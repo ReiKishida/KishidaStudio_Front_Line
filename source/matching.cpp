@@ -11,6 +11,10 @@
 #include "sound.h"
 #include "texture.h"
 #include "UI_Texture.h"
+#include "server.h"
+#include "menu.h"
+#include "serverfunction.h"
+#include "mechaSelect.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -37,6 +41,14 @@ CMatching::CMatching(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority,
 	m_pUITex[1] = NULL;
 	m_pUITex[2] = NULL;
 	m_pUITex[3] = NULL;
+	m_nCntFade = 0;
+	m_bFade = false;
+
+	for (int nCntPlayerUI = 0; nCntPlayerUI < MATCHING_UI_PLAYER; nCntPlayerUI++)
+	{
+		m_pMatchingPlayerUI[nCntPlayerUI] = NULL;
+	}
+
 }
 
 //=========================================
@@ -51,6 +63,13 @@ CMatching::~CMatching()
 //=============================================================================
 HRESULT CMatching::Init(void)
 {
+	m_nCntFade = 0;
+	m_bFade = false;
+	if (CMenu::GetMode() == CMenu::MODE_MULTI)
+	{
+		CManager::CreateClient();
+	}
+
 	// 背景下地
 	CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH , SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_MATCHING_BG);
 
@@ -77,6 +96,15 @@ HRESULT CMatching::Init(void)
 	// 4Pロゴ
 	m_pUITex[7] = CUI_TEXTURE::Create(D3DXVECTOR3(RIGHT_POS_X, DOWN_POS_Y, 0.0f), PLAYER_NUM_WIDTH, PLAYER_NUM_HEIGHT, CUI_TEXTURE::UIFLAME_PLAYER_NUM);
 	m_pUITex[7]->SetTex(3, 1, 4);
+
+
+	m_pMatchingPlayerUI[0] = CUI_TEXTURE::Create(D3DXVECTOR3((SCREEN_WIDTH / 2) - 300.0f, 150.0f, 0.0f), 250.0f, 250.0f, CUI_TEXTURE::UIFLAME_MATCHING_BG_00);
+
+	m_pMatchingPlayerUI[1] = CUI_TEXTURE::Create(D3DXVECTOR3((SCREEN_WIDTH / 2) - 300.0f, SCREEN_HEIGHT - 250.0f, 0.0f), 250.0f, 250.0f, CUI_TEXTURE::UIFLAME_MATCHING_BG_01);
+
+	m_pMatchingPlayerUI[2] = CUI_TEXTURE::Create(D3DXVECTOR3((SCREEN_WIDTH / 2) + 300.0f, 150.0f, 0.0f), 250.0f, 250.0f, CUI_TEXTURE::UIFLAME_MATCHING_BG_00);
+
+	m_pMatchingPlayerUI[3] = CUI_TEXTURE::Create(D3DXVECTOR3((SCREEN_WIDTH / 2) + 300.0f, SCREEN_HEIGHT - 250.0f, 0.0f), 250.0f, 250.0f, CUI_TEXTURE::UIFLAME_MATCHING_BG_01);
 
 	// ロゴ
 	CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 150.0f, 150.0f, CUI_TEXTURE::UIFLAME_VS);
@@ -108,6 +136,12 @@ void CMatching::Uninit(void)
 //=============================================================================
 void CMatching::Update(void)
 {
+	//必要な情報を書き込む処理
+	PrintData();
+
+	//情報を読み取る処理
+	ReadMessage();
+
 	// 入力の情報を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();
 	CXInput *pXInput = CManager::GetXInput();
@@ -143,12 +177,58 @@ void CMatching::Update(void)
 	{
 		if (CFade::GetFade() == CFade::FADE_NONE)
 		{// フェードがないとき
-			CFade::Create(CManager::MODE_GAME);
+			//CFade::Create(CManager::MODE_GAME);
 			//pSound->PlaySound(CSound::SOUND_LABEL_DECIDE);
 		}
 	}
 
 	CDebugProc::Print("マッチング画面");
+
+	CClient *pClient = CManager::GetClient();			//クライアントのポインタ情報
+
+	if (pClient != NULL)
+	{
+		char *pStr = pClient->GetReceiveData();				//サーバーから受け取ったメッセージ情報
+
+			//頭出し処理
+		pStr = CServerFunction::HeadPutout(pStr, "");
+
+		if (CServerFunction::Memcmp(pStr, SERVER_NUM_CONNECT) == 0)
+		{//接続総数を示している場合
+			pStr += strlen(SERVER_NUM_CONNECT);								//頭出し
+			pClient->SetNumConnect(CServerFunction::ReadInt(pStr, ""));		//総数の設置処理
+		}
+
+		if (pClient->GetNumConnect() == MAX_CONNECT)
+		{
+			if (m_bFade == false)
+			{
+				m_bFade = true;
+			}
+			if (CFade::GetFade() == CFade::FADE_NONE)
+			{// フェードがないとき
+
+			 //CFade::Create(CManager::MODE_GAME);
+			 //pSound->PlaySound(CSound::SOUND_LABEL_DECIDE);
+			}
+
+		}
+	}
+
+	if (m_bFade == true)
+	{
+		m_nCntFade++;
+	}
+	if (m_nCntFade >= 200)
+	{
+		if (CFade::GetFade() == CFade::FADE_NONE)
+		{// フェードがないとき
+
+		 CFade::Create(CManager::MODE_GAME);
+		 //pSound->PlaySound(CSound::SOUND_LABEL_DECIDE);
+		}
+
+	}
 }
 
 //=============================================================================
@@ -156,4 +236,75 @@ void CMatching::Update(void)
 //=============================================================================
 void CMatching::Draw(void)
 {
+}
+
+//=============================================================================
+// 必要な情報を書き込む処理
+//=============================================================================
+void CMatching::PrintData(void)
+{
+	//クライアントの取得
+	CClient *pClient = CManager::GetClient();
+	if (pClient != NULL)
+	{
+		int nIdx = pClient->GetClientIdx();
+		pClient->SetMechaType(pClient->GetPlayerIdx(), CMechaSelect::GetMechaType());
+		//m_pMatchingPlayerUI[nIdx]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)CMechaSelect::GetMechaType()));
+		pClient->Printf("%d", pClient->GetPlayerIdx());
+		pClient->Printf(" ");
+		pClient->Printf("%d", pClient->GetMechaType(pClient->GetPlayerIdx()));
+		pClient->Printf(" ");
+		CDebugProc::Print("プレイヤー番号%d", pClient->GetPlayerIdx());
+	}
+}
+
+//=============================================================================
+// 情報を読み取る処理
+//=============================================================================
+void CMatching::ReadMessage(void)
+{
+	//クライアントの取得
+	CClient *pClient = CManager::GetClient();
+
+	if (pClient != NULL)
+	{
+		char *pStr = pClient->GetReceiveData();
+		int nWord = 0;
+		int nPlayerIdx = 0;
+		int nMechatype = 0;
+
+		//頭出し処理
+		pStr = CServerFunction::HeadPutout(pStr, "");
+
+		if (CServerFunction::Memcmp(pStr, SERVER_NUM_CONNECT) == 0)
+		{//接続総数を示している場合
+			pStr += strlen(SERVER_NUM_CONNECT);								//頭出し
+			pClient->SetNumConnect(CServerFunction::ReadInt(pStr, ""));		//総数の設置処理
+			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
+			pStr += nWord;													//頭出し
+		}
+		if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
+		{//プレイヤーの開始を示している場合
+			pStr += strlen(SERVER_PLAYER_START);
+
+			for(int nCntClient = 0;nCntClient < pClient->GetNumConnect() - 1;nCntClient++)
+			{
+				//番号を代入
+				nPlayerIdx = CServerFunction::ReadInt(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
+				pStr += nWord;										//頭出し
+
+				//メカの種類を代入												//番号を代入
+				nMechatype = CServerFunction::ReadInt(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
+				pStr += nWord;										//頭出し
+
+				if (nPlayerIdx != pClient->GetPlayerIdx())
+				{
+					pClient->SetMechaType(nPlayerIdx, nMechatype);
+				}
+			}
+		}
+		CDebugProc::Print("種類：%d %d %d %d", pClient->GetMechaType(0), pClient->GetMechaType(1), pClient->GetMechaType(2), pClient->GetMechaType(3));
+	}
 }

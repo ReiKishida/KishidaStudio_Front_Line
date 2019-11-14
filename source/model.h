@@ -57,6 +57,8 @@ public:
 
 	bool Collision(D3DXVECTOR3 pos, float fRange);					// 当たり判定
 
+	void MatrixCalculation(void);									// マトリックスの計算
+
 protected:
 
 private:

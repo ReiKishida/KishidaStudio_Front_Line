@@ -35,6 +35,7 @@
 //*****************************************************************************
 // 静的メンバ変数
 //*****************************************************************************
+CMenu::MODE CMenu::m_mode = CMenu::MODE_SINGLE;
 
 //=========================================
 // コンストラクタ
@@ -156,7 +157,7 @@ void CMenu::Update(void)
 
 	bool bButtonSwitch = false;
 	int nSelect = -1;
-	MODE mode = MODE_SINGLE;
+	//MODE mode = MODE_SINGLE;
 
 	for (int nCntButton = 0; nCntButton < MENU_NUM_BUTTON; nCntButton++)
 	{// ボタンの判定
@@ -165,7 +166,8 @@ void CMenu::Update(void)
 			if (m_apButtonUI[nCntButton]->ClickRelease())
 			{// クリックされた
 				bButtonSwitch = true;
-				mode = (MODE)nCntButton;
+				//mode = (MODE)nCntButton;
+				m_mode = (MODE)nCntButton;
 				break;
 			}
 
@@ -217,14 +219,11 @@ void CMenu::Update(void)
 		break;
 	}
 
-	//**********************************************
-	// モード選択された！画面遷移
-	//**********************************************
 	if (bButtonSwitch)
 	{// 画面遷移
 		if (CFade::GetFade() == CFade::FADE_NONE)
 		{// フェードがないとき
-			switch(mode)
+			switch(m_mode)
 			{
 			case MODE_SINGLE:
 				CFade::Create(CManager::MODE_MECHASELECT);

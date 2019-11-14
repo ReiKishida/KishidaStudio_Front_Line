@@ -13,6 +13,8 @@
 #include "bg.h"
 #include "mouseCursor.h"
 #include "button.h"
+#include "server.h"
+#include "menu.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -33,6 +35,7 @@
 //*****************************************************************************
 // 静的メンバ変数
 //*****************************************************************************
+CMechaSelect::MECHATYPE CMechaSelect::m_mechaType = CMechaSelect::MECHATYPE_SHOOTER;
 
 //=========================================
 // コンストラクタ
@@ -84,7 +87,7 @@ HRESULT CMechaSelect::Init(void)
 	m_apUI[2] = CScene2D::Create();
 	m_apUI[2]->SetPos(D3DXVECTOR3(300.0f, 350.0f, 0.0f));
 	m_apUI[2]->SetSize(400.0f, 400.0f);
-	m_apUI[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MECHA_SELECT)));
+	m_apUI[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_AI_MECHA_FLAME)));
 
 	// 適正距離表示
 	m_apUI[3] = CScene2D::Create();
@@ -106,6 +109,8 @@ HRESULT CMechaSelect::Init(void)
 	// カーソルの生成
 	m_pCursor = CMouseCursor2D::Create();
 
+	//メカ選択の初期化
+	m_mechaType = MECHATYPE_LIGHT;
 	return S_OK;
 }
 
@@ -162,19 +167,17 @@ void CMechaSelect::Update(void)
 
 	bool bButtonSwitch = false;
 	int nSelect = -1;
-	MECHATYPE mechaType = MECHATYPE_LIGHT;
+	//MECHATYPE mechaType = MECHATYPE_LIGHT;
 
-	//**********************************************
-	// ボタンの判定
-	//**********************************************
 	for (int nCntButton = 0; nCntButton < MECHASEL_NUM_BUTTON; nCntButton++)
-	{
+	{// ボタンの判定
 		if (m_apButtonUI[nCntButton]->InRange(m_pCursor->GetMousePosition()))
 		{// 範囲内かチェック
 			if (m_apButtonUI[nCntButton]->ClickRelease())
 			{// クリックされた
 				bButtonSwitch = true;
-				mechaType = (MECHATYPE)nCntButton;
+				//mechaType = (MECHATYPE)nCntButton;
+				m_mechaType = (MECHATYPE)nCntButton;
 				break;
 			}
 
@@ -183,52 +186,51 @@ void CMechaSelect::Update(void)
 	}
 
 	//**********************************************
-	// 選択中の機体説明
+	// 選択されていないとき選択項目を非表示にする
 	//**********************************************
+	// 選択中の機体説明
 	if (-1 == nSelect) { m_apUI[1]->SetDisp(false); }
 	else{ m_apUI[1]->SetDisp(true); }
 
 	switch (nSelect)
 	{
-	case 0:		// 軽量型
+	case 0:		// タイプA
 		m_apUI[1]->SetTex(0, 1, 4);
 		break;
 
-	case 1:		// 支援型
+	case 1:		// タイプB
 		m_apUI[1]->SetTex(1, 1, 4);
 		break;
 
-	case 2:		// 重量型
+	case 2:		// タイプC
 		m_apUI[1]->SetTex(2, 1, 4);
 		break;
 
-	case 3:		// 強襲型
+	case 3:		// タイプD
 		m_apUI[1]->SetTex(3, 1, 4);
 		break;
 	}
 
-	//**********************************************
 	// 選択中の機体表示
-	//**********************************************
 	if (-1 == nSelect) { m_apUI[2]->SetDisp(false); }
 	else { m_apUI[2]->SetDisp(true); }
 
 	switch (nSelect)
 	{
-	case 0:		// 軽量型
-		m_apUI[2]->SetTex(0, 1, 4);
+	case 0:		// タイプA
+		m_apUI[2]->SetTex(0, 1, 2);
 		break;
 
-	case 1:		// 支援型
-		m_apUI[2]->SetTex(1, 1, 4);
+	case 1:		// タイプB
+		m_apUI[2]->SetTex(1, 1, 2);
 		break;
 
-	case 2:		// 重量型
-		m_apUI[2]->SetTex(2, 1, 4);
+	case 2:		// タイプC
+		m_apUI[2]->SetTex(0, 1, 2);
 		break;
 
-	case 3:		// 強襲型
-		m_apUI[2]->SetTex(3, 1, 4);
+	case 3:		// タイプD
+		m_apUI[2]->SetTex(1, 1, 2);
 		break;
 	}
 
@@ -236,22 +238,33 @@ void CMechaSelect::Update(void)
 	{// 画面遷移
 		if (CFade::GetFade() == CFade::FADE_NONE)
 		{// フェードがないとき
-			switch (mechaType)
+			CManager::MODE mode;
+
+			if (CMenu::GetMode() == CMenu::MODE_MULTI)
+			{
+				mode = CManager::MODE_MATCHING;
+			}
+			else
+			{
+				mode = CManager::MODE_GAME;
+			}
+
+			switch (m_mechaType)
 			{
 			case MECHATYPE_LIGHT:
-				CFade::Create(CManager::MODE_GAME);
+				CFade::Create(mode);
 				break;
 
 			case MECHATYPE_SHOOTER:
-				CFade::Create(CManager::MODE_GAME);
+				CFade::Create(mode);
 				break;
 
 			case MECHATYPE_HEAVY:
-				CFade::Create(CManager::MODE_GAME);
+				CFade::Create(mode);
 				break;
 
 			case MECHATYPE_ASSULT:
-				CFade::Create(CManager::MODE_GAME);
+				CFade::Create(mode);
 				break;
 			}
 		}

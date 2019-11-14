@@ -12,6 +12,7 @@
 #include "game.h"
 #include "texture.h"
 #include "camera.h"
+#include "server.h"
 
 //==================================
 // マクロ定義
@@ -165,7 +166,7 @@ void CBulletCollision::Draw(void)
 //==================================
 // 生成処理
 //==================================
-CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, TYPE type)
+CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage)
 {
 	CBulletPlayer *pBullet = NULL;
 
@@ -173,8 +174,7 @@ CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngle
 
 	if (NULL != pBullet)
 	{// メモリ確保成功
-		pBullet->m_type = type;
-		pBullet->Init(pos, fAngle, fAngleVertical);
+		pBullet->Init(pos, fAngle, fAngleVertical, nDamage);
 	}
 
 	return pBullet;
@@ -197,23 +197,17 @@ CBulletPlayer::~CBulletPlayer()
 //=========================================
 // 初期化処理
 //=========================================
-HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical)
+HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage)
 {
 	CBullet::Init(pos);										// 位置の設定
 	CBullet::SetLighting(false);
-	switch (m_type)
-	{
-	case TYPE_NORMAL:	// 通常弾
-		CBullet::SetMove(D3DXVECTOR3(sinf(fAngle) * BULLET_SPEED, cosf(fAngleVertical) * BULLET_SPEED, cosf(fAngle) * BULLET_SPEED));
-		CBullet::SetLife(BULLET_LIFE);
-		CBullet::SetSize(D3DXVECTOR3(10.0f,10.0f,0.0f));							// 大きさの設定
-		CBullet::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));	// 色の設定
-		CBullet::SetDamage(1);
-		break;
 
-	default:			// 例外処理
-		break;
-	}
+	CBullet::SetMove(D3DXVECTOR3(sinf(fAngle) * BULLET_SPEED, cosf(fAngleVertical) * BULLET_SPEED, cosf(fAngle) * BULLET_SPEED));
+	CBullet::SetLife(BULLET_LIFE);
+	CBullet::SetSize(D3DXVECTOR3(3.0f, 3.0f, 0.0f));							// 大きさの設定
+	CBullet::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));	// 色の設定
+	CBullet::SetDamage(nDamage);
+	//CBullet::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_BULLET));
 
 	return S_OK;
 }
@@ -371,7 +365,7 @@ void CBulletEnemy::Draw(void)
 bool CBulletEnemy::BulletCollision(void)
 {
 	// プレイヤーを探す
-	CPlayer *pPlayer = CGame::GetPlayer();	// キャストして敵クラスの変数として使う
+	CPlayer *pPlayer = CGame::GetPlayer(CManager::GetClient()->GetClientIdx());	// キャストして敵クラスの変数として使う
 
 	if (Collision(pPlayer->GetPos(), pPlayer->GetVtxMax().x))
 	{// 接触している

@@ -14,7 +14,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define MAX_FILE		(2)		// ファイル数
+#define MAX_FILE		(5)		// ファイル数
 #define MOTION_PRIORITY	(0)		// 処理の優先順位
 #define ATTACK_MOTION	(CMotionManager::TYPE_MAX - CMotionManager::TYPE_ATTACK01)	// 攻撃モーション数
 
@@ -33,6 +33,8 @@ public:
 	{
 		TYPE_NEUTRAL = 0,	// ニュートラル
 		TYPE_WALK,			// 歩き
+		TYPE_BACK,			// バックラン
+
 		TYPE_DAMAGE,		// ダメージ
 		TYPE_SLIP,			// 滑り
 		TYPE_DEATH,			// 死亡

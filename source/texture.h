@@ -68,6 +68,7 @@ public:
 		TEXTURE_SELECT_RESPAWN,		// リスポーン選択（アクションパートで使用）
 		TEXTURE_RELOAD,						// リロードロゴ（アクションパートで使用）
 		TEXTURE_MECHA_SELECT,			// 機体画像（機体選択画面で使用）
+		TEXTURE_BULLET,				// 弾
 		TEXTURE_MAX
 	}TEXTURE;
 

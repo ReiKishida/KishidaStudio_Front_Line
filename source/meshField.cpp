@@ -206,7 +206,7 @@ float CMeshField::GetHeight(D3DXVECTOR3 pos)
 	D3DXVec3Cross(&collisionNor, &vecA, &vecB);			// 外積を求める
 	D3DXVec3Normalize(&collisionNor, &collisionNor);	// 正規化
 
-														// プレイヤーのベクトル
+	// プレイヤーのベクトル
 	vecPlayer = pos - collisionPos[0];
 
 	// プレイヤーのY軸を求める

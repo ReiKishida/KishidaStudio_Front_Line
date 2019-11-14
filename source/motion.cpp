@@ -61,7 +61,10 @@ HRESULT CMotionManager::Load(void)
 	int nCntFile = 0;
 	char *pFileName[MAX_FILE] =
 	{
-		{ "data/TEXT/chaser/motion_chaser.txt" },
+		{ "data/TEXT/PLAYER/assult/motion_assult.txt" },
+		{ "data/TEXT/PLAYER/light/motion_light.txt" },
+		{ "data/TEXT/PLAYER/heavy/motion_heavy.txt" },
+		{ "data/TEXT/PLAYER/snipe/motion_snipe.txt" },
 		{ "data/TEXT/ENEMY/motion.txt" },
 	};
 

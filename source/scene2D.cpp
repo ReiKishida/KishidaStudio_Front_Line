@@ -392,7 +392,7 @@ void CScene2D::SetBgMove(int nCntBg_X, int nCntBg_Y, float fScrollSpeed)
 {
 	VERTEX_2D * pVtx;			//頂点情報へのポインタ
 
-	//頂点バッファをロックし、頂点データへのポインタを取得
+								//頂点バッファをロックし、頂点データへのポインタを取得
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	//テクスチャの座標設定
@@ -412,7 +412,7 @@ void CScene2D::SetTex(int nUV, int nUV_X, int nUV_Y)
 {
 	VERTEX_2D * pVtx;			//頂点情報へのポインタ
 
-	//頂点バッファをロックし、頂点データへのポインタを取得
+								//頂点バッファをロックし、頂点データへのポインタを取得
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	//テクスチャの座標設定

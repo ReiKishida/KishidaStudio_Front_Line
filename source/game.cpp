@@ -36,6 +36,13 @@
 #include "model.h"
 #include "gauge.h"
 
+#include "server.h"
+#include "serverfunction.h"
+
+#include "collisionSet.h"
+
+#include "menu.h"
+
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -48,7 +55,7 @@
 //*****************************************************************************
 CGame::STATE CGame::m_state = CGame::STATE_NONE;
 int CGame::m_nCurStage = 0;
-CPlayer *CGame::m_pPlayer = NULL;
+CPlayer *CGame::m_pPlayer[MAX_CONNECT] = {};
 
 //=============================================================================
 // コンストラクタ
@@ -82,13 +89,35 @@ HRESULT CGame::Init(void)
 	m_pField = CModel::Create();
 	m_pField->SetModel(FIELD_MODEL_NAME);
 
+	D3DXVECTOR3 aPos[4];
+	aPos[0] = D3DXVECTOR3(590.0f, 0.0f, 40.0f);
+	aPos[1] = D3DXVECTOR3(590.0f, 0.0f, -60.0f);
+	aPos[2] = D3DXVECTOR3(-760.0f, 0.0f, 40.0f);
+	aPos[3] = D3DXVECTOR3(-760.0f, 0.0f, -60.0f);
+
 	// プレイヤーの生成
-	m_pPlayer = CPlayer::Create();
+	for (int nCntPlayer = 0; nCntPlayer < MAX_CONNECT; nCntPlayer++)
+	{
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{
+			CClient *pClient = CManager::GetClient();
+			if (pClient != NULL)
+			{
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, (CMechaSelect::MECHATYPE)pClient->GetMechaType(nCntPlayer),aPos[nCntPlayer]);
+			}
+		}
+		else
+		{
+			m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(),aPos[nCntPlayer]);
+		}
+	}
 
 	CBulletCollision::Create();
 
 	CEnemy::Load();
 	CEnemy::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), 0);
+
+	CCollision::Load();
 
 	//****************************************
 	// 2DUI生成（フレーム）
@@ -139,10 +168,13 @@ void CGame::Uninit(void)
 	CModelSetManager::Unload();
 	CEnemy::Unload();
 
-	if (NULL != m_pPlayer)
-	{// プレイヤークラスの破棄
-		m_pPlayer->Uninit();
-		m_pPlayer = NULL;
+	for (int nCntPlayer = 0; nCntPlayer < MAX_CONNECT; nCntPlayer++)
+	{
+		if (NULL != m_pPlayer[nCntPlayer])
+		{// プレイヤークラスの破棄
+			m_pPlayer[nCntPlayer]->Uninit();
+			m_pPlayer[nCntPlayer] = NULL;
+		}
 	}
 
 	if (NULL != m_pField)
@@ -167,6 +199,12 @@ void CGame::Update(void)
 	CInputMouse *pMouse = CManager::GetInputMouse();
 	CDirectInput *pDirectInput = CManager::GetDirectInput();	//DirectInputの取得
 	CDirectInput::GamePad *DirectInputStick = pDirectInput->GetgamePadStick();
+
+	//必要な情報を書き込む処理
+	PrintData();
+
+	//情報を読み取る処理
+	ReadMessage();
 
 #ifdef _DEBUG
 	if (pKeyboard->GetTrigger(DIK_O))
@@ -381,4 +419,290 @@ void CGame::SetStage(int nStage)
 {
 	// 現在のステージを設定
 	m_nCurStage = nStage;
+}
+
+//=============================================================================
+// 必要な情報を書き込む処理
+//=============================================================================
+void CGame::PrintData(void)
+{
+	//クライアントの取得
+	CClient *pClient = CManager::GetClient();
+#if 1
+	if (pClient != NULL)
+	{//NULLではない場合
+		if (m_pPlayer[pClient->GetPlayerIdx()] != NULL)
+		{//NULLではない場合
+		 //クライアント番号を書き込む
+			pClient->Printf("%d", CManager::GetClient()->GetPlayerIdx());
+			pClient->Printf(" ");
+
+			//チームの番号を書き込む
+			pClient->Printf("%d", CManager::GetClient()->GetTeam());
+			pClient->Printf(" ");
+
+			//プレイヤーのx,y軸の位置を書き込む
+			pClient->Printf("%.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetPos().z);
+			pClient->Printf(" ");
+
+			//プレイヤーのy軸の向きを書き込む
+			pClient->Printf("%.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetRot().y);
+			pClient->Printf(" ");
+
+			//モデル0番のy軸の向きを書き込む
+			pClient->Printf("%.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetModel(0)->GetRot().y);
+			pClient->Printf(" ");
+
+			//モデル1番の向きを書き込む
+			pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetModel(1)->GetRot().x, m_pPlayer[pClient->GetPlayerIdx()]->GetModel(1)->GetRot().y, m_pPlayer[pClient->GetPlayerIdx()]->GetModel(1)->GetRot().z);
+			pClient->Printf(" ");
+
+			//カメラの向きを書き込む
+			pClient->Printf("%.1f %.1f %.1f", CManager::GetCamera()->GetRot().x, CManager::GetCamera()->GetRot().y, CManager::GetCamera()->GetRot().z);
+			pClient->Printf(" ");
+
+			//弾を発射しているかどうかを書き込む
+			if (m_pPlayer[pClient->GetPlayerIdx()]->GetShoot() == true)
+			{//発射されている場合
+
+				pClient->Printf("1");
+				pClient->Printf(" ");
+
+				//弾の同時発射数を書き込む
+				pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetNumShoot());
+				pClient->Printf(" ");
+
+				pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetAttack());
+				pClient->Printf(" ");
+
+				//水平角度の情報を書き込む
+				for (int nCntShoot = 0; nCntShoot < m_pPlayer[pClient->GetPlayerIdx()]->GetNumShoot() * 2; nCntShoot++)
+				{
+					pClient->Printf("%.2f %.2f", m_pPlayer[pClient->GetPlayerIdx()]->GetAngle(nCntShoot), m_pPlayer[pClient->GetPlayerIdx()]->GetAngleV(nCntShoot));
+					pClient->Printf(" ");
+
+				}
+
+				//発射していない状態に戻す
+				m_pPlayer[pClient->GetClientIdx()]->SetShoot(false);
+			}
+			else
+			{
+				pClient->Printf("0");
+				pClient->Printf(" ");
+			}
+		}
+	}
+#endif
+}
+
+//=============================================================================
+// 情報を読み取る処理
+//=============================================================================
+void CGame::ReadMessage(void)
+{
+	CClient *pClient = CManager::GetClient();			//クライアントのポインタ情報
+	char *pStr = pClient->GetReceiveData();				//サーバーから受け取ったメッセージ情報
+	D3DXVECTOR3 pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);									//位置
+	D3DXVECTOR3 rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	D3DXVECTOR3 modelRotDown = D3DXVECTOR3(0.0f, 0.0f, 0.0f), modelRotUp = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//モデルの上半身と下半身の向き
+	D3DXVECTOR3 cameraRot;								//カメラの向き
+	int nPlayerIdx = 0;									//プレイヤーの番号
+	int nNumConnect = 0;								//接続総数
+	int nWord = 0;										//文字の頭出し用
+	int nCntClient = 0;									//クライアントのカウンター
+	int nTeam = 0;
+	float *pAngle = NULL;
+	float *pAngleV = NULL;
+	bool bShoot = false;
+	int nNumShoot = 0;
+	int nAttack = 0;
+
+	if (pClient != NULL)
+	{
+		//頭出し処理
+		pStr = CServerFunction::HeadPutout(pStr, "");
+
+		if (CServerFunction::Memcmp(pStr, SERVER_NUM_CONNECT) == 0)
+		{//接続総数を示している場合
+			pStr += strlen(SERVER_NUM_CONNECT);								//頭出し
+			pClient->SetNumConnect(CServerFunction::ReadInt(pStr, ""));		//総数の設置処理
+			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
+			pStr += nWord;													//頭出し
+		}
+		if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
+		{//プレイヤーの開始を示している場合
+			pStr += strlen(SERVER_PLAYER_START);							//頭出し
+
+			for (int nCntClient = 0; nCntClient < pClient->GetNumConnect() - 1; nCntClient++)
+			{
+				//番号を代入
+				nPlayerIdx = CServerFunction::ReadInt(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
+				pStr += nWord;										//頭出し
+
+																	//チーム情報の代入
+				nTeam = CServerFunction::ReadInt(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				//プレイヤーの位置を代入
+				pos.x = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				pos.z = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				//プレイヤーの向きを代入
+				rot.y = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				//下半身のモデルの向きを代入
+				modelRotDown.y = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				//上半身のモデルの向きを代入
+				modelRotUp.x = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				modelRotUp.y = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				modelRotUp.z = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+
+				//カメラの向きを代入
+				cameraRot.x = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				cameraRot.y = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				cameraRot.z = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				//弾を発射しているかどうかを代入
+				bShoot = CServerFunction::ReadBool(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				if (bShoot == true)
+				{
+					nNumShoot = CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					pAngle = new float[nNumShoot * 2];
+					pAngleV = new float[nNumShoot * 2];
+
+					nAttack = CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					for (int nCntShoot = 0; nCntShoot < nNumShoot * 2; nCntShoot++)
+					{
+						pAngle[nCntShoot] = CServerFunction::ReadFloat(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+
+						pAngleV[nCntShoot] = CServerFunction::ReadFloat(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+
+					}
+				}
+
+				if (nPlayerIdx != pClient->GetPlayerIdx())
+				{//プレイヤーの番号がクライアント番号と違う場合
+					if (m_pPlayer[nPlayerIdx] != NULL)
+					{
+						//チーム情報をの設置処理
+						//m_pPlayer[nPlayerIdx]->SetTeam(nTeam);
+
+						//プレイヤーの位置の設置処理
+						m_pPlayer[nPlayerIdx]->SetPos(pos);
+
+						//弾を発射しているかどうかの設置処理
+						//m_pPlayer[nPlayerIdx]->SetShoot(bShoot);
+
+						float fDiffRot;
+						float fAngle = D3DX_PI + cameraRot.y;
+						float fRotDest = m_pPlayer[nPlayerIdx]->GetRotDest();
+						// 目的の角度の調節
+						if (fRotDest > D3DX_PI) { fRotDest -= D3DX_PI * 2.0f; }
+						if (fRotDest < -D3DX_PI) { fRotDest += D3DX_PI * 2.0f; }
+
+						// 目的の角度への差分
+						fDiffRot = fRotDest - rot.y;
+						if (fDiffRot > D3DX_PI) { fDiffRot -= D3DX_PI * 2.0f; }
+						if (fDiffRot < -D3DX_PI) { fDiffRot += D3DX_PI * 2.0f; }
+
+						// 角度の更新
+						rot.y += fDiffRot * 0.05f;
+						if (rot.y > D3DX_PI) { rot.y -= D3DX_PI * 2.0f; }
+						if (rot.y < -D3DX_PI) { rot.y += D3DX_PI * 2.0f; }
+
+						float fCameraAngle = fAngle - rot.y;
+
+						// 差分の調節
+						if (fCameraAngle > D3DX_PI) { fCameraAngle -= D3DX_PI * 2.0f; }
+						if (fCameraAngle < -D3DX_PI) { fCameraAngle += D3DX_PI * 2.0f; }
+
+						if (fRotDest <= D3DX_PI * 0.5f && fRotDest >= D3DX_PI * -0.5f)
+						{// 下半身の動きを進行方向に合わせる
+							m_pPlayer[nPlayerIdx]->GetModel(0)->SetRot(D3DXVECTOR3(modelRotDown.x, rot.y + fCameraAngle, modelRotDown.z));
+							m_pPlayer[nPlayerIdx]->GetModel(1)->SetRot(D3DXVECTOR3(-cameraRot.x + (D3DX_PI * 0.5f), fCameraAngle - fAngle, modelRotUp.z));
+						}
+						else
+						{// 斜め後ろ向きのとき
+							m_pPlayer[nPlayerIdx]->GetModel(1)->SetRot(D3DXVECTOR3(-cameraRot.x + (D3DX_PI * 0.5f), fCameraAngle - (fAngle - D3DX_PI), modelRotUp.z));
+						}
+
+						//プレイヤーの向きの設置処理
+						m_pPlayer[nPlayerIdx]->SetRot(rot);
+
+						//プレイヤーの目的の角度の設置処理
+						m_pPlayer[nPlayerIdx]->SetRotDest(fRotDest);
+
+						if (bShoot == true)
+						{//弾を発射している場合
+
+							for (int nCntShoot = 0; nCntShoot < nNumShoot; nCntShoot++)
+							{
+								// 弾の生成
+								D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
+								D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
+								CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack);
+								mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(5)->GetMtxWorld();
+								posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
+								CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack);
+							}
+
+							//D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
+							//CBulletPlayer::Create(D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f), cameraRot.y, cameraRot.x + (D3DX_PI * 0.5f), CBulletPlayer::TYPE_NORMAL);
+							//mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(5)->GetMtxWorld();
+							//CBulletPlayer::Create(D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f), cameraRot.y, cameraRot.x + (D3DX_PI * 0.5f), CBulletPlayer::TYPE_NORMAL);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (pAngle != NULL)
+	{
+		delete[] pAngle;
+		pAngle = NULL;
+	}
+	if (pAngleV != NULL)
+	{
+		delete[] pAngleV;
+		pAngleV = NULL;
+	}
 }

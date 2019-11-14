@@ -50,8 +50,9 @@ public:
 	void SetDisp(bool bDisp) { m_bDisp = bDisp; }
 
 	void Flashing(int nFlame);		// ì_ñ≈
-	void SetBgMove(int nCntBg_X, int nCntBg_Y, float fScrollSpeed);	// îwåiìÆÇ©Ç∑Åiâ°Åj
 	void SetTex(int nUV, int nUV_X, int nUV_Y);
+
+	void SetBgMove(int nCntBg_X, int nCntBg_Y, float fScrollSpeed);
 
 protected:
 

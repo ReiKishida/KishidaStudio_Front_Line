@@ -237,6 +237,47 @@ void CModel::Draw(void)
 }
 
 //=========================================
+// マトリックスの計算
+//=========================================
+void CModel::MatrixCalculation(void)
+{
+	// デバイスの取得
+	CRenderer *pRenderer = CManager::GetRenderer();
+	LPDIRECT3DDEVICE9 pDevice;
+	pDevice = pRenderer->GetDevice();
+
+	D3DXMATRIX mtxRot, mtxTrans, mtxParent;	// 計算用マトリックス
+
+	if (m_pParent != NULL)
+	{// 親のマトリックスを取得
+		mtxParent = m_pParent->GetMtxWorld();
+	}
+	else if (m_pMtxParent != NULL)
+	{
+		mtxParent = *m_pMtxParent;
+	}
+
+	// ワールドマトリックスの初期化
+	D3DXMatrixIdentity(&m_mtxWorld);
+
+	// 回転を反映
+	D3DXMatrixRotationYawPitchRoll(&mtxRot, m_rot.y, m_rot.x, m_rot.z);
+	D3DXMatrixMultiply(&m_mtxWorld, &m_mtxWorld, &mtxRot);
+
+	// 移動を反映
+	D3DXMatrixTranslation(&mtxTrans, m_pos.x, m_pos.y, m_pos.z);
+	D3DXMatrixMultiply(&m_mtxWorld, &m_mtxWorld, &mtxTrans);
+
+	if (m_pMtxParent != NULL)
+	{// 親のマトリックスと掛け合わせる
+		D3DXMatrixMultiply(&m_mtxWorld, &m_mtxWorld, &mtxParent);
+	}
+
+	// ワールドマトリックスの設定
+	pDevice->SetTransform(D3DTS_WORLD, &m_mtxWorld);
+}
+
+//=========================================
 // 使うモデルの設定
 //=========================================
 void CModel::SetModel(char *pModelName)

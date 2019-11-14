@@ -11,6 +11,7 @@
 #include "debugProc.h"
 #include "player.h"
 #include "game.h"
+#include "server.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -54,7 +55,7 @@ HRESULT CCamera::Init(void)
 	m_vecU = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 	m_rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_fLength = m_posV.z;
-	m_fLookHeight = 60.0f;
+	m_fLookHeight = 25.0f;
 
 	return S_OK;
 }
@@ -75,48 +76,52 @@ void CCamera::Update(void)
 	{
 		if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
 		{// アクションパート
-			// マウスの入力情報を取得
-			CInputMouse *pInputMouse = CManager::GetInputMouse();
-
-			// マウス座標の前回との差分を求める
-			float fDiffX = (float)pInputMouse->GetDiffPointX();
-			float fDiffY = (float)pInputMouse->GetDiffPointY();
-
 			// プレイヤーの取得
-			CPlayer *pPlayer = CManager::GetGame()->GetPlayer();
+			CPlayer *pPlayer = CManager::GetGame()->GetPlayer(CManager::GetClient()->GetClientIdx());
 			D3DXVECTOR3 pos = pPlayer->GetPos();
+			float fModelHeight = pPlayer->GetVtxMax().y;
 
-			// 向きを変える
-			m_rot.y += fDiffX * 0.01f;	// 横方向
-			m_rot.x += fDiffY * 0.01f;	// 縦方向
+			if (pPlayer->GetRespawn() == CPlayer::RESPAWN_NONE)
+			{
+				// マウスの入力情報を取得
+				CInputMouse *pInputMouse = CManager::GetInputMouse();
 
-			// 差分の調節
-			if (m_rot.y > D3DX_PI) { m_rot.y -= D3DX_PI * 2.0f; }
-			if (m_rot.y < -D3DX_PI) { m_rot.y += D3DX_PI * 2.0f; }
+				// マウス座標の前回との差分を求める
+				float fDiffX = (float)pInputMouse->GetDiffPointX();
+				float fDiffY = (float)pInputMouse->GetDiffPointY();
 
-			// 差分の調節
-			if (m_rot.x > D3DX_PI) { m_rot.x -= D3DX_PI * 2.0f; }
-			if (m_rot.x < -D3DX_PI) { m_rot.x += D3DX_PI * 2.0f; }
+				// 向きを変える
+				m_rot.y += fDiffX * 0.01f;	// 横方向
+				m_rot.x += fDiffY * 0.01f;	// 縦方向
 
-			// x軸の回転の制御
-			if (D3DX_PI * 0.4f > m_rot.x)
-			{// 上側
-				m_rot.x = D3DX_PI * 0.4f;
-			}
-			else if (D3DX_PI * 0.55f < m_rot.x)
-			{// 下側
-				m_rot.x = D3DX_PI * 0.55f;
+				// 差分の調節
+				if (m_rot.y > D3DX_PI) { m_rot.y -= D3DX_PI * 2.0f; }
+				if (m_rot.y < -D3DX_PI) { m_rot.y += D3DX_PI * 2.0f; }
+
+				// 差分の調節
+				if (m_rot.x > D3DX_PI) { m_rot.x -= D3DX_PI * 2.0f; }
+				if (m_rot.x < -D3DX_PI) { m_rot.x += D3DX_PI * 2.0f; }
+
+				// x軸の回転の制御
+				if (D3DX_PI * 0.3f > m_rot.x)
+				{// 上側
+					m_rot.x = D3DX_PI * 0.3f;
+				}
+				else if (D3DX_PI * 0.55f < m_rot.x)
+				{// 下側
+					m_rot.x = D3DX_PI * 0.55f;
+				}
 			}
 
 			// 注視点
 			m_posR.x = pos.x - sinf(m_rot.y) * m_fLength;
 			m_posR.z = pos.z - cosf(m_rot.y) * m_fLength;
-			m_posR.y = pos.y - cosf(m_rot.x) * m_fLength + m_fLookHeight;
+			m_posR.y = pos.y - cosf(m_rot.x) * m_fLength + fModelHeight + m_fLookHeight;
 
 			// 視点
 			m_posV.x = pos.x + sinf(m_rot.y) * m_fLength;
 			m_posV.z = pos.z + cosf(m_rot.y) * m_fLength;
-			m_posV.y = pos.y + cosf(m_rot.x) * m_fLength + m_fLookHeight;
+			m_posV.y = pos.y + cosf(m_rot.x) * m_fLength + fModelHeight + m_fLookHeight;
 		}
 		else
 		{// ストラテジーパート

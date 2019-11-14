@@ -45,11 +45,13 @@ public:
 	void Update(void);
 	void Draw(void);
 
+	static MODE GetMode(void) { return m_mode; };
 private:
 	CBg *m_pBg;		// 背景のポインタ変数
 	CButton2D *m_apButtonUI[MENU_NUM_BUTTON];	// ボタンクラスのポインタ変数
 	CMouseCursor2D *m_pCursor;					// カーソルクラスのポインタ変数
 	CScene2D *m_apUI[MENU_NUM_UI];				// UIのポリゴン
+	static MODE m_mode;							// モード情報
 };
 
 #endif

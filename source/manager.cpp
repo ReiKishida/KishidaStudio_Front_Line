@@ -23,8 +23,10 @@
 #include "sound.h"
 #include "texture.h"
 #include "mechaSelect.h"
-#include <stdio.h>
+#include "server.h"
+#include "matching.h"
 
+#include <stdio.h>
 //=========================================
 // マクロ定義
 //=========================================
@@ -45,13 +47,17 @@ CSound				*CManager::m_pSound = NULL;				// サウンドクラスのポインタ変数
 CTitle				*CManager::m_pTitle = NULL;				// タイトルクラスのポインタ変数
 CMenu				*CManager::m_pMenu = NULL;				// メニュークラスのポインタ変数
 CMechaSelect		*CManager::m_pMechaSelect = NULL;
+CMatching			*CManager::m_pMatching = NULL;			// マッチングクラスのポインタ情報
 CTutorial			*CManager::m_pTutorial = NULL;			// チュートリアルクラスのポインタ変数
 CGame				*CManager::m_pGame = NULL;				// ゲームクラスのポインタ変数
 CResult				*CManager::m_pResult = NULL;			// リザルトクラスのポインタ変数
 CRanking			*CManager::m_pRanking = NULL;			// ランキングクラスのポインタ変数
-CManager::MODE		CManager::m_mode = CManager::MODE_GAME;
+CManager::MODE		CManager::m_mode = CManager::MODE_TITLE;
 
 int  CManager::m_nNumStage = 0;
+
+CServer				*CManager::m_pServer = NULL;			// サーバークラスのポインタ変数
+CClient				*CManager::m_pClient = NULL;			// クライアントクラスのポインタ変数
 
 //=========================================
 // コンストラクタ
@@ -72,6 +78,11 @@ CManager::~CManager()
 //=========================================
 HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, bool bWindow)
 {
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	// サーバーの初期化処理
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	CServer::Startup();
+
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// レンダリングクラスの生成
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -275,6 +286,25 @@ HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, bool bWindow)
 		MessageBox(0, "サウンドクラスに何か入っています", "失敗", MB_OK);
 	}
 
+	////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//// サーバー関係の生成
+	////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//switch (SERVER_MODE)
+	//{
+	//case 0:
+	//	if (m_pServer == NULL)
+	//	{
+	//		m_pServer = CServer::Create();
+	//	}
+	//	break;
+	//case 1:
+	//	if (m_pClient == NULL)
+	//	{
+	//		//m_pClient = CClient::Create();
+	//	}
+	//	break;
+	//}
+
 	// テクスチャの読み込み
 	CTexture::Load();
 
@@ -366,6 +396,20 @@ void CManager::Uninit(void)
 		delete m_pSound;
 		m_pSound = NULL;
 	}
+
+	if (m_pServer != NULL)
+	{//サーバークラスの破棄
+		m_pServer->Uninit();
+		delete m_pServer;
+		m_pServer = NULL;
+	}
+
+	//クライアントの開放処理
+	ReleaseClient();
+
+	//サーバーの終了
+	CServer::Cleanup();
+
 }
 
 //=========================================
@@ -377,6 +421,24 @@ void CManager::Update(void)
 	m_pInputMouse->Update();
 	m_pDirectInput->Update();
 	m_pXInput->Update();
+
+	switch (SERVER_MODE)
+	{
+	case 0:
+		if (m_pServer != NULL)
+		{
+			m_pServer->Update();
+			CDebugProc::Print("サーバー\n");
+		}
+		break;
+	case 1:
+		if (m_pClient != NULL)
+		{
+			m_pClient->Update();
+			CDebugProc::Print("クライアント\n");
+		}
+		break;
+	}
 
 	if (m_pGame != NULL)
 	{// ゲーム中
@@ -450,6 +512,13 @@ const void CManager::SetMode(MODE mode)
 		}
 		break;
 
+	case MODE_MATCHING:
+		if (m_pMatching != NULL)
+		{// メニュー
+			m_pMatching = NULL;
+		}
+		break;
+
 	case MODE_TUTORIAL:
 		if (m_pTutorial != NULL)
 		{// チュートリアル
@@ -505,6 +574,14 @@ const void CManager::SetMode(MODE mode)
 		}
 		break;
 
+	case MODE_MATCHING:
+		if (m_pMatching == NULL)
+		{// メニュー
+			m_pMatching = new CMatching;
+			m_pMatching->Init();
+		}
+		break;
+
 	case MODE_TUTORIAL:
 		if (m_pTutorial == NULL)
 		{// タイトル
@@ -531,5 +608,29 @@ const void CManager::SetMode(MODE mode)
 			m_pResult->Init();
 		}
 		break;
+	}
+}
+
+//=============================================================================
+// クライアントの生成処理
+//=============================================================================
+void CManager::CreateClient(void)
+{
+	if (m_pClient == NULL)
+	{
+		m_pClient = CClient::Create();
+	}
+}
+
+//=============================================================================
+// クライアントの開放処理
+//=============================================================================
+void CManager::ReleaseClient(void)
+{
+	if (m_pClient != NULL)
+	{//クライアントクラスの破棄
+		m_pClient->Uninit();
+		delete m_pClient;
+		m_pClient = NULL;
 	}
 }

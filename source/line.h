@@ -1,47 +1,53 @@
 //=============================================================================
 //
-// マッチング画面処理 [matching.h]
-// Author : Ayaka Hakozaki
+// 当たり判定のライン処理 [line.h]
+// Author : Ishida Takuto
 //
 //=============================================================================
-#ifndef _MATCHING_H_
-#define _MATCHING_H_
+#ifndef _LINE_H_
+#define _LINE_H_
 
 #include "scene.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define MATCHING_PRIORITY				(7)		// 優先番号
-#define MATCHING_UITEX						(12)
-#define MATCHING_UI_PLAYER				(4)
+
 //*****************************************************************************
 // 前方宣言
 //*****************************************************************************
-class CUI_TEXTURE;
 
 //*****************************************************************************
 // クラス定義
 //*****************************************************************************
-class CMatching : public CScene
+class CLine : public CScene
 {
 public:
-	CMatching(int nPriority = MATCHING_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_MATCHING);
-	~CMatching();
+	CLine();
+	~CLine();
 	HRESULT Init(void);
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
 
-private:
-	void PrintData(void);
-	void ReadMessage(void);
+	static CLine *Create(D3DXVECTOR3 start, D3DXVECTOR3 end, D3DXCOLOR col);
 
-	CUI_TEXTURE		*m_pUITex[MATCHING_UITEX];		// UIテクスチャポインタ
-	CUI_TEXTURE		*m_pMatchingPlayerUI[MATCHING_UI_PLAYER];
-	int						m_nCntBgMove;			// スクロール
-	int m_nCntFade;
-	bool m_bFade;
+	void MakeVertex(LPDIRECT3DDEVICE9 pDevice);
+
+	void SetPoint(D3DXVECTOR3 start, D3DXVECTOR3 end);
+
+	void SetColor(D3DXCOLOR col);
+
+	D3DXVECTOR3 GetStart(void) { return m_start; }
+	D3DXVECTOR3 GetEnd(void) { return m_end; }
+	D3DXVECTOR3 GetVector(void) { return m_end - m_start; }
+
+private:
+	LPDIRECT3DVERTEXBUFFER9 m_pVtxBuff;	// 頂点バッファへのポインタ
+	D3DXMATRIX m_mtxWorld;
+	D3DXVECTOR3 m_start;
+	D3DXVECTOR3 m_end;
+	D3DXCOLOR m_col;
 };
 
 #endif

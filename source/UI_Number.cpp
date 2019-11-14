@@ -120,7 +120,7 @@ HRESULT CUI_NUMBER::Init(void)
 		break;
 
 	case UI_NUMTYPE_CNTRESPAWN:
-		m_nCntRespawn = CNT_RESPAWN;		// カウント初期値
+		m_nCntRespawn = 5;		// カウント初期値
 		SetNumDisPlay(m_nCntRespawn, m_UINumType);		// チケット設定
 		break;
 	}
@@ -166,8 +166,8 @@ void CUI_NUMBER::Update(void)
 	switch (m_UINumType)
 	{
 	case UI_NUMTYPE_REMAINBULLET:
-		SetNumColor(m_nRemBullet, PLAYER_BULLET);				// 値によって色変化する
-		SetNum(m_nRemBullet, PLAYER_BULLET, m_col);
+		SetNumColor(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetClientIdx())->GetBulletCapacity());				// 値によって色変化する
+		SetNum(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetClientIdx())->GetBulletCapacity(), m_col);
 		break;
 
 	case UI_NUMTYPE_PLAYER_HP:
@@ -222,7 +222,7 @@ void CUI_NUMBER::Update(void)
 
 		if (m_nCntRespawn >= 0)
 		{	// カウンター0以上
-			SetNum(m_nCntRespawn, CNT_RESPAWN, m_col);
+			SetNum(m_nCntRespawn, 5, m_col);
 		}
 		else
 		{	// カウンター0になった

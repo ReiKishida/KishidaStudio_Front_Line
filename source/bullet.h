@@ -71,25 +71,18 @@ private:
 class CBulletPlayer : public CBullet
 {
 public:
-	typedef enum
-	{// éÌóﬁ
-		TYPE_NORMAL = 0,	// í èÌíe
-		TYPE_MAX
-	}TYPE;
-
 	CBulletPlayer();
 	~CBulletPlayer();
-	HRESULT Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical);
+	HRESULT Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage);
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
 
-	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, TYPE type);
+	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage);
 
 	bool BulletCollision(void);
 
 private:
-	TYPE m_type;		// éÌóﬁ
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++

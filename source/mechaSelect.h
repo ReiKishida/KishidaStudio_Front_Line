@@ -32,22 +32,24 @@ class CMechaSelect : public CScene
 public:
 	typedef enum
 	{
-		MECHATYPE_LIGHT = 0,		// Œy—ÊŒ^
-		MECHATYPE_SHOOTER,		// x‰‡Œ^
+		MECHATYPE_ASSULT = 0,			// ‹­PŒ^
+		MECHATYPE_LIGHT,				// Œy—ÊŒ^
 		MECHATYPE_HEAVY,				// d—ÊŒ^
-		MECHATYPE_ASSULT,			// ‹­PŒ^
+		MECHATYPE_SHOOTER,				// x‰‡Œ^
 		MECHATYPE_MAX					// Å‘å”
 	} MECHATYPE;
 
-	CMechaSelect(int nPriority = MECHASEL_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_MECHASELECT);
+	CMechaSelect(int nPriority = MECHASEL_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_MENU);
 	~CMechaSelect();
 	HRESULT Init(void);
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
 
+	static MECHATYPE GetMechaType(void) { return m_mechaType; };
+
 	// •Ï”
-	MECHATYPE m_mechaType;			// ƒ^ƒCƒv•ª‚¯•Ï”
+	static MECHATYPE m_mechaType;			// ƒ^ƒCƒv•ª‚¯•Ï”
 
 private:
 	CBg *m_pBg;		// ”wŒi‚Ìƒ|ƒCƒ“ƒ^•Ï”

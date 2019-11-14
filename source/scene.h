@@ -26,6 +26,8 @@ public:
 		OBJTYPE_NONE = 0,			// 初期値
 		OBJTYPE_TITLE,				// タイトル
 		OBJTYPE_MENU,				// メニュー
+		OBJTYPE_MECHASELECT,		// 機体選択
+		OBJTYPE_MATCHING,			// マッチング
 		OBJTYPE_TUTORIAL,			// チュートリアル
 		OBJTYPE_GAME,				// ゲーム
 		OBJTYPE_RESULT,				// リザルト
@@ -60,6 +62,7 @@ public:
 		OBJTYPE_UI_NUMBER,
 		OBJTYPE_UI_TEXTURE,
 		OBJTYPE_UI_TEXTURE3D,
+		OBJTYPE_COLLISION,
 		OBJTYPE_MAX					// オブジェクトの種類の最大数
 	}OBJTYPE;
 
@@ -81,11 +84,11 @@ public:
 
 	void SwapPriority(int nPriority);		// 優先順位の変更
 
-	void SetObjType(OBJTYPE objType) { m_objType = objType; };
-	OBJTYPE GetObjType(void) { return m_objType; };
+	void SetObjType(OBJTYPE objType) { m_objType = objType; }
+	OBJTYPE GetObjType(void) { return m_objType; }
 
-	CScene *GetSceneTop(int nPriority) { return m_apTop[nPriority]; };
-	CScene *GetSceneNext(void) { return m_pNext; };
+	static CScene *GetSceneTop(int nPriority) { return m_apTop[nPriority]; }
+	CScene *GetSceneNext(void) { return m_pNext; }
 
 protected:
 	void Release(void);

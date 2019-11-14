@@ -51,6 +51,9 @@ public:
 
 	void SetLighting(bool bLighting) { m_bLighting = bLighting; };
 
+	bool GetDisp(void) { return m_bDisp; }
+	void SetDisp(bool bDisp) { m_bDisp = bDisp; }
+
 	bool Collision(D3DXVECTOR3 pos, float fRadius);
 
 protected:
@@ -69,6 +72,7 @@ private:
 	D3DCMPFUNC				m_cmpFunc;			// Zバッファの設定用
 	bool					m_bZBuffer;			// Zバッファの設定をするかどうか
 	bool					m_bLighting;		// ライトが有効か無効か
+	bool					m_bDisp;			// 描画するかどうか
 };
 
 #endif

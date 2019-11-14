@@ -32,6 +32,9 @@ class CGame;
 class CResult;
 class CRanking;
 
+class CServer;
+class CClient;
+
 //=====================================
 // クラス定義
 //=====================================
@@ -74,6 +77,10 @@ public:
 
 	static int GetNumStage(void) { return m_nNumStage; };
 
+	static CClient *GetClient(void) { return m_pClient; };							// クライアントの取得
+
+	static void CreateClient(void);
+	static void ReleaseClient(void);
 private:
 	static CRenderer		*m_pRenderer;			// レンダリングクラスのポインタ変数
 	static CInputKeyboard	*m_pInputKeyboard;		// インプットクラスのポインタ変数
@@ -87,8 +94,8 @@ private:
 
 	static CTitle			*m_pTitle;				// タイトルクラスのポインタ変数
 	static CMenu			*m_pMenu;				// メニュークラスのポインタ変数
-	static CMechaSelect *m_pMechaSel;		// メカ選択クラスのポインタ変数
-	static CMatching			*m_pMatching;	// マッチングクラスのポインタ変数
+	static CMechaSelect		*m_pMechaSelect;		// メニュークラスのポインタ変数
+	static CMatching		*m_pMatching;			// マッチングクラスのポインタ情報
 	static CTutorial		*m_pTutorial;			// チュートリアルクラスのポインタ変数
 	static CGame			*m_pGame;				// ゲームクラスのポインタ変数
 	static CResult			*m_pResult;				// リザルトクラスのポインタ変数
@@ -97,6 +104,10 @@ private:
 
 	static int				m_nNumStage;			// ステージ数
 	bool					m_bDebugProc;			// デバッグ文字を表示させるかどうか
+
+	static CServer			*m_pServer;				// サーバークラスのポインタ変数
+	static CClient			*m_pClient;				// クライアントクラスのポインタ変数
+
 };
 
 #endif
