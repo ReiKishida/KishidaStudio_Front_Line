@@ -1166,6 +1166,11 @@ void CPlayer::Respawn(RESPAWN respawn)
 		break;
 	}
 
+	if (respawn == RESPAWN_NONE)
+	{
+		int n;
+		n = 0;
+	}
 	m_Respawn = respawn;
 
 #ifdef _DEBUG

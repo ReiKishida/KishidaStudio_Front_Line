@@ -77,6 +77,10 @@ private:
 	void PrintData(void);
 	void ReadMessage(void);
 
+	void CreateActionUI(void);
+	void CreateStrategyUI(void);
+	void SwicthPart(void);
+
 	CPause *m_pPause;							// ポーズクラスのポインタ変数
 	static STATE m_state;						// ゲームの状態
 	bool m_bPause;								// ポーズON/OFFの切替

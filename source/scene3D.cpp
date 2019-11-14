@@ -50,6 +50,7 @@ CScene3D::CScene3D(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_pVtxBuff = NULL;		// 頂点バッファへのポインタ
 	m_col = D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f);
 	m_pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);			// ポリゴンの位置
+	m_rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);			// ポリゴンの向き
 	m_size = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_pMtxParent = NULL;
 	m_blendOp = D3DBLENDOP_FORCE_DWORD;
