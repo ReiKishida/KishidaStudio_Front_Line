@@ -76,6 +76,7 @@ HRESULT CMenu::Init(void)
 	m_apUI[0]->SetPos(MENU_LOGO_POS);
 	m_apUI[0]->SetSize(MENU_LOGO_WIDTH, MENU_LOGO_HEIGHT);
 	m_apUI[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_LOGO)));
+	m_apUI[0]->SetTex(0, 1, 2);
 
 	// ‘I‘ğ€–Ú•\¦
 	m_apUI[1] = CScene2D::Create();

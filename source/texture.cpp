@@ -63,7 +63,7 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/UI/reticle.png" },									// レティクル
 		{ "data/TEXTURE/mechaSelect/main_frame.png" },			// メインメニュー、メカセレクトロゴ
 		{ "data/TEXTURE/mechaSelect/aptitude_range.jpg" },		// 距離表示（機体選択画面で使用）
-		{ "data/TEXTURE/mechaSelect/mecha_inst.jpg" },			// 機体説明（機体選択画面で使用）
+		{ "data/TEXTURE/mechaSelect/mecha_inst.png" },			// 機体説明（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_type.png" },			// 機体の種類（機体選択画面で使用）
 		{ "data/TEXTURE/menu/menu_disp.png" },						// モード説明ロゴ（メニュー画面で使用）
 		{ "data/TEXTURE/menu/menu_frame.png" },					// モードフレーム（メニュー画面で使用）

@@ -89,6 +89,7 @@ private:
 	CMouseCursor *m_pMouseCursor;				// マウスカーソル
 	PART m_part;								// 現在のパート
 	CModel *m_pField;							// 地面のモデル
+	CModel *m_pSky;								// スカイドーム
 };
 
 #endif

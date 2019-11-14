@@ -58,7 +58,7 @@ void CLight::Init(void)
 	}
 
 	// ƒ‰ƒCƒg‚ÌŠgUŒõ‚ğİ’è
-	m_alight[0].Diffuse = D3DXCOLOR(0.9f, 0.9f, 0.9f, 1.0f);
+	m_alight[0].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 	m_alight[1].Diffuse = D3DXCOLOR(0.8f, 0.8f, 0.8f, 1.0f);
 	m_alight[2].Diffuse = D3DXCOLOR(0.45f, 0.45f, 0.45f, 1.0f);
 

@@ -53,6 +53,7 @@ CModel::CModel()
 	m_pMesh = NULL;
 	m_pBuffMat = NULL;
 	m_nNumMat = 0;
+	m_pParent = NULL;
 }
 
 //=========================================

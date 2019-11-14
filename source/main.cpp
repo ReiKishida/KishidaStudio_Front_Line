@@ -16,14 +16,6 @@
 #define WINDOW_NAME		"岸田studio"	// ウインドウのキャプション名
 #define WINDOW_MODE		(true)			// ウィンドウモード(falseでフルスクリーン)
 
-// メモリリークチェック
-#ifdef _DEBUG
-#include <crtdbg.h>
-#define malloc(X) _malloc_dbg(X,_NORMAL_BLOCK,__FILE__,__LINE__)
-#define _CRTDBG_MAP_ALLOC
-#define new ::new(_NORMAL_BLOCK,__FILE__,__LINE__)
-#endif
-
 //*****************************************************************************
 // プロトタイプ宣言
 //*****************************************************************************

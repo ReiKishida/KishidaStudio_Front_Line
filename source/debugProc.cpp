@@ -28,7 +28,7 @@ bool CDebugProc::m_bDisp = true;					// •\¦‚·‚é‚©‚Ç‚¤‚©
 //=============================================================================
 void CDebugProc::Print(char *fmt, ...)
 {
-	char aSource[256 * 2];
+	char aSource[MAX_DEBUG_TEXT];
 
 	// ‰Â•Ï’·ˆø”‚ğg‚Á‚Ä•¶š—ñ‚É‚·‚é
 	va_list arg;
@@ -37,8 +37,8 @@ void CDebugProc::Print(char *fmt, ...)
 	va_end(arg);
 
 	// •¶š—ñ‚ğ‘SŠp‚É‚·‚é
-	char aStr[512 * 2];
-	LCMapString(0x0411, LCMAP_FULLWIDTH, aSource, -1, aStr, 512 * 2 );
+	char aStr[MAX_DEBUG_TEXT];
+	LCMapString(0x0411, LCMAP_FULLWIDTH, aSource, -1, aStr, MAX_DEBUG_TEXT);
 
 	int nMaxLength = strlen(m_aStr);	// ¡‚Ü‚Å‚Ì•¶š—ñ‚Ì’·‚³‚ğæ“¾
 	int nLength = strlen(aStr);			// ¡‰ñ‚Ì•¶š—ñ‚Ì’·‚³‚ğæ“¾

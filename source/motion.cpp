@@ -65,6 +65,7 @@ HRESULT CMotionManager::Load(void)
 		{ "data/TEXT/PLAYER/light/motion_light.txt" },
 		{ "data/TEXT/PLAYER/heavy/motion_heavy.txt" },
 		{ "data/TEXT/PLAYER/snipe/motion_snipe.txt" },
+
 		{ "data/TEXT/ENEMY/motion.txt" },
 	};
 

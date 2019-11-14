@@ -297,7 +297,7 @@ bool CCollision::CollisionBox(D3DXVECTOR3 *pPos, D3DXVECTOR3 posOld, D3DXVECTOR3
 			pPos->x = vtxMax.x + m_fWidth + m_pos.x;
 			CDebugProc::Print("‰E");
 		}
-		else if (pPos->x + vtxMax.z > m_pos.x && posOld.x + vtxMax.z <= m_pos.x)
+		else if (pPos->x + vtxMax.z > m_pos.x && posOld.x + (vtxMax.z - 1.0f) <= m_pos.x)
 		{// ¶‘¤‚©‚çÕ“Ë
 			pPos->x = m_pos.x - vtxMax.z;
 			CDebugProc::Print("¶");
@@ -308,7 +308,7 @@ bool CCollision::CollisionBox(D3DXVECTOR3 *pPos, D3DXVECTOR3 posOld, D3DXVECTOR3
 			pPos->z = vtxMax.x + m_fDepth + m_pos.z;
 			CDebugProc::Print("‘O");
 		}
-		else if (pPos->z + vtxMax.z >= m_pos.z && posOld.z + vtxMax.z <= m_pos.z)
+		else if (pPos->z + vtxMax.z >= m_pos.z && posOld.z + (vtxMax.z - 1.0f) <= m_pos.z)
 		{// Œã‘¤‚©‚çÕ“Ë
 			pPos->z = m_pos.z - vtxMax.z;
 			CDebugProc::Print("Œã");

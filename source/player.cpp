@@ -32,6 +32,7 @@
 #include "collisionSet.h"
 #include "mouseCursor.h"
 #include "button.h"
+#include "menu.h"
 
 //==================================
 // マクロ定義
@@ -68,7 +69,7 @@ CPlayer* CPlayer::Create(int nPlayerIdx, CMechaSelect::MECHATYPE mecha, D3DXVECT
 	{// メモリ確保成功
 		pPlayer->SetPlayerIdx(nPlayerIdx);
 		pPlayer->m_mecha = mecha;
-		pPlayer->SetPos(pos);
+		pPlayer->m_pos = pos;
 		pPlayer->Init();
 	}
 
@@ -98,13 +99,33 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_vtxMax = D3DXVECTOR3(-1000.0f, -1000.0f, -1000.0f);
 	m_vtxMin = D3DXVECTOR3(1000.0f, 1000.0f, 1000.0f);
 	m_nPlayerLife = 0;
-	m_pUINum[PLAYER_UI_NUM] = {};
-	m_apButtonUI[PLAYER_BOTTON] = {};
 	m_pCursor = NULL;
 	m_nLife = 0;
 	m_nTimer = 0;
 	m_nDisTime = 0;
 	m_mecha = CMechaSelect::MECHATYPE_ASSULT;
+	m_nTeam = 0;
+	m_bDeath = false;
+	m_pGauge = NULL;
+	for (int nCnt = 0; nCnt < PLAYER_UI_NUM; nCnt++)
+	{
+		m_pUINum[nCnt] = NULL;
+	}
+
+	for (int nCnt = 0; nCnt < PLAYER_BOTTON; nCnt++)
+	{
+		m_apButtonUI[nCnt] = NULL;
+	}
+
+	for (int nCnt = 0; nCnt < MAX_UITEX; nCnt++)
+	{// ポインタの3つ目から使用しているため、初期値は2
+		m_pUITex[nCnt] = NULL;
+	}
+
+	// カウンターの初期化
+	m_nCntAnim = 0;
+	m_nPatternAnim = 0;
+
 }
 
 //=========================================
@@ -198,9 +219,8 @@ HRESULT CPlayer::Init(void)
 							else if (strcmp(aStr, "SHOOTS") == 0)
 							{// 同時発射数
 								fscanf(pFile, " = %d", &m_nNumShoot);
-								m_pAngle = new float[m_nNumParts * 2];
-								m_pAngleV = new float[m_nNumParts * 2];
-
+								m_pAngle = new float[m_nNumShoot * 2];
+								m_pAngleV = new float[m_nNumShoot * 2];
 							}
 							else if (strcmp(aStr, "DISPERTION") == 0)
 							{// ばらつき
@@ -302,11 +322,26 @@ HRESULT CPlayer::Init(void)
 		m_pShadow = CShadow::Create(&m_pos);
 	}
 
-	CClient *pClient = CManager::GetClient();
+	if (CMenu::GetMode() == CMenu::MODE_MULTI)
+	{// マルチモード
+		CClient *pClient = CManager::GetClient();
 
-	if (m_nPlayerIdx == pClient->GetPlayerIdx())
-	{
-		if (NULL == m_pReticle)
+		if (m_nPlayerIdx == pClient->GetPlayerIdx())
+		{
+			if (NULL == m_pReticle)
+			{// レティクルの生成
+				m_pReticle = CScene3DBill::Create();
+				m_pReticle->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_RETICLE));
+				m_pReticle->SetSize(D3DXVECTOR3(50.0f, 50.0f, 0.0f));
+				m_pReticle->SetLighting(false);
+				m_pReticle->SetZBuffer(D3DCMP_ALWAYS);
+				m_pReticle->SwapPriority(6);
+			}
+		}
+	}
+	else
+	{// シングルモード
+		if (NULL == m_pReticle && m_nPlayerIdx == 0)
 		{// レティクルの生成
 			m_pReticle = CScene3DBill::Create();
 			m_pReticle->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_RETICLE));
@@ -382,7 +417,24 @@ HRESULT CPlayer::Init(void)
 	m_Respawn = RESPAWN_START;
 	m_nDisTime = 1.8f;
 
-	return S_OK;
+	if (m_nPlayerIdx == 0 || m_nPlayerIdx == 1)
+	{
+		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+		{
+			m_pModel[nCntModel]->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+		}
+		m_nTeam = 0;
+	}
+	else if(m_nPlayerIdx == 2 || m_nPlayerIdx == 3)
+	{
+		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+		{
+			m_pModel[nCntModel]->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f));
+		}
+
+		m_nTeam = 1;
+	}
+		return S_OK;
 }
 
 //=========================================
@@ -419,16 +471,22 @@ void CPlayer::Uninit(void)
 		m_pModel = NULL;
 	}
 
-	if (m_pAngle != NULL)
-	{
+	if (NULL != m_pAngle)
+	{// 弾の角度の破棄
 		delete[] m_pAngle;
 		m_pAngle = NULL;
 	}
 
-	if (m_pAngleV != NULL)
-	{
+	if (NULL != m_pAngleV)
+	{// 弾の垂直方向角度の破棄
 		delete[] m_pAngleV;
 		m_pAngleV = NULL;
+	}
+
+	if (NULL != m_pCursor)
+	{// カーソルの破棄
+		m_pCursor->Uninit();
+		m_pCursor = NULL;
 	}
 
 	// オブジェクトの破棄
@@ -445,95 +503,150 @@ void CPlayer::Update(void)
 		Respawn(RESPAWN_START);
 	}
 
-	if (m_nPlayerIdx != CManager::GetClient()->GetPlayerIdx())
-	{// プレイヤーの番号がクライアント番号と違う場合
-		CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
-		CXInput *pXInput = CManager::GetXInput();			// XInputの入力を取得
-
-		if (m_pUpperMotion != NULL && m_pLowerMotion != NULL)
-		{// モーションクラスが使われている
-			if (m_pos != m_posOld)
-			{//過去の位置と現在の位置がずれていた場合
-			 //歩きモーションにする
-				m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
-				m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
+	if (CMenu::GetMode() == CMenu::MODE_MULTI)
+	{
+		if (m_nPlayerIdx != CManager::GetClient()->GetPlayerIdx())
+		{// プレイヤーの番号がクライアント番号と違う場合
+			if (m_pUpperMotion != NULL && m_pLowerMotion != NULL)
+			{// モーションクラスが使われている
+				if (m_pos != m_posOld)
+				{//過去の位置と現在の位置がずれていた場合
+				 //歩きモーションにする
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
+				}
+				else
+				{//ニュートラルモーションにする
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+				}
 			}
-			else
-			{//ニュートラルモーションにする
-				m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-				m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-			}
+			m_posOld = m_pos;
 		}
-		m_posOld = m_pos;
 	}
 
-	if (m_nPlayerIdx == CManager::GetClient()->GetPlayerIdx())
-	{//プレイヤーの番号がクライアント番号と同じ場合
-		if (m_pReticle != NULL)
-		{
+	if (CMenu::GetMode() == CMenu::MODE_MULTI)
+	{
+		if (m_nPlayerIdx == CManager::GetClient()->GetPlayerIdx())
+		{//プレイヤーの番号がクライアント番号と同じ場合
 			m_pReticle->SetDisp(false);
-		}
 
-		if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
-		{// アクションパート
-			CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
-			CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
+			if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+			{// アクションパート
+				CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+				CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
 
-			if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
-			{	// ライフある && 戦闘開始状態の時
+				if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
+				{	// ライフある && 戦闘開始状態の時
+					if (m_nDiff > 0)
+					{	// ダメージ量が0以上の時
+						m_nLife--;
+						m_nDiff--;
+					}
+					if (m_nLife <= 0)
+					{	// ライフがなくなった
+						m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+					}
 
-				if (pKeyboard->GetTrigger(DIK_F2))
-				{
-					m_nDiff += 4;
+					// 移動の処理
+					Movement();
+
+					// 弾を撃つ
+					Shoot();
+
+					// 重力
+					//m_move.y -= GRAVITY;
+
+					D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
+					D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+
+					m_pReticle->SetDisp(true);
+					m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
+
+					for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+					{// パーツモデルの更新
+						m_pModel[nCntModel]->Update();
+					}
+					CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
 				}
-				if (m_nDiff > 0)
-				{	// ダメージ量が0以上の時
-					m_nLife--;
-					m_nDiff--;
+				if (m_Respawn == RESPAWN_DEATH)
+				{	// 行動不能状態
+					Respawn(m_Respawn);		// リスポーン処理
 				}
-				if (m_nLife <= 0)
-				{	// ライフがなくなった
-					m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+				if (m_Respawn == RESPAWN_SELECT)
+				{	// リスポーン選択状態
+					SelectRespawn();				// リスポーン位置選択
 				}
-
-				// 移動の処理
-				Movement();
-
-				// 弾を撃つ
-				Shoot();
 
 				// 角度の更新
 				Angle();
 
-				// 重力
-				//m_move.y -= GRAVITY;
+				// ライフの設定
+				m_pUINum[1]->SetPlayerLife(m_nLife);
+			}
+		}
+	}
+	else if(CMenu::GetMode() == CMenu::MODE_SINGLE)
+	{
+		if (m_nPlayerIdx == 0)
+		{
+			m_pReticle->SetDisp(false);
 
-				D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
-				D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+			if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+			{// アクションパート
+				CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+				CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
 
-				if (m_pReticle != NULL)
-				{
+				if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
+				{	// ライフある && 戦闘開始状態の時
+					if (m_nDiff > 0)
+					{	// ダメージ量が0以上の時
+						m_nLife--;
+						m_nDiff--;
+					}
+					if (m_nLife <= 0)
+					{	// ライフがなくなった
+						m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+					}
+
+					// 移動の処理
+					Movement();
+
+					// 弾を撃つ
+					Shoot();
+
+					// 重力
+					//m_move.y -= GRAVITY;
+
+					D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
+					D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+
 					m_pReticle->SetDisp(true);
 					m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
-				}
-				for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-				{// パーツモデルの更新
-					m_pModel[nCntModel]->Update();
-				}
-				CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
-			}
-			if (m_Respawn == RESPAWN_DEATH)
-			{	// 行動不能状態
-				Respawn(m_Respawn);		// リスポーン処理
-			}
-			if (m_Respawn == RESPAWN_SELECT)
-			{	// リスポーン選択状態
-				SelectRespawn();				// リスポーン位置選択
-			}
 
-			// ライフの設定
-			m_pUINum[1]->SetPlayerLife(m_nLife);
+					for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+					{// パーツモデルの更新
+						m_pModel[nCntModel]->Update();
+					}
+					CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
+				}
+				if (m_Respawn == RESPAWN_DEATH)
+				{	// 行動不能状態
+					Respawn(m_Respawn);		// リスポーン処理
+				}
+				if (m_Respawn == RESPAWN_SELECT)
+				{	// リスポーン選択状態
+					SelectRespawn();				// リスポーン位置選択
+				}
+
+				// 角度の更新
+				Angle();
+
+				// ライフの設定
+				m_pUINum[1]->SetPlayerLife(m_nLife);
+			}
 		}
+
 	}
 }
 
@@ -549,7 +662,7 @@ void CPlayer::Draw(void)
 
 	D3DXMATRIX mtxRot, mtxTrans;	// 計算用マトリックス
 
-									// ワールドマトリックスの初期化
+	// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_mtxWorld);
 
 	// 回転を反映
@@ -565,12 +678,12 @@ void CPlayer::Draw(void)
 
 	for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 	{// パーツモデルの描画
-	 //if ()
-	 //{// ダメージを受けている状態
-	 //	m_pModel[nCntModel]->AddColor(D3DXCOLOR(0.7f, 0.0f, 0.0f, -0.5f));
-	 //}
+		//if ()
+		//{// ダメージを受けている状態
+		//	m_pModel[nCntModel]->AddColor(D3DXCOLOR(0.7f, 0.0f, 0.0f, -0.5f));
+		//}
 
-	 // モデルの描画処理
+		// モデルの描画処理
 		m_pModel[nCntModel]->Draw();
 
 		//if (m_bDamage)
@@ -687,7 +800,7 @@ void CPlayer::Movement(void)
 
 	// マップの当たり判定
 	if (CCollision::Collision(&pos, m_posOld, m_vtxMax, m_vtxMin)) { m_pos = pos; }
-	else { m_pos += m_move; }
+	else{ m_pos += m_move; }
 }
 
 //=========================================
@@ -708,49 +821,46 @@ void CPlayer::Shoot(void)
 			D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
 			// レティクル（目的の位置）の取得
-			if (m_pReticle != NULL)
-			{
-				D3DXVECTOR3 posReticle = m_pReticle->GetPos();
-
-				if (m_nDispertion != 0)
-				{// ブレが０でないとき
-					dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
-					posReticle += dispertion;
-				}
-
-				// 射出口の位置の取得
-				D3DXMATRIX mtxCanon = m_pModel[2]->GetMtxWorld();
-				D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
-
-				// 水平方向の角度の計算
-				m_pAngle[nCntShoots * 2] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
-				m_pAngleV[nCntShoots * 2] = rotCamera.x;
-				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
-
-				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack);
-
-				// レティクル（目的の位置）の取得
-				posReticle = m_pReticle->GetPos();
-				if (m_nDispertion != 0)
-				{// ブレが０でないとき
-					dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
-					posReticle += dispertion;
-				}
-
-				// 射出口の位置の取得
-				mtxCanon = m_pModel[3]->GetMtxWorld();
-				posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
-
-				// 水平方向の角度の計算
-				m_pAngle[nCntShoots * 2 + 1] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
-				m_pAngleV[nCntShoots * 2 + 1] = rotCamera.x;
-				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
-
-				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack);
-				m_bShoot = true;
+			D3DXVECTOR3 posReticle = m_pReticle->GetPos();
+			if (m_nDispertion != 0)
+			{// ブレが０でないとき
+				dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
+				posReticle += dispertion;
 			}
+
+			// 射出口の位置の取得
+			D3DXMATRIX mtxCanon = m_pModel[2]->GetMtxWorld();
+			D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
+
+			// 水平方向の角度の計算
+			m_pAngle[nCntShoots * 2] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
+			m_pAngleV[nCntShoots * 2] = rotCamera.x;
+			if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
+
+			// 弾の生成
+			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack,m_nTeam);
+
+			// レティクル（目的の位置）の取得
+			posReticle = m_pReticle->GetPos();
+			if (m_nDispertion != 0)
+			{// ブレが０でないとき
+				dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
+				posReticle += dispertion;
+			}
+
+			// 射出口の位置の取得
+			mtxCanon = m_pModel[3]->GetMtxWorld();
+			posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
+
+			// 水平方向の角度の計算
+			m_pAngle[nCntShoots * 2 + 1] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
+			m_pAngleV[nCntShoots * 2 + 1] = rotCamera.x;
+			if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
+
+			// 弾の生成
+			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack,m_nTeam);
+
+			m_bShoot = true;
 		}
 
 		m_nRemBullet--;
@@ -761,8 +871,6 @@ void CPlayer::Shoot(void)
 
 	// 残弾の設定
 	m_pUINum[0]->SetRemainBullet(m_nRemBullet);
-
-	//if (m_nRemBullet == 0) { m_nRemBullet = 3; }
 }
 
 //=========================================
@@ -770,8 +878,6 @@ void CPlayer::Shoot(void)
 //=========================================
 void CPlayer::Angle(void)
 {
-	if (m_Respawn != RESPAWN_NONE) { return; }
-
 	// カメラの角度を求める
 	D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 	float fDiffRot;
@@ -851,8 +957,16 @@ void CPlayer::Damage(int nDamage)
 			m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
 
 			m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
-			CSound *pSound = CManager::GetSound();				// サウンドの取得
-			pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
+
+			m_nLife -= nDamage;
+
+			if (0 >= m_nLife)
+			{
+				m_nLife = 0;
+				m_bDeath = true;
+			}
+			//CSound *pSound = CManager::GetSound();				// サウンドの取得
+			//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
 		}
 	}
 }
@@ -921,9 +1035,9 @@ void CPlayer::Reload(void)
 		// ゲージ増加
 		m_pGauge->AddSubtract(100.0f / m_nReload);		// 100％ / 秒数
 
-														//*******************************************
-														// 設定した秒数後→ロゴ＆ゲージ破棄＆弾生成
-														//*******************************************
+															//*******************************************
+															// 設定した秒数後→ロゴ＆ゲージ破棄＆弾生成
+															//*******************************************
 		if (m_nCntReRoad % m_nReload == 0)
 		{
 			// 弾生成

@@ -115,7 +115,7 @@ void CServer::Update(void)
 		//クライアントへデータ（メッセージ）送信
 		send(m_sockClient, "HELLOONLINE!", 14, 0);
 		memset(m_aReceiveMessage, 0, sizeof(m_aReceiveMessage));
-		m_nLengthAddClient = recv(m_sockClient, &m_aReceiveMessage[0],MAX_SERVER_DATA,0);
+		m_nLengthAddClient = recv(m_sockClient, &m_aReceiveMessage[0], MAX_SERVER_DATA, 0);
 		CDebugProc::Print("受信バイト[%d]\n", m_nLengthAddClient);
 	}
 }
@@ -127,7 +127,7 @@ HRESULT CServer::Startup(void)
 {
 	WSADATA wsaData;		//winsockの情報
 
-	//winsockの初期化
+							//winsockの初期化
 	WSAStartup(MAKEWORD(2, 0), &wsaData);
 
 	return S_OK;
@@ -192,7 +192,7 @@ HRESULT CClient::Init(void)
 	{
 		m_nMechaType[nCntConnect] = 0;
 	}
-
+	m_nPlayerIdx = 0;
 	memset(m_aSendMessage, 0, MAX_SERVER_DATA);			//サーバーに送信するメッセージ
 	memset(m_aData, 0, MAX_SERVER_DATA);				//受信データ
 	memset(m_aReceiveMessage, 0, MAX_SERVER_DATA);		//サーバーに受信するメッセージ
@@ -201,7 +201,7 @@ HRESULT CClient::Init(void)
 	m_threadHandle = 0;									//スレッド情報
 	m_team = 0;											//チーム情報
 
-	//サーバーシステム情報を読み込み
+														//サーバーシステム情報を読み込み
 	LoadServerSystem();
 
 	m_threadHandle = (HANDLE)_beginthreadex(NULL, 0, WaitConnectHandle, this, 0, NULL);
@@ -215,17 +215,19 @@ void CClient::Uninit(void)
 {
 	char aStr[10];
 
-	memset(m_aSendMessage, 0, sizeof(m_aSendMessage));
-	strcpy(m_aSendMessage, SERVER_CLIENT_DELETE);
-	sprintf(aStr, "%d", m_nPlayerIdx);
-	strcat(m_aSendMessage, aStr);
-	send(m_sockClient, m_aSendMessage, strlen(m_aSendMessage), 0);
-	memset(m_aSendMessage,0,MAX_SERVER_DATA);
+	if (m_bConnected == true)
+	{
+		memset(m_aSendMessage, 0, sizeof(m_aSendMessage));
+		strcpy(m_aSendMessage, SERVER_CLIENT_DELETE);
+		sprintf(aStr, "%d", m_nPlayerIdx);
+		strcat(m_aSendMessage, aStr);
+		send(m_sockClient, m_aSendMessage, strlen(m_aSendMessage), 0);
+		memset(m_aSendMessage, 0, MAX_SERVER_DATA);
 
-	//サーバーからデータ（メッセージ）を受信
-	memset(m_aReceiveMessage, 0, MAX_SERVER_DATA);
-	m_nLengthData = recv(m_sockClient, &m_aReceiveMessage[0], MAX_SERVER_DATA, 0);
-
+		//サーバーからデータ（メッセージ）を受信
+		memset(m_aReceiveMessage, 0, MAX_SERVER_DATA);
+		m_nLengthData = recv(m_sockClient, &m_aReceiveMessage[0], MAX_SERVER_DATA, 0);
+	}
 
 	//スレッドの破棄
 	if (m_threadHandle != 0)
@@ -340,7 +342,7 @@ int CClient::GetPlayerIdx(void)
 //=============================================================================
 // メカの種類の設置処理
 //=============================================================================
-void CClient::SetMechaType(int nPlayerIdx,int nMechaType)
+void CClient::SetMechaType(int nPlayerIdx, int nMechaType)
 {
 	m_nMechaType[nPlayerIdx] = nMechaType;
 }
@@ -356,7 +358,7 @@ int CClient::GetMechaType(int nPlayerIdx)
 //=============================================================================
 // データの受け渡し処理
 //=============================================================================
-void CClient::Printf(char *fmt,...)
+void CClient::Printf(char *fmt, ...)
 {
 	char aStr[MAX_SERVER_DATA];
 	//aStr[0] = '\0';
@@ -398,7 +400,7 @@ void CClient::SetIdx(void)
 
 	memset(m_aSendMessage, 0, sizeof(m_aSendMessage));
 	strcpy(m_aSendMessage, SERVER_IDX);
-	sprintf(aStr,"%d", m_team);
+	sprintf(aStr, "%d", m_team);
 	strcat(m_aSendMessage, aStr);
 	send(m_sockClient, m_aSendMessage, strlen(m_aSendMessage), 0);
 
@@ -447,7 +449,7 @@ void CClient::WaitConnect(void)
 	m_addrServer.sin_port = htons(12345);
 	m_addrServer.sin_addr.S_un.S_addr = inet_addr(m_serverIP);	//127.0.0.1 = ローカル・ループバッグ・アドレス（初期）
 
-	//サーバー接続
+																//サーバー接続
 	if (connect(m_sockClient, (struct sockaddr*)&m_addrServer, sizeof(m_addrServer)) == SOCKET_ERROR)
 	{
 		m_bConnected = false;
@@ -469,7 +471,7 @@ void CClient::LoadServerSystem(void)
 {
 	FILE *pFile;	//ファイルのポインタ
 
-	//ファイルの読み込み
+					//ファイルの読み込み
 	pFile = fopen(SERVER_INI, "r");
 
 	if (pFile == NULL)
@@ -485,7 +487,7 @@ void CClient::LoadServerSystem(void)
 			fscanf(pFile, "%s", aStr);
 			if (strcmp(aStr, SERVER_SCRIPT) == 0)
 			{//スクリプトの開始を示している場合
-				while (strcmp(aStr,SERVER_END_SCRIPT) != 0)
+				while (strcmp(aStr, SERVER_END_SCRIPT) != 0)
 				{//スクリプトの終了を示すまでループ
 					fscanf(pFile, "%s", aStr);
 					if (strcmp(aStr, SERVER_IP) == 0)

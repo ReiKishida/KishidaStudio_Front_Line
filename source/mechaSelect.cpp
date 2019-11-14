@@ -76,6 +76,7 @@ HRESULT CMechaSelect::Init(void)
 	m_apUI[0]->SetPos(MENU_LOGO_POS);
 	m_apUI[0]->SetSize(MENU_LOGO_WIDTH, MENU_LOGO_HEIGHT);
 	m_apUI[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_LOGO)));
+	m_apUI[0]->SetTex(1, 1, 2);
 
 	// 選択中の機体説明
 	m_apUI[1] = CScene2D::Create();
@@ -87,7 +88,7 @@ HRESULT CMechaSelect::Init(void)
 	m_apUI[2] = CScene2D::Create();
 	m_apUI[2]->SetPos(D3DXVECTOR3(300.0f, 350.0f, 0.0f));
 	m_apUI[2]->SetSize(400.0f, 400.0f);
-	m_apUI[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_AI_MECHA_FLAME)));
+	m_apUI[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MECHA_SELECT)));
 
 	// 適正距離表示
 	m_apUI[3] = CScene2D::Create();
@@ -167,8 +168,10 @@ void CMechaSelect::Update(void)
 
 	bool bButtonSwitch = false;
 	int nSelect = -1;
-	//MECHATYPE mechaType = MECHATYPE_LIGHT;
 
+	//**********************************************
+	// ボタンの判定
+	//**********************************************
 	for (int nCntButton = 0; nCntButton < MECHASEL_NUM_BUTTON; nCntButton++)
 	{// ボタンの判定
 		if (m_apButtonUI[nCntButton]->InRange(m_pCursor->GetMousePosition()))
@@ -176,61 +179,60 @@ void CMechaSelect::Update(void)
 			if (m_apButtonUI[nCntButton]->ClickRelease())
 			{// クリックされた
 				bButtonSwitch = true;
-				//mechaType = (MECHATYPE)nCntButton;
 				m_mechaType = (MECHATYPE)nCntButton;
 				break;
 			}
-
 			nSelect = nCntButton;
 		}
 	}
 
 	//**********************************************
-	// 選択されていないとき選択項目を非表示にする
-	//**********************************************
 	// 選択中の機体説明
+	//**********************************************
 	if (-1 == nSelect) { m_apUI[1]->SetDisp(false); }
-	else{ m_apUI[1]->SetDisp(true); }
+	else { m_apUI[1]->SetDisp(true); }
 
 	switch (nSelect)
 	{
-	case 0:		// タイプA
+	case 0:		// 軽量型
 		m_apUI[1]->SetTex(0, 1, 4);
 		break;
 
-	case 1:		// タイプB
+	case 1:		// 支援型
 		m_apUI[1]->SetTex(1, 1, 4);
 		break;
 
-	case 2:		// タイプC
+	case 2:		// 重量型
 		m_apUI[1]->SetTex(2, 1, 4);
 		break;
 
-	case 3:		// タイプD
+	case 3:		// 強襲型
 		m_apUI[1]->SetTex(3, 1, 4);
 		break;
 	}
 
+	//**********************************************
 	// 選択中の機体表示
+	//**********************************************
 	if (-1 == nSelect) { m_apUI[2]->SetDisp(false); }
 	else { m_apUI[2]->SetDisp(true); }
 
 	switch (nSelect)
 	{
-	case 0:		// タイプA
-		m_apUI[2]->SetTex(0, 1, 2);
+	case 0:		// 軽量型
+		m_apUI[2]->SetTex(0, 1, 4);
 		break;
 
-	case 1:		// タイプB
-		m_apUI[2]->SetTex(1, 1, 2);
+	case 1:		// 支援型
+		m_apUI[2]->SetTex(1, 1, 4);
 		break;
 
-	case 2:		// タイプC
-		m_apUI[2]->SetTex(0, 1, 2);
+	case 2:		// 重量型
+		m_apUI[2]->SetTex(2, 1, 4);
 		break;
 
-	case 3:		// タイプD
-		m_apUI[2]->SetTex(1, 1, 2);
+	case 3:		// 強襲型
+		m_apUI[2]->SetTex(3, 1, 4);
 		break;
 	}
 

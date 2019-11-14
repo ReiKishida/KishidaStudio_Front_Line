@@ -12,6 +12,7 @@
 #include "player.h"
 #include "game.h"
 #include "server.h"
+#include "menu.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -53,7 +54,7 @@ HRESULT CCamera::Init(void)
 	m_posV = D3DXVECTOR3(0.0f, 0.0f, CAMERA_LENGTH);
 	m_posR = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_vecU = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
-	m_rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_rot = D3DXVECTOR3(D3DX_PI * 0.5f, 0.0f, 0.0f);
 	m_fLength = m_posV.z;
 	m_fLookHeight = 25.0f;
 
@@ -76,8 +77,25 @@ void CCamera::Update(void)
 	{
 		if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
 		{// アクションパート
+			CPlayer *pPlayer = NULL;
+
 			// プレイヤーの取得
-			CPlayer *pPlayer = CManager::GetGame()->GetPlayer(CManager::GetClient()->GetClientIdx());
+			if (CMenu::GetMode() == CMenu::MODE_MULTI)
+			{// マルチ
+				if (CManager::GetClient() != NULL && CManager::GetClient()->GetConnect() == true)
+				{
+					pPlayer = CManager::GetGame()->GetPlayer(CManager::GetClient()->GetPlayerIdx());
+				}
+				else
+				{
+					pPlayer = CManager::GetGame()->GetPlayer(0);
+				}
+			}
+			else
+			{// シングル
+				pPlayer = CManager::GetGame()->GetPlayer(0);
+			}
+
 			D3DXVECTOR3 pos = pPlayer->GetPos();
 			float fModelHeight = pPlayer->GetVtxMax().y;
 
@@ -91,26 +109,26 @@ void CCamera::Update(void)
 				float fDiffY = (float)pInputMouse->GetDiffPointY();
 
 				// 向きを変える
-				m_rot.y += fDiffX * 0.01f;	// 横方向
-				m_rot.x += fDiffY * 0.01f;	// 縦方向
+				m_rot.y += fDiffX * 0.0062f;	// 横方向
+				m_rot.x += fDiffY * 0.0062f;	// 縦方向
+			}
 
-				// 差分の調節
-				if (m_rot.y > D3DX_PI) { m_rot.y -= D3DX_PI * 2.0f; }
-				if (m_rot.y < -D3DX_PI) { m_rot.y += D3DX_PI * 2.0f; }
+			// 差分の調節
+			if (m_rot.y > D3DX_PI) { m_rot.y -= D3DX_PI * 2.0f; }
+			if (m_rot.y < -D3DX_PI) { m_rot.y += D3DX_PI * 2.0f; }
 
-				// 差分の調節
-				if (m_rot.x > D3DX_PI) { m_rot.x -= D3DX_PI * 2.0f; }
-				if (m_rot.x < -D3DX_PI) { m_rot.x += D3DX_PI * 2.0f; }
+			// 差分の調節
+			if (m_rot.x > D3DX_PI) { m_rot.x -= D3DX_PI * 2.0f; }
+			if (m_rot.x < -D3DX_PI) { m_rot.x += D3DX_PI * 2.0f; }
 
-				// x軸の回転の制御
-				if (D3DX_PI * 0.3f > m_rot.x)
-				{// 上側
-					m_rot.x = D3DX_PI * 0.3f;
-				}
-				else if (D3DX_PI * 0.55f < m_rot.x)
-				{// 下側
-					m_rot.x = D3DX_PI * 0.55f;
-				}
+			// x軸の回転の制御
+			if (D3DX_PI * 0.3f > m_rot.x)
+			{// 上側
+				m_rot.x = D3DX_PI * 0.3f;
+			}
+			else if (D3DX_PI * 0.55f < m_rot.x)
+			{// 下側
+				m_rot.x = D3DX_PI * 0.55f;
 			}
 
 			// 注視点

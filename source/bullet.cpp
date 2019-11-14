@@ -47,9 +47,6 @@ HRESULT CBullet::Init(D3DXVECTOR3 pos)
 {
 	CScene3DBill::Init();
 
-	// テクスチャの設定
-	//BindTexture(CTexture::GetTexture(CTexture::TEXTURE_BULLET));
-
 	// ポリゴンの位置を設定
 	CScene3DBill::SetPos(pos);
 
@@ -166,7 +163,7 @@ void CBulletCollision::Draw(void)
 //==================================
 // 生成処理
 //==================================
-CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage)
+CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,int nTeam)
 {
 	CBulletPlayer *pBullet = NULL;
 
@@ -174,6 +171,7 @@ CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngle
 
 	if (NULL != pBullet)
 	{// メモリ確保成功
+		pBullet->m_nTeam = nTeam;
 		pBullet->Init(pos, fAngle, fAngleVertical, nDamage);
 	}
 
@@ -207,7 +205,7 @@ HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical,
 	CBullet::SetSize(D3DXVECTOR3(3.0f, 3.0f, 0.0f));							// 大きさの設定
 	CBullet::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));	// 色の設定
 	CBullet::SetDamage(nDamage);
-	//CBullet::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_BULLET));
+	CBullet::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_BULLET));
 
 	return S_OK;
 }
@@ -217,6 +215,7 @@ HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical,
 //=========================================
 void CBulletPlayer::Uninit(void)
 {
+	m_pPlayer = NULL;
 	CScene3DBill::Uninit();
 }
 
@@ -262,7 +261,20 @@ bool CBulletPlayer::BulletCollision(void)
 				return true;		// 接触したのでtrueを返す
 			}
 		}
-
+		else if (objTypeEnemy == CScene::OBJTYPE_PLAYER)
+		{
+			CPlayer *pPlayer = (CPlayer*)pSceneEnemy;
+			int nTeam = pPlayer->GetTeam();
+			if (m_nTeam != nTeam)
+			{
+				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f))
+				{// 接触している
+					pPlayer->Damage(CBullet::GetDamage());
+					Uninit();
+					return true;		// 接触したのでtrueを返す
+				}
+			}
+		}
 		// 次のオブジェクトを見る
 		pSceneEnemy = pSceneNextEnemy;
 	}

@@ -13,13 +13,13 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define PLAYER_PRIORITY		(4)				// 処理の優先番号
+#define PLAYER_PRIORITY		(4)		// 処理の優先番号
 #define PLAYER_LIFE				(100)
 #define TEAM_BLUE				(100)
 #define TEAM_RED				(100)
 #define MAX_UITEX				(10)		// UIテクスチャ枚数
-#define PLAYER_UI_NUM		(2)				// 数字UIの枚数
-#define PLAYER_BOTTON		(4)				// リスポーン時ボタンの数
+#define PLAYER_UI_NUM		(2)		// 数字UIの枚数
+#define PLAYER_BOTTON		(4)		// リスポーン時ボタンの数
 
 //*****************************************************************************
 // 前方宣言
@@ -78,7 +78,7 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	static CPlayer* Create(int nPlayerIdx, CMechaSelect::MECHATYPE mecha,D3DXVECTOR3 pos);
+	static CPlayer* Create(int nPlayerIdx, CMechaSelect::MECHATYPE mecha, D3DXVECTOR3 pos);
 
 	D3DXVECTOR3 GetPos(void) { return m_pos; };					// 位置の取得
 	void SetPos(D3DXVECTOR3 pos) { m_pos = pos; };		// 位置の設定
@@ -115,10 +115,15 @@ public:
 
 	RESPAWN GetRespawn(void) { return m_Respawn; }
 
-	float GetAngle(int nIdx) { return m_pAngle[nIdx]; };
-	float GetAngleV(int nIdx) { return m_pAngleV[nIdx]; };
+	float GetAngle(int nIdx) { return m_pAngle[nIdx]; }
+	float GetAngleV(int nIdx) { return m_pAngleV[nIdx]; }
 
-	int GetNumShoot(void) { return m_nNumShoot; };
+	int GetNumShoot(void) { return m_nNumShoot; }
+
+	void SetTeam(int nTeam) { m_nTeam = nTeam; };
+	int GetTeam(void) { return m_nTeam; };
+	bool GetDeath(void) { return m_bDeath; };
+
 private:
 	void Movement(void);
 	void Shoot(void);
@@ -156,9 +161,7 @@ private:
 	CButton2D *m_apButtonUI[PLAYER_BOTTON];	// ボタンクラスのポインタ変数
 	CMouseCursor2D *m_pCursor;								// カーソルクラスのポインタ変数
 	int m_nTimer;					// タイマー
-	float m_nDisTime;				// ロゴ表示時間
-	float *m_pAngle;
-	float *m_pAngleV;
+	float m_nDisTime;			// ロゴ表示時間
 
 	int				m_nPlayerIdx;		// プレイヤー番号
 	D3DXVECTOR3		m_posOld;			// 過去の位置
@@ -170,7 +173,10 @@ private:
 	int				m_nDispertion;		// ばらつき
 	int				m_nReload;			// リロード時間
 	CMechaSelect::MECHATYPE	m_mecha;	// 機体の種類
-
+	float			*m_pAngle;
+	float			*m_pAngleV;
+	int				m_nTeam;
+	bool			m_bDeath;
 };
 
 #endif

@@ -9,6 +9,9 @@
 
 #include "scene3DBill.h"
 
+//前方宣言
+class CPlayer;
+
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -78,11 +81,13 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage);
+	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,int nTeam);
 
 	bool BulletCollision(void);
 
 private:
+	CPlayer *m_pPlayer;			// プレイヤークラスのポインタ変数
+	int		m_nTeam;			// チームの情報
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++

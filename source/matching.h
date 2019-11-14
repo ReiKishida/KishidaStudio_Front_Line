@@ -13,12 +13,13 @@
 // マクロ定義
 //*****************************************************************************
 #define MATCHING_PRIORITY				(7)		// 優先番号
-#define MATCHING_UITEX						(12)
+#define MATCHING_UITEX						(8)
 #define MATCHING_UI_PLAYER				(4)
 //*****************************************************************************
 // 前方宣言
 //*****************************************************************************
 class CUI_TEXTURE;
+class CScene2D;
 
 //*****************************************************************************
 // クラス定義
@@ -38,7 +39,7 @@ private:
 	void ReadMessage(void);
 
 	CUI_TEXTURE		*m_pUITex[MATCHING_UITEX];		// UIテクスチャポインタ
-	CUI_TEXTURE		*m_pMatchingPlayerUI[MATCHING_UI_PLAYER];
+	CScene2D		*m_pMatchingPlayerUI[MATCHING_UI_PLAYER];
 	int						m_nCntBgMove;			// スクロール
 	int m_nCntFade;
 	bool m_bFade;

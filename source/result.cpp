@@ -111,7 +111,7 @@ void CResult::Uninit(void)
 		m_pPressButton = NULL;
 	}
 
-	//クライアントの破棄
+	// クライアントの破棄
 	CManager::ReleaseClient();
 
 	// 自分を破棄

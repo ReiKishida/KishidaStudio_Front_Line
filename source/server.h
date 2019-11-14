@@ -79,6 +79,7 @@ public:	//誰からもアクセス可能
 	void SetMechaType(int nPlayerIdx,int nMechaType);
 	int GetMechaType(int nPlayerIdx);
 
+	bool GetConnect(void) { return m_bConnected; };
 	//静的メンバ関数
 	static CClient *Create(void);
 

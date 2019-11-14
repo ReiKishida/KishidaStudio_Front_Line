@@ -84,7 +84,7 @@ HRESULT CScene3DBill::Init(void)
 	// 頂点情報を設定
 	VERTEX_3D *pVtx;	// 頂点情報のポインタ
 
-						// 頂点バッファをロックし、頂点データへのポインタを取得
+	// 頂点バッファをロックし、頂点データへのポインタを取得
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	pVtx[0].pos = D3DXVECTOR3(-m_fWidth, m_fHeight, 0.0f) * 0.5f;
@@ -169,7 +169,7 @@ void CScene3DBill::Draw(void)
 
 	D3DXMATRIX mtxTrans, mtxView;	// ワールドマトリックスの保存用
 
-									// ワールドマトリックスの初期化
+	// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_mtxWorld);
 
 	// 回転を反映
@@ -259,7 +259,7 @@ void CScene3DBill::SetColor(D3DXCOLOR col)
 	// 頂点情報を設定
 	VERTEX_3D *pVtx;		// 頂点情報のポインタ
 
-							//頂点バッファをロックし、頂点データへのポインタを取得
+	//頂点バッファをロックし、頂点データへのポインタを取得
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	//テクスチャ座標
@@ -283,7 +283,7 @@ void CScene3DBill::AddColor(D3DXCOLOR col)
 	// 頂点情報を設定
 	VERTEX_3D *pVtx;		// 頂点情報のポインタ
 
-							//頂点バッファをロックし、頂点データへのポインタを取得
+	//頂点バッファをロックし、頂点データへのポインタを取得
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	//テクスチャ座標
@@ -308,7 +308,7 @@ void CScene3DBill::SetSize(D3DXVECTOR3 size)
 	// 頂点情報を設定
 	VERTEX_3D *pVtx;	// 頂点情報のポインタ
 
-						//頂点バッファをロックし、頂点データへのポインタを取得
+	//頂点バッファをロックし、頂点データへのポインタを取得
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	pVtx[0].pos = D3DXVECTOR3(-m_fWidth, m_fHeight, size.z) * 0.5f;
@@ -330,7 +330,7 @@ void CScene3DBill::SetWidth(float fWidth)
 	// 頂点情報を設定
 	VERTEX_3D *pVtx;	// 頂点情報のポインタ
 
-						//頂点バッファをロックし、頂点データへのポインタを取得
+	//頂点バッファをロックし、頂点データへのポインタを取得
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	pVtx[0].pos.x = -m_fWidth * 0.5f;
@@ -352,7 +352,7 @@ void CScene3DBill::SetHeight(float fHeight)
 	// 頂点情報を設定
 	VERTEX_3D *pVtx;	// 頂点情報のポインタ
 
-						//頂点バッファをロックし、頂点データへのポインタを取得
+	//頂点バッファをロックし、頂点データへのポインタを取得
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	pVtx[0].pos.y = m_fHeight * 0.5f;

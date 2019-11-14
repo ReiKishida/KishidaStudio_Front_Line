@@ -14,6 +14,7 @@
 #include "UI_Number.h"
 #include "game.h"
 #include "player.h"
+#include "menu.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -166,8 +167,24 @@ void CUI_NUMBER::Update(void)
 	switch (m_UINumType)
 	{
 	case UI_NUMTYPE_REMAINBULLET:
-		SetNumColor(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetClientIdx())->GetBulletCapacity());				// 値によって色変化する
-		SetNum(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetClientIdx())->GetBulletCapacity(), m_col);
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{
+			if (CManager::GetClient() != NULL && CManager::GetClient()->GetConnect() == true)
+			{
+				SetNumColor(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetBulletCapacity());				// 値によって色変化する
+				SetNum(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetBulletCapacity(), m_col);
+			}
+			else
+			{
+				SetNumColor(m_nRemBullet, CGame::GetPlayer(0)->GetBulletCapacity());				// 値によって色変化する
+				SetNum(m_nRemBullet, CGame::GetPlayer(0)->GetBulletCapacity(), m_col);
+			}
+		}
+		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+		{
+			SetNumColor(m_nRemBullet, CGame::GetPlayer(0)->GetBulletCapacity());				// 値によって色変化する
+			SetNum(m_nRemBullet, CGame::GetPlayer(0)->GetBulletCapacity(), m_col);
+		}
 		break;
 
 	case UI_NUMTYPE_PLAYER_HP:

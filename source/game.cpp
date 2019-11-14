@@ -103,19 +103,19 @@ HRESULT CGame::Init(void)
 			CClient *pClient = CManager::GetClient();
 			if (pClient != NULL)
 			{
-				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, (CMechaSelect::MECHATYPE)pClient->GetMechaType(nCntPlayer),aPos[nCntPlayer]);
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, (CMechaSelect::MECHATYPE)pClient->GetMechaType(nCntPlayer), aPos[nCntPlayer]);
 			}
 		}
 		else
 		{
-			m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(),aPos[nCntPlayer]);
+			m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(), aPos[nCntPlayer]);
 		}
 	}
 
 	CBulletCollision::Create();
 
-	CEnemy::Load();
-	CEnemy::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), 0);
+	//CEnemy::Load();
+	//CEnemy::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), 0);
 
 	CCollision::Load();
 
@@ -272,7 +272,7 @@ void CGame::Update(void)
 
 																													//****************************************
 																													// UI生成（数字）
-			//																										//****************************************
+																													//																										//****************************************
 			CUI_NUMBER::Create(D3DXVECTOR3(630.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 1, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 			CUI_NUMBER::Create(D3DXVECTOR3(920.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_RED, 2, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 
@@ -338,6 +338,13 @@ void CGame::Update(void)
 		}
 	}
 
+	for (int nCntPlayer = 0; nCntPlayer < MAX_CONNECT; nCntPlayer++)
+	{
+		if (m_pPlayer[nCntPlayer]->GetDeath() == true)
+		{
+			m_state = STATE_END;
+		}
+	}
 	// フェードの取得
 	CFade::FADE fade = CFade::GetFade();
 
@@ -345,7 +352,7 @@ void CGame::Update(void)
 	{// フェード中はポーズにできなくする
 		if (pKeyboard->GetTrigger(DIK_RETURN))
 		{
-			CFade::Create(CManager::MODE_RESULT);
+			//CFade::Create(CManager::MODE_RESULT);
 		}
 
 		if (pKeyboard->GetTrigger(DIK_P) || pXInput->GetTrigger(0, CXInput::XIJS_BUTTON_4))
@@ -362,7 +369,7 @@ void CGame::Update(void)
 			}
 		}
 
-		if(!m_bPause)
+		if (!m_bPause)
 		{// ポーズを閉じるとき
 			if (m_pPause != NULL)
 			{// ポーズでなくなったら破棄
@@ -385,7 +392,7 @@ void CGame::Update(void)
 			m_state = STATE_NONE;
 
 			// 画面(モード)の設定
-			//CFade::Create(CManager::MODE_RESULT);
+			CFade::Create(CManager::MODE_RESULT);
 		}
 		break;
 	}
@@ -429,7 +436,7 @@ void CGame::PrintData(void)
 	//クライアントの取得
 	CClient *pClient = CManager::GetClient();
 #if 1
-	if (pClient != NULL)
+	if (pClient != NULL && pClient->GetConnect() == true)
 	{//NULLではない場合
 		if (m_pPlayer[pClient->GetPlayerIdx()] != NULL)
 		{//NULLではない場合
@@ -484,7 +491,7 @@ void CGame::PrintData(void)
 				}
 
 				//発射していない状態に戻す
-				m_pPlayer[pClient->GetClientIdx()]->SetShoot(false);
+				m_pPlayer[pClient->GetPlayerIdx()]->SetShoot(false);
 			}
 			else
 			{
@@ -518,7 +525,7 @@ void CGame::ReadMessage(void)
 	int nNumShoot = 0;
 	int nAttack = 0;
 
-	if (pClient != NULL)
+	if (pClient != NULL && pClient->GetConnect() == true)
 	{
 		//頭出し処理
 		pStr = CServerFunction::HeadPutout(pStr, "");
@@ -628,9 +635,6 @@ void CGame::ReadMessage(void)
 						//プレイヤーの位置の設置処理
 						m_pPlayer[nPlayerIdx]->SetPos(pos);
 
-						//弾を発射しているかどうかの設置処理
-						//m_pPlayer[nPlayerIdx]->SetShoot(bShoot);
-
 						float fDiffRot;
 						float fAngle = D3DX_PI + cameraRot.y;
 						float fRotDest = m_pPlayer[nPlayerIdx]->GetRotDest();
@@ -676,12 +680,15 @@ void CGame::ReadMessage(void)
 							for (int nCntShoot = 0; nCntShoot < nNumShoot; nCntShoot++)
 							{
 								// 弾の生成
-								D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
+								D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
 								D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-								CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack);
-								mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(5)->GetMtxWorld();
+								CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack,m_pPlayer[nPlayerIdx]->GetTeam());
+								mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
 								posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-								CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack);
+								CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam());
+
+								//弾を発射しているかどうかの設置処理
+								m_pPlayer[nPlayerIdx]->SetShoot(false);
 							}
 
 							//D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();

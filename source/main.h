@@ -28,6 +28,14 @@
 
 #include <process.h>					//サーバーに必要
 
+// メモリリークチェック
+#ifdef _DEBUG
+#include <crtdbg.h>
+//#define malloc(X) _malloc_dbg(X,_NORMAL_BLOCK,__FILE__,__LINE__)
+#define _mallocc_dbg(X,_NOMAL_BLOCK,__FILE__,__LINE__)
+#define _CRTDBG_MAP_ALLOC
+#define new ::new(_NORMAL_BLOCK,__FILE__,__LINE__)
+#endif
 //*****************************************************************************
 // ライブラリのリンク
 //*****************************************************************************
