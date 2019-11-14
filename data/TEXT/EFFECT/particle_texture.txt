@@ -1,0 +1,7 @@
+5
+
+data/TEXTURE/EFFECT/sweat.png
+data/TEXTURE/EFFECT/SandDust.jpg
+data/TEXTURE/EFFECT/weed.png
+data/TEXTURE/EFFECT/attack.png
+data/TEXTURE/EFFECT/wind.png

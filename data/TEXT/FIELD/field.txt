@@ -1,0 +1,16 @@
+#********************************************************************
+#
+#    地面スクリプトファイル[field.txt]
+#    Auther : Ishida Takuto
+#
+#********************************************************************
+FIELDSET
+	POS = 0.0 0.0 0.0	# 位置
+	ROT = 0.0 0.0 0.0	# 向き
+	WIDTH = 500.0	# 1ブロック分の幅の大きさ
+	DEPTH = 500.0	# 1ブロック分の奥行の大きさ
+	XBLOCK = 50	# 横の分割数
+	ZBLOCK = 50	# 奥行の分割数
+	VERTEX_FILENAME = data/TEXT/FIELD/field.bin	# 読み込む頂点情報のバイナリファイル名
+	TEXTURE = data/TEXTURE/field000.jpg	# テクスチャ名
+END_FIELDSET
