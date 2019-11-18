@@ -46,6 +46,9 @@ CHARACTERSET
 	DISPERTION = 0					# ‚Î‚ç‚Â‚«
 	RELOAD = 180					# ƒŠƒ[ƒhŽžŠÔ
 
+	LIFE = 250						# ‘Ï‹v—Í
+	SPEED = 3.0						# ˆÚ“®—Ê
+
 	FOOT = 4						# ‘«‚ÌŽn‚Ü‚è”Ô†
 
 	PARTSSET						# [0]˜
