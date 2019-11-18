@@ -8,6 +8,7 @@
 #include "debugproc.h"
 #include "serverfunction.h"
 #include <stdio.h>
+#include "manager.h"
 
 //=============================================================================
 // マクロ定義
@@ -190,8 +191,9 @@ HRESULT CClient::Init(void)
 {
 	for (int nCntConnect = 0; nCntConnect < MAX_CONNECT; nCntConnect++)
 	{
-		m_nMechaType[nCntConnect] = 0;
+		m_nMechaType[nCntConnect] =  -1;
 	}
+
 	m_nPlayerIdx = 0;
 	memset(m_aSendMessage, 0, MAX_SERVER_DATA);			//サーバーに送信するメッセージ
 	memset(m_aData, 0, MAX_SERVER_DATA);				//受信データ
@@ -200,7 +202,9 @@ HRESULT CClient::Init(void)
 	m_nNumConnect = 0;									//接続している総数
 	m_threadHandle = 0;									//スレッド情報
 	m_team = 0;											//チーム情報
-
+	m_gameMode = GAME_MODE_PLAYER;
+	m_nMinIdx = 0;										//最小の番号
+	m_nMaxIdx = 0;										//最大の番号
 														//サーバーシステム情報を読み込み
 	LoadServerSystem();
 
@@ -250,9 +254,22 @@ void CClient::Update(void)
 	else
 	{//接続している場合
 		memset(m_aSendMessage, 0, sizeof(m_aSendMessage));
-		strcpy(m_aSendMessage, " ");
+		if (CManager::GetMode() == CManager::MODE_MATCHING)
+		{
+			strcpy(m_aSendMessage, SERVER_MODE_MATCHING);
+			strcat(m_aSendMessage, " ");
+		}
+		else if (CManager::GetMode() == CManager::MODE_GAME)
+		{
+			strcpy(m_aSendMessage, SERVER_MODE_GAME);
+			strcat(m_aSendMessage, " ");
+		}
+		else if (CManager::GetMode() == CManager::MODE_RESULT)
+		{
+			strcpy(m_aSendMessage,SERVER_MODE_RESULT);
+			strcat(m_aSendMessage, " ");
+		}
 		strcat(m_aSendMessage, m_aData);
-
 		//サーバーへデータ（メッセージ）を送信
 		CDebugProc::Print("送ったメッセージ：%s\n", m_aSendMessage);
 		send(m_sockClient, m_aSendMessage, strlen(m_aSendMessage), 0);
@@ -353,6 +370,46 @@ void CClient::SetMechaType(int nPlayerIdx, int nMechaType)
 int CClient::GetMechaType(int nPlayerIdx)
 {
 	return m_nMechaType[nPlayerIdx];
+}
+
+//=============================================================================
+// 接続しているかどうかの取得処理
+//=============================================================================
+bool CClient::GetConnect(void)
+{
+	return m_bConnected;
+}
+
+//=============================================================================
+// 最小の番号の設置処理
+//=============================================================================
+void CClient::SetMinIdx(int nMinIdx)
+{
+	m_nMinIdx = nMinIdx;
+}
+
+//=============================================================================
+// 最小の番号の取得処理
+//=============================================================================
+int CClient::GetMinIdx(void)
+{
+	return m_nMinIdx;
+}
+
+//=============================================================================
+// 最大の番号の設置処理
+//=============================================================================
+void CClient::SetMaxIdx(int nMaxIdx)
+{
+	m_nMaxIdx = nMaxIdx;
+}
+
+//=============================================================================
+// 最大の番号の取得処理
+//=============================================================================
+int CClient::GetMaxIdx(void)
+{
+	return	m_nMaxIdx;
 }
 
 //=============================================================================

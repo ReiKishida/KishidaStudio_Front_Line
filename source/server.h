@@ -67,7 +67,9 @@ public:	//誰からもアクセス可能
 	HRESULT Init(void);
 	void Uninit(void);
 	void Update(void);
+
 	void Printf(char *fmt, ...);
+
 	void SetNumConnect(int nNumConnect);
 	int GetNumConnect(void);
 	int GetClientIdx(void);
@@ -79,7 +81,13 @@ public:	//誰からもアクセス可能
 	void SetMechaType(int nPlayerIdx,int nMechaType);
 	int GetMechaType(int nPlayerIdx);
 
-	bool GetConnect(void) { return m_bConnected; };
+	bool GetConnect(void);
+
+	void SetMinIdx(int nMinIdx);
+	int GetMinIdx(void);
+	void SetMaxIdx(int nMaxIdx);
+	int GetMaxIdx(void);
+
 	//静的メンバ関数
 	static CClient *Create(void);
 
@@ -103,14 +111,17 @@ private: //自分だけがアクセス可能
 	bool m_bConnected;								//接続したかどうか
 	char m_aSendMessage[MAX_SERVER_DATA];			//サーバーへ送信するメッセージ
 	char m_aReceiveMessage[MAX_SERVER_DATA];		//サーバー受信するメッセージ
+
 	int	m_nClientIdx;								//クライアント番号
 	int m_nNumConnect;								//接続している総数
 	char m_serverIP[128];							//IPアドレス情報
-	int m_team;										//チーム情報
 	HANDLE m_threadHandle;							//スレッド情報
 	GAME_MODE m_gameMode;							//ゲームのモード情報
+	int m_team;										//チーム情報
 	int m_nPlayerIdx;								//プレイヤーの番号
 	int m_nMechaType[MAX_CONNECT];					//メカの種類
+	int m_nMinIdx;									//最小の番号
+	int m_nMaxIdx;									//最大の番号
 };
 
 #endif // _SERVER_H_

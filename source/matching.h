@@ -8,13 +8,15 @@
 #define _MATCHING_H_
 
 #include "scene.h"
+#include "server.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
 #define MATCHING_PRIORITY				(7)		// 優先番号
-#define MATCHING_UITEX						(8)
-#define MATCHING_UI_PLAYER				(4)
+#define MATCHING_UITEX					(8)		// UIテクスチャの総数
+#define MATCHING_UI_PLAYER				(4)		// プレイヤーテクスチャの総数
+
 //*****************************************************************************
 // 前方宣言
 //*****************************************************************************
@@ -35,14 +37,23 @@ public:
 	void Draw(void);
 
 private:
+	void CreateUITex(void);
+	void CreatePlayerUI(void);
+	void ScrollUI(void);
+	void CheckFade(void);
+
 	void PrintData(void);
 	void ReadMessage(void);
 
-	CUI_TEXTURE		*m_pUITex[MATCHING_UITEX];		// UIテクスチャポインタ
-	CScene2D		*m_pMatchingPlayerUI[MATCHING_UI_PLAYER];
-	int						m_nCntBgMove;			// スクロール
-	int m_nCntFade;
-	bool m_bFade;
+	CUI_TEXTURE *m_pUITex[MATCHING_UITEX];				// UIテクスチャポインタ
+	CScene2D *m_pPlayerUI[MATCHING_UI_PLAYER];			// プレイヤーテクスチャのポインタ
+	int	m_nCntBgMove;									// スクロール
+	bool m_bFade;										// フェードをするかどうか
+	int m_nCntFade;										// フェードまでのカウンター
+	bool m_bConnect[MAX_CONNECT];
+	int m_nNumBlue;
+	int m_nNumRed;
+
 };
 
 #endif
