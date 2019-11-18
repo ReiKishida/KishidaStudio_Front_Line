@@ -169,10 +169,13 @@ void CUI_NUMBER::Update(void)
 	case UI_NUMTYPE_REMAINBULLET:
 		if (CMenu::GetMode() == CMenu::MODE_MULTI)
 		{
-			if (CManager::GetClient() != NULL && CManager::GetClient()->GetConnect() == true)
+			if (CManager::GetClient() != NULL)
 			{
-				SetNumColor(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetBulletCapacity());				// 値によって色変化する
-				SetNum(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetBulletCapacity(), m_col);
+				if (CManager::GetClient()->GetConnect() == true)
+				{
+					SetNumColor(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetBulletCapacity());				// 値によって色変化する
+					SetNum(m_nRemBullet, CGame::GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetBulletCapacity(), m_col);
+				}
 			}
 			else
 			{
@@ -188,12 +191,41 @@ void CUI_NUMBER::Update(void)
 		break;
 
 	case UI_NUMTYPE_PLAYER_HP:
-		SetNumColor(m_nPlayerLife, PLAYER_LIFE);
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{
+			if (CManager::GetClient() != NULL)
+			{
+				if (CManager::GetClient()->GetConnect() == true)
+				{
 
-		if (m_nPlayerLife >= 0)
-		{	// 0以上の時、数字更新
-			SetNum(m_nPlayerLife, PLAYER_LIFE, m_col);
+					SetNumColor(m_nPlayerLife, CGame::GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetLifeMax());
+
+					if (m_nPlayerLife >= 0)
+					{	// 0以上の時、数字更新
+						SetNum(m_nPlayerLife, CGame::GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetLifeMax(), m_col);
+					}
+				}
+			}
+			else
+			{
+				SetNumColor(m_nPlayerLife, CGame::GetPlayer(0)->GetLifeMax());
+
+				if (m_nPlayerLife >= 0)
+				{	// 0以上の時、数字更新
+					SetNum(m_nPlayerLife, CGame::GetPlayer(0)->GetLifeMax(), m_col);
+				}
+			}
 		}
+		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+		{
+			SetNumColor(m_nPlayerLife, CGame::GetPlayer(0)->GetLifeMax());
+
+			if (m_nPlayerLife >= 0)
+			{	// 0以上の時、数字更新
+				SetNum(m_nPlayerLife, CGame::GetPlayer(0)->GetLifeMax(), m_col);
+			}
+		}
+
 		break;
 
 	case UI_NUMTYPE_BLUE:

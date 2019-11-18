@@ -66,6 +66,8 @@ HRESULT CMotionManager::Load(void)
 		{ "data/TEXT/PLAYER/heavy/motion_heavy.txt" },
 		{ "data/TEXT/PLAYER/snipe/motion_snipe.txt" },
 
+		{ "data/TEXT/AI/drone/motion_drone.txt" },
+
 		{ "data/TEXT/ENEMY/motion.txt" },
 	};
 
@@ -449,7 +451,7 @@ void CMotionManager::Draw(void)
 //=========================================
 void CMotion::SetMotion(CMotionManager::TYPE type)
 {
-	if (m_nCurMotion != type)
+	if (m_nCurMotion != type && m_pMotionManager->GetNumMotion() > type)
 	{
 		int nNumMotion = m_pMotionManager->GetNumMotion();
 		for (int nCntMotion = 0; nCntMotion < nNumMotion; nCntMotion++)

@@ -14,7 +14,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define MAX_FILE		(5)		// ファイル数
+#define MAX_FILE		(6)		// ファイル数
 #define MOTION_PRIORITY	(0)		// 処理の優先順位
 #define ATTACK_MOTION	(CMotionManager::TYPE_MAX - CMotionManager::TYPE_ATTACK01)	// 攻撃モーション数
 

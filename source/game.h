@@ -73,6 +73,8 @@ public:
 
 	PART GetPart(void) { return m_part; };
 
+	CMouseCursor *GetMouseCursor(void) { return m_pMouseCursor; }
+
 private:
 	void PrintData(void);
 	void ReadMessage(void);

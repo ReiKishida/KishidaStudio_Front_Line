@@ -14,7 +14,6 @@
 // マクロ定義
 //*****************************************************************************
 #define PLAYER_PRIORITY		(4)		// 処理の優先番号
-#define PLAYER_LIFE				(100)
 #define TEAM_BLUE				(100)
 #define TEAM_RED				(100)
 #define MAX_UITEX				(10)		// UIテクスチャ枚数
@@ -124,6 +123,8 @@ public:
 	int GetTeam(void) { return m_nTeam; };
 	bool GetDeath(void) { return m_bDeath; };
 
+	int GetLifeMax(void) { return m_nLifeMax; }
+
 private:
 	void Movement(void);
 	void Shoot(void);
@@ -146,11 +147,9 @@ private:
 	int				m_nCurMotion;		// 現在のモーション
 	STATE			m_state;			// 状態
 	float			m_fCameraAngle;		// カメラの向き
-	float			m_fSpeed;			// 速度
-	int				m_nLife;			// 体力
 	int				m_nDamageTime;		// ダメージを受けた時の硬直時間
 	CScene3DBill	*m_pReticle;		// レティクル
-	int				m_nRemBullet, m_nPlayerLife;
+	int				m_nRemBullet;
 	int				m_nCntReRoad;
 	CUI_TEXTURE *m_pUITex[MAX_UITEX];
 	CUI_NUMBER	*m_pUINum[PLAYER_UI_NUM];
@@ -166,17 +165,23 @@ private:
 	int				m_nPlayerIdx;		// プレイヤー番号
 	D3DXVECTOR3		m_posOld;			// 過去の位置
 	bool			m_bShoot;			// 弾を発射しているかどうか
+	int				m_nLife;			// 耐久力
 
 	int				m_nCapacity;		// 装弾数
 	int				m_nAttack;			// 攻撃力
 	int				m_nNumShoot;		// 同時発射数
 	int				m_nDispertion;		// ばらつき
 	int				m_nReload;			// リロード時間
+	int				m_nLifeMax;			// 耐久力
+	float			m_fSpeed;			// 移動量
+
 	CMechaSelect::MECHATYPE	m_mecha;	// 機体の種類
 	float			*m_pAngle;
 	float			*m_pAngleV;
 	int				m_nTeam;
 	bool			m_bDeath;
+	int				m_nCntShoot;		// 発射間隔
+	bool			m_bShootButton;		// 弾の発射ボタン押下フラグ
 };
 
 #endif

@@ -9,6 +9,7 @@
 
 #include "main.h"
 #include "scene3D.h"
+#include "scene2D.h"
 
 class CInputKeyboard;
 class CInputMouse;
@@ -46,9 +47,9 @@ public:
 
 	CMouseCursor(int nPriority = MOUSE_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_MOUSE);
 	~CMouseCursor();
-	
+
 	static CMouseCursor *Create();
-	
+
 	HRESULT Init();
 	void Uninit(void);
 	void Update(void);
@@ -60,6 +61,8 @@ public:
 	void SaveLoad(CInputKeyboard *pKeyboard);
 	HRESULT FileSave(void);
 	void FileLoad(char* pFileName);
+
+	D3DXVECTOR3 GetPos(void) { return m_pos; }
 
 private:
 	NODE_LOAD_STATE m_LoadNodeData;		// ロードしたマップ情報
@@ -81,7 +84,7 @@ private:
 	bool m_bSaveMassage;			// セーブ完了メッセージのONOFF
 	bool m_bErrorMassage;			// エラーメッセージのONOFF
 
-	// 接続元ノードの情報	(コメント用)
+									// 接続元ノードの情報	(コメント用)
 	D3DXVECTOR3	m_SelectNodePos;			// 位置
 	int	m_SelectNodeNumber;					// 番号
 	int	m_SelectNodeConnectMax;				// 接続数
@@ -90,4 +93,30 @@ private:
 	static CCamera *m_pCamera;		// カメラへのポインタ
 	static CNodePointer *m_pNodePointer[NODEPOINT_MAX];	// ノードポリゴンへのポインタ
 };
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// 2Dマウスカーソルのクラス
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class CMouseCursor2D : public CScene2D
+{
+public:
+	CMouseCursor2D(int nPriority = MOUSE_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_MOUSE);
+	~CMouseCursor2D();
+
+	static CMouseCursor2D *Create(void);
+
+	HRESULT Init(void);
+	void Uninit(void);
+	void Update(void);
+	void Draw(void);
+
+	void Move(CInputMouse *pMouse);
+
+	static void SetMousePosition(D3DXVECTOR3 pos) { m_pos = pos; };
+	static D3DXVECTOR3 GetMousePosition(void) { return m_pos; };
+
+private:
+	static D3DXVECTOR3	m_pos;		// 位置
+};
+
 #endif

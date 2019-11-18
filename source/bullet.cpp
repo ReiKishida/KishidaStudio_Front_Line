@@ -13,6 +13,7 @@
 #include "texture.h"
 #include "camera.h"
 #include "server.h"
+#include "collisionSet.h"
 
 //==================================
 // マクロ定義
@@ -242,28 +243,16 @@ void CBulletPlayer::Draw(void)
 bool CBulletPlayer::BulletCollision(void)
 {
 	// 敵を探す
-	CScene *pSceneEnemy = CScene::GetSceneTop(ENEMY_PRIORITY);
-	CScene *pSceneNextEnemy = NULL;
-	while (pSceneEnemy != NULL)
+	CScene *pScene = CScene::GetSceneTop(PLAYER_PRIORITY);
+	CScene *pSceneNext = NULL;
+	while (pScene != NULL)
 	{// NULLになるまでループ
-		pSceneNextEnemy = pSceneEnemy->GetSceneNext();
-		CScene::OBJTYPE objTypeEnemy = pSceneEnemy->GetObjType();
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
 
-		if (objTypeEnemy == CScene::OBJTYPE_ENEMY)
-		{// 敵だったとき
-			CEnemy *pEnemy = (CEnemy*)pSceneEnemy;	// キャストして敵クラスの変数として使う
-
-			if (CScene3DBill::Collision(pEnemy->GetPos(), 50.0f))
-			{// 接触している
-				pEnemy->Uninit();
-				CGame::SetGameState(CGame::STATE_END);
-				Uninit();
-				return true;		// 接触したのでtrueを返す
-			}
-		}
-		else if (objTypeEnemy == CScene::OBJTYPE_PLAYER)
+		if (CScene::OBJTYPE_PLAYER == objType)
 		{
-			CPlayer *pPlayer = (CPlayer*)pSceneEnemy;
+			CPlayer *pPlayer = (CPlayer*)pScene;
 			int nTeam = pPlayer->GetTeam();
 			if (m_nTeam != nTeam)
 			{
@@ -275,8 +264,16 @@ bool CBulletPlayer::BulletCollision(void)
 				}
 			}
 		}
+
 		// 次のオブジェクトを見る
-		pSceneEnemy = pSceneNextEnemy;
+		pScene = pSceneNext;
+	}
+
+	// マップの当たり判定
+	D3DXVECTOR3 length = D3DXVECTOR3(CScene3DBill::GetWidth(), CScene3DBill::GetWidth(), CScene3DBill::GetWidth());
+	if (CCollision::Collision(&GetPos(), GetPosOld(), length, length))
+	{// 衝突している
+		Uninit();
 	}
 
 	return false;	// 接触してないのでfalseを返す

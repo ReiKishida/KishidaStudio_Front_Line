@@ -53,6 +53,8 @@
 #define SCREEN_WIDTH	(1280)		// ウインドウの幅
 #define SCREEN_HEIGHT	(720)		// ウインドウの高さ
 #define SERVER_MODE (1)
+#define NODEPOINT_MAX	(512)
+#define CONNECT_MAX		(9)
 
 //*****************************************************************************
 // 構造体定義

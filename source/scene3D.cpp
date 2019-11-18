@@ -254,6 +254,29 @@ bool CScene3D::Collision(D3DXVECTOR3 pos, float fRadius)
 }
 
 //=========================================
+// マウス位置の設定
+//=========================================
+const void CScene3D::SetMousePos(D3DXVECTOR3 pos)
+{
+	m_pos = pos;	// 位置の設定
+
+					// 頂点情報を設定
+	VERTEX_3D *pVtx;	// 頂点情報のポインタ
+
+						// 頂点バッファをロックし、頂点データへのポインタを取得
+	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	// 頂点座標
+	pVtx[0].pos = D3DXVECTOR3(m_pos.x, m_pos.y, m_pos.z);
+	pVtx[1].pos = D3DXVECTOR3(m_pos.x + m_size.x, m_pos.y, m_pos.z);
+	pVtx[2].pos = D3DXVECTOR3(m_pos.x, m_pos.y, m_pos.z - m_size.z);
+	pVtx[3].pos = D3DXVECTOR3(m_pos.x + m_size.x, m_pos.y, m_pos.z - m_size.z);
+
+	// 頂点バッファをアンロック
+	m_pVtxBuff->Unlock();
+}
+
+//=========================================
 // 位置の設定
 //=========================================
 void CScene3D::SetPos(D3DXVECTOR3 pos)

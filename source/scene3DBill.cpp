@@ -48,6 +48,7 @@ CScene3DBill::CScene3DBill(int nPriority, CScene::OBJTYPE objType) : CScene(nPri
 	m_pVtxBuff = NULL;		// 頂点バッファへのポインタ
 	m_pMtxParent = NULL;	// 親のワールドマトリックス
 	m_pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);		// 位置
+	m_posOld = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 前回の位置
 	m_fWidth = 0.0f;							// 幅
 	m_fHeight = 0.0f;							// 高さ
 	m_cmpFunc = D3DCMP_LESSEQUAL;				// Zバッファの設定

@@ -27,6 +27,8 @@ public:
 	D3DXVECTOR3 GetPos(void) { return m_pos; };
 	void SetPos(D3DXVECTOR3 pos) { m_pos = pos; };
 
+	D3DXVECTOR3 GetPosOld(void) { return m_posOld; }
+
 	D3DXVECTOR3 GetSize(void) { return D3DXVECTOR3(m_fWidth, m_fHeight, 0.0f); };
 	void SetSize(D3DXVECTOR3 size);
 
@@ -65,7 +67,7 @@ private:
 	D3DXMATRIX				*m_pMtxParent;		// 親のマトリックス
 
 	D3DXVECTOR3				m_pos;				// ポリゴンの位置
-	D3DXVECTOR3				m_rot;				// 回転
+	D3DXVECTOR3				m_posOld;			// 前回の位置
 	float					m_fWidth;			// 頂点のX軸の距離
 	float					m_fHeight;			// 頂点のY軸の距離
 	D3DXCOLOR				m_col;				// 色

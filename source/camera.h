@@ -30,7 +30,9 @@ public:
 	D3DXMATRIX GetProjection(void) { return m_mtxProjection; };
 	D3DXMATRIX GetView(void) { return m_mtxView; };
 	float GetRotY(void) { return m_rot.y; };
+
 	D3DXVECTOR3 GetRot(void) { return m_rot; };
+	void SetRot(D3DXVECTOR3 rot) { m_rot = rot; }
 
 	D3DXVECTOR3 GetPosV(void) { return m_posV; };
 	void SetPosV(D3DXVECTOR3 posV) { m_posV = posV; };

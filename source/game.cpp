@@ -47,6 +47,7 @@
 // マクロ定義
 //*****************************************************************************
 #define FIELD_MODEL_NAME	"data/MODEL/map_UV_bill.x"
+#define SKY_MODEL_NAME		"data/MODEL/sky_dome.x"
 #define NUMTEX_UV_X		(1)
 #define NUMTEX_UV_Y		(3)
 
@@ -69,6 +70,7 @@ CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType
 	m_pTimer = NULL;
 	m_pButtonManager = NULL;
 	m_part = PART_ACTION;
+	m_pSky = NULL;
 }
 
 //=============================================================================
@@ -89,6 +91,9 @@ HRESULT CGame::Init(void)
 	m_pField = CModel::Create();
 	m_pField->SetModel(FIELD_MODEL_NAME);
 
+	m_pSky = CModel::Create();
+	m_pSky->SetModel(SKY_MODEL_NAME);
+
 	D3DXVECTOR3 aPos[4];
 	aPos[0] = D3DXVECTOR3(590.0f, 0.0f, 40.0f);
 	aPos[1] = D3DXVECTOR3(590.0f, 0.0f, -60.0f);
@@ -99,7 +104,7 @@ HRESULT CGame::Init(void)
 	for (int nCntPlayer = 0; nCntPlayer < MAX_CONNECT; nCntPlayer++)
 	{
 		if (CMenu::GetMode() == CMenu::MODE_MULTI)
-		{
+		{// マルチ
 			CClient *pClient = CManager::GetClient();
 			if (pClient != NULL)
 			{
@@ -107,16 +112,15 @@ HRESULT CGame::Init(void)
 			}
 		}
 		else
-		{
+		{// シングル
 			m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(), aPos[nCntPlayer]);
 		}
 	}
 
+	// 弾の当たり判定クラスの生成
 	CBulletCollision::Create();
 
-	//CEnemy::Load();
-	//CEnemy::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), 0);
-
+	// マップの当たり判定の読み込み
 	CCollision::Load();
 
 	//****************************************
@@ -177,11 +181,24 @@ void CGame::Uninit(void)
 		}
 	}
 
+	if (NULL != m_pButtonManager)
+	{// ボタン管理クラスの破棄
+		m_pButtonManager->Uninit();
+		m_pButtonManager = NULL;
+	}
+
 	if (NULL != m_pField)
 	{// 地面の破棄
 		m_pField->Uninit();
 		delete m_pField;
 		m_pField = NULL;
+	}
+
+	if (NULL != m_pSky)
+	{// スカイドームの破棄
+		m_pSky->Uninit();
+		delete m_pSky;
+		m_pSky = NULL;
 	}
 
 	// オブジェクトを破棄
@@ -306,6 +323,22 @@ void CGame::Draw(void)
 	{// 地面の描画
 		m_pField->Draw();
 	}
+
+	// デバイスの取得
+	CRenderer *pRenderer = CManager::GetRenderer();
+	LPDIRECT3DDEVICE9 pDevice;
+	pDevice = pRenderer->GetDevice();
+
+	// ライティングOFF
+	pDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+
+	if (NULL != m_pSky)
+	{// スカイドームの描画
+		m_pSky->Draw();
+	}
+
+	// ライティングON
+	pDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
 }
 
 //=============================================================================
@@ -588,6 +621,15 @@ void CGame::ReadMessage(void)
 			pClient->SetNumConnect(CServerFunction::ReadInt(pStr, ""));		//総数の設置処理
 			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 			pStr += nWord;													//頭出し
+
+			pClient->SetMinIdx(CServerFunction::ReadInt(pStr, ""));
+			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
+			pStr += nWord;													//頭出し
+
+			pClient->SetMaxIdx(CServerFunction::ReadInt(pStr, ""));
+			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
+			pStr += nWord;													//頭出し
+
 		}
 		if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
 		{//プレイヤーの開始を示している場合

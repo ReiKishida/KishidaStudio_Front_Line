@@ -69,6 +69,8 @@ public:
 
 	D3DXMATRIX GetWorldMatrix(void) { return m_mtxWorld; }
 
+	const void CScene3D::SetMousePos(D3DXVECTOR3 pos);
+
 protected:
 
 private:

@@ -295,23 +295,19 @@ bool CCollision::CollisionBox(D3DXVECTOR3 *pPos, D3DXVECTOR3 posOld, D3DXVECTOR3
 		if (pPos->x - vtxMax.x <= m_fWidth + m_pos.x && posOld.x - (vtxMax.x - 1.0f) >= m_fWidth + m_pos.x)
 		{// 右側から衝突
 			pPos->x = vtxMax.x + m_fWidth + m_pos.x;
-			CDebugProc::Print("右");
 		}
 		else if (pPos->x + vtxMax.z > m_pos.x && posOld.x + (vtxMax.z - 1.0f) <= m_pos.x)
 		{// 左側から衝突
 			pPos->x = m_pos.x - vtxMax.z;
-			CDebugProc::Print("左");
 		}
 
 		if (pPos->z - vtxMax.x <= m_fDepth + m_pos.z && posOld.z - (vtxMax.x - 1.0f) >= m_fDepth + m_pos.z)
 		{// 前側から衝突
 			pPos->z = vtxMax.x + m_fDepth + m_pos.z;
-			CDebugProc::Print("前");
 		}
 		else if (pPos->z + vtxMax.z >= m_pos.z && posOld.z + (vtxMax.z - 1.0f) <= m_pos.z)
 		{// 後側から衝突
 			pPos->z = m_pos.z - vtxMax.z;
-			CDebugProc::Print("後");
 		}
 
 		return true;

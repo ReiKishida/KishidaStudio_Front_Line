@@ -12,6 +12,7 @@
 #include "texture.h"
 #include "game.h"
 #include "mouseCursor.h"
+#include "fade.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -105,6 +106,8 @@ void CButton2D::Draw(void)
 //=========================================
 bool CButton2D::InRange(D3DXVECTOR3 _pos)
 {
+	if (CFade::GetFade() != CFade::FADE_NONE) { return false; }
+
 	D3DXVECTOR3 pos = CScene2D::GetPos();
 
 	if (pos.x - (m_size.x * 0.5f) <= _pos.x && pos.x + (m_size.x * 0.5f) >= _pos.x)
@@ -424,7 +427,7 @@ void CButtonLine::Update(void)
 {
 	if (m_bLink) { return; }	// 接続しているときは抜ける
 
-	D3DXVECTOR3 cursor = CMouseCursor::GetMousePosition();
+	D3DXVECTOR3 cursor = CManager::GetGame()->GetMouseCursor()->GetPos();
 
 	// カーソル位置への角度を計算
 	float fAngle = atan2f(cursor.x - m_start.x, cursor.z - m_start.z);
@@ -757,7 +760,7 @@ void CButtonManagerStrategy::AITypeSelect(void)
 {
 	for (int nCntAIType = 0; nCntAIType < 2; nCntAIType++)
 	{// ドローンとウォーカーを両方チェック
-		if (m_pAIType[nCntAIType]->InRange(CMouseCursor::GetMousePosition()))
+		if (m_pAIType[nCntAIType]->InRange(CManager::GetGame()->GetMouseCursor()->GetPos()))
 		{// 範囲内かチェック
 			if (m_pAIType[nCntAIType]->ClickRelease())
 			{// クリックされた
@@ -797,7 +800,7 @@ void CButtonManagerStrategy::FirstHierarchy(void)
 {
 	for (int nCntFirst = 0; nCntFirst < m_aNumLogic[0]; nCntFirst++)
 	{
-		if (m_pFirst[nCntFirst]->InRange(CMouseCursor::GetMousePosition()))
+		if (m_pFirst[nCntFirst]->InRange(CManager::GetGame()->GetMouseCursor()->GetPos()))
 		{// 範囲内かチェック
 			if (m_pFirst[nCntFirst]->ClickRelease())
 			{// クリックされた
@@ -873,7 +876,7 @@ void CButtonManagerStrategy::SecondHierarchy(void)
 {
 	for (int nCntSecond = 0; nCntSecond < m_aNumLogic[1]; nCntSecond++)
 	{
-		if (m_pSecond[nCntSecond]->InRange(CMouseCursor::GetMousePosition()))
+		if (m_pSecond[nCntSecond]->InRange(CManager::GetGame()->GetMouseCursor()->GetPos()))
 		{// 範囲内かチェック
 			if (m_pSecond[nCntSecond]->ClickRelease())
 			{// クリックされた
@@ -965,7 +968,7 @@ void CButtonManagerStrategy::ThirdHierarchy(void)
 
 	for (int nCntThird = 0; nCntThird < m_aNumLogic[2]; nCntThird++)
 	{
-		if (m_pThird[nCntThird]->InRange(CMouseCursor::GetMousePosition()))
+		if (m_pThird[nCntThird]->InRange(CManager::GetGame()->GetMouseCursor()->GetPos()))
 		{// 範囲内かチェック
 			if (m_pThird[nCntThird]->ClickRelease())
 			{// クリックされた
@@ -1032,7 +1035,7 @@ void CButtonManagerStrategy::FourthHierarchy(void)
 
 	for (int nCntFourth = 0; nCntFourth < m_aNumLogic[3]; nCntFourth++)
 	{
-		if (m_pFourth[nCntFourth]->InRange(CMouseCursor::GetMousePosition()))
+		if (m_pFourth[nCntFourth]->InRange(CManager::GetGame()->GetMouseCursor()->GetPos()))
 		{// 範囲内かチェック
 			if (m_pFourth[nCntFourth]->ClickRelease())
 			{// クリックされた

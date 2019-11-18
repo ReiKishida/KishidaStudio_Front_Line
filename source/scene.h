@@ -59,10 +59,12 @@ public:
 		OBJTYPE_BUTTONLINE,			// ボタンをつなぐ線
 		OBJTYPE_BUTTON_MANAGER,		// ボタンの管理
 		OBJTYPE_ITEM,				// アイテム
+		OBJTYPE_AI,					// AI機体
+		OBJTYPE_COLLISION,			// マップの当たり判定
 		OBJTYPE_UI_NUMBER,
 		OBJTYPE_UI_TEXTURE,
 		OBJTYPE_UI_TEXTURE3D,
-		OBJTYPE_COLLISION,
+		OBJTYPE_NODE,				// ノード
 		OBJTYPE_MAX					// オブジェクトの種類の最大数
 	}OBJTYPE;
 
@@ -89,6 +91,8 @@ public:
 
 	static CScene *GetSceneTop(int nPriority) { return m_apTop[nPriority]; }
 	CScene *GetSceneNext(void) { return m_pNext; }
+
+	bool GetDeath(void) { return m_bDeath; }
 
 protected:
 	void Release(void);
