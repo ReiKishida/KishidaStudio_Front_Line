@@ -33,9 +33,13 @@
 #define SERVER_IP					"SERVER_IP"					//サーバーのIPアドレス情報
 #define SERVER_TEAM					"TEAM"						//チームの情報
 #define SERVER_END_SCRIPT			"END_SCRIPT"				//スクリプトの終了
-#define SERVER_CLIENT_DELETE		"CLIENT_DELETE = "				//クライアントの削除
+#define SERVER_CLIENT_DELETE		"CLIENT_DELETE = "			//クライアントの削除
 #define SERVER_GAME_MODE			"GAME_MODE"					//ゲームモードの状態
 #define SERVER_IDX					"IDX = "					//番号の情報
+#define SERVER_MODE_MATCHING		"MODE_MATCHING"				//マッチングモード
+#define SERVER_MODE_GAME			"MODE_GAME"					//ゲームモード
+#define SERVER_MODE_RESULT			"MODE_RESULT"				//リザルトモード
+
 //*****************************************************************************
 // クラスの定義
 //*****************************************************************************
