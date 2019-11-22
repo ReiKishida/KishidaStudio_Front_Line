@@ -66,8 +66,9 @@ HRESULT CMatching::Init(void)
 {
 	m_nCntFade = 0;		//フェードのカウンター
 	m_bFade = false;	//フェードをするかどうか
-	m_nNumBlue = 0;
-	m_nNumRed = 0;
+	m_nNumBlue = 0;		//青チームの総数
+	m_nNumRed = 0;		//赤チームの総数
+
 	for (int nCntConnect = 0; nCntConnect < MAX_CONNECT; nCntConnect++)
 	{
 		m_bConnect[nCntConnect] = false;
@@ -127,7 +128,7 @@ void CMatching::Update(void)
 	{
 		if (pClient->GetConnect() == true)
 		{
-			m_bConnect[pClient->GetPlayerIdx()] = true;
+			//m_bConnect[pClient->GetPlayerIdx()] = true;
 		}
 	}
 	//必要な情報を書き込む処理
@@ -309,9 +310,9 @@ void CMatching::ReadMessage(void)
 			//頭出し処理
 			pStr = CServerFunction::HeadPutout(pStr, "");
 
-			if (CServerFunction::Memcmp(pStr, SERVER_NUM_CONNECT) == 0)
+			if (CServerFunction::Memcmp(pStr, SERVER_CONNECT_DATA) == 0)
 			{//接続総数を示している場合
-				pStr += strlen(SERVER_NUM_CONNECT);								//頭出し
+				pStr += strlen(SERVER_CONNECT_DATA);								//頭出し
 				pClient->SetNumConnect(CServerFunction::ReadInt(pStr, ""));		//総数の設置処理
 				nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 				pStr += nWord;													//頭出し
@@ -332,6 +333,12 @@ void CMatching::ReadMessage(void)
 				nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 				pStr += nWord;													//頭出し
 
+				for (int nCntPlayerConnect = 0; nCntPlayerConnect < MAX_CONNECT; nCntPlayerConnect++)
+				{
+					m_bConnect[nCntPlayerConnect] = CServerFunction::ReadBool(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
+					pStr += nWord;													//頭出し
+				}
 			}
 			if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
 			{//プレイヤーの開始を示している場合
@@ -345,7 +352,7 @@ void CMatching::ReadMessage(void)
 					pStr += nWord;										//頭出し
 
 					//接続されている状態にする
-					m_bConnect[nPlayerIdx] = true;
+					//m_bConnect[nPlayerIdx] = true;
 
 					//メカの種類を代入												//番号を代入
 					nMechatype = CServerFunction::ReadInt(pStr, "");
@@ -370,16 +377,18 @@ void CMatching::ReadMessage(void)
 				}
 			}
 			CDebugProc::Print("種類：%d %d %d %d", pClient->GetMechaType(0), pClient->GetMechaType(1), pClient->GetMechaType(2), pClient->GetMechaType(3));
+			CDebugProc::Print("最小：%d", pClient->GetMinIdx());
+			CDebugProc::Print("最大：%d", pClient->GetMaxIdx());
 		}
 		for (int nCntPlayer = 0; nCntPlayer < MAX_CONNECT; nCntPlayer++)
 		{//
 			if (m_bConnect[nCntPlayer] == true)
 			{
-				m_pPlayerUI[nCntPlayer]->SetTex(pClient->GetMechaType(nCntPlayer), 1, 4);
+				m_pPlayerUI[nCntPlayer]->SetTex(pClient->GetMechaType(nCntPlayer) + 1, 1, 5);
 			}
 			else if (m_bConnect[nCntPlayer] == false)
 			{
-				m_pPlayerUI[nCntPlayer]->SetTex(-1, 1, 4);
+				m_pPlayerUI[nCntPlayer]->SetTex(0, 1, 5);
 			}
 		}
 

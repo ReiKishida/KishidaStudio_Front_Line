@@ -16,7 +16,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define SERVER_NUM_CONNECT			"NUMCONNECT = "				//接続している総数
+#define SERVER_CONNECT_DATA			"CONNECT_DATA = "			//接続している総数
 #define SERVER_CLIENT_IDX			"CLIENT_IDX = "				//クライアントの番号
 #define SERVER_NOW_MODE				"NOW_MODE = "				//現在のモード
 #define SERVER_CHARACTER_START		"CHARACTER_START"			//キャラ情報の開始
