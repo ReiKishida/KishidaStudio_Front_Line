@@ -38,33 +38,32 @@
 //==================================
 // マクロ定義
 //==================================
-#define ASSULT_FILE					"data/TEXT/PLAYER/assult/model_assult.txt"
-#define LIGHT_FILE					"data/TEXT/PLAYER/light/model_light.txt"
-#define HEAVY_FILE					"data/TEXT/PLAYER/heavy/model_heavy.txt"
-#define SNIPE_FILE					"data/TEXT/PLAYER/snipe/model_snipe.txt"
+#define ASSULT_FILE				"data/TEXT/PLAYER/assult/model_assult.txt"
+#define LIGHT_FILE				"data/TEXT/PLAYER/light/model_light.txt"
+#define HEAVY_FILE				"data/TEXT/PLAYER/heavy/model_heavy.txt"
+#define SNIPE_FILE				"data/TEXT/PLAYER/snipe/model_snipe.txt"
 
-#define PLAYER_DAMAGE_TIME			(60)		// ダメージを受けた時の無敵時間
-#define PLAYER_DAMAGE_MOVE			(40)		// ダメージを受けてから動けるようになるまでの時間
-#define PLAYER_RETICLE_LENGTH		(2500.0f)	// レティクルの距離
-#define ANIM_SPEED							(10)		// タイルアニメーション
-#define ANIM_PATTERN						(8)		// タイルのパターン数
-#define PLAYER_BOTTON_WIDTH	(75.0f)	// リスポーンボタンの横幅
-#define PLAYER_BOTTON_HEIGHT	(75.0f)	// リスポーンボタンの縦幅
-#define PLAYER_BOTTON_INT			(40.0f)	// ボタンとボタンの間隔
-#define PLAYER_UI_HEIGHT				(630.0f)
+#define PLAYER_DAMAGE_TIME		(60)		// ダメージを受けた時の無敵時間
+#define PLAYER_DAMAGE_MOVE		(40)		// ダメージを受けてから動けるようになるまでの時間
+#define PLAYER_RETICLE_LENGTH	(2500.0f)	// レティクルの距離
+#define ANIM_SPEED				(10)		// タイルアニメーション
+#define ANIM_PATTERN			(8)			// タイルのパターン数
+#define PLAYER_BOTTON_WIDTH		(75.0f)		// リスポーンボタンの横幅
+#define PLAYER_BOTTON_HEIGHT	(75.0f)		// リスポーンボタンの縦幅
+#define PLAYER_BOTTON_INT		(40.0f)		// ボタンとボタンの間隔
+#define PLAYER_UI_HEIGHT		(630.0f)
 
 // =============================================================
 // AI関係
 // =============================================================
 #define	LOAD_FILENAME		("data/TEXT/NODE_DATA/NodeData.txt")	// マップデータを読み込むファイルの名前
-#define MOVE_ACCEPTABLE		(20.0f)		// 移動字の誤差の許容範囲
+#define MOVE_ACCEPTABLE		(50.0f)		// 移動時の誤差の許容範囲
 #define POS_ACCEPTABLE		(30.0f)		// 検索時の誤差の許容範囲
 #define MOUSE_ACCEPTABLE	(20.0f)		// マウスの誤差の許容範囲
 #define COLLECT_TIME		(5)			// データの収集を行う間隔(秒)
 #define DATA_REFERENCE_TIME	(5)			// データの参照を行う間隔(回)
 #define PLAYER_BREAKTIME	(1)			// 休憩時間(フレーム)
 #define PLAYER_FINALPOINT_BREAKTIME	(120)	// 最終地点の休憩時間(フレーム)
-
 
 //==================================
 // 静的メンバ変数宣言
@@ -150,9 +149,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 //=========================================
 // デストラクタ
 //=========================================
-CPlayer::~CPlayer()
-{
-}
+CPlayer::~CPlayer(){}
 
 //=========================================
 // 初期化処理
@@ -471,46 +468,58 @@ HRESULT CPlayer::Init(void)
 
 	CAIMecha::Create(this, CAIMecha::MECHATYPE_DRONE, D3DXVECTOR3(0.0f, 70.0f, 0.0f));
 
-	// 数値の初期化==============================================================================
-	m_posDest = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	m_nPoint = 0;
-	m_nCountPoint = 0;
-	m_nCountCollect = 0;
-	m_nBreaktime = 0;
-	m_nGoalCount = 0;
-	m_nCollectionTimer = COLLECT_TIME * 60;
-	m_bGoal = false;
-	m_bPartSwitch = false;
-	m_bCollectSwitch = false;
+		// 数値の初期化==============================================================================
+		m_posDest = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		m_nPoint = 0;
+		m_nCountPoint = 0;
+		m_nCountCollect = 0;
+		m_nBreaktime = 0;
+		m_nGoalCount = 0;
+		m_nCollectionTimer = COLLECT_TIME * 60;
+		m_bGoal = false;
+		m_bPartSwitch = false;
+		m_bCollectSwitch = false;
 
-	for (int nCntEnemy = 0; nCntEnemy < ENEMY_PLAYER_MAX; nCntEnemy++)
-	{// エネミーの最大値分回る
-		for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
-		{// 収集データの最大値分回る
-			m_collectionPos[nCntEnemy][nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		for (int nCntEnemy = 0; nCntEnemy < ENEMY_PLAYER_MAX; nCntEnemy++)
+		{// エネミーの最大値分回る
+			for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+			{// 収集データの最大値分回る
+				m_collectionPos[nCntEnemy][nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+			}
 		}
-	}
 
-	// マップ関係==============================================================================
-	CPlayer::FileLoad("data/TEXT/NODE_DATA/NodeData.txt");
-
-	// 開始時点のノードの初期化
-	float fMinLength = 100000, fLength = 100000;	// 差分系
-
-													// 開始時点のノードの初期化
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
-	{// ノードの数だけ回る
-		m_waypoint[nCntNode] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	 // 差分を求める
-		fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
-
-		if (fMinLength > fLength)
-		{// 差分の最小値を求める
-			fMinLength = fLength;
-			m_nStartNode = nCntNode;
+		for (int nCntNode = 0; nCntNode < NODE_MAX; nCntNode++)
+		{// ノードの最大値分回る
+			m_waypoint[nCntNode] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 		}
-	}
-	m_nEndNode = m_nMovePoint[rand() % 7];
+
+		if (!m_bConnect)
+		{// 人間が接続していない場合
+			// マップ関係==============================================================================
+			CPlayer::FileLoad(LOAD_FILENAME);
+
+			// 開始時点のノードの初期化
+			float fMinLength = 100000, fLength = 100000;	// 差分系
+
+			// 開始時点のノードの初期化
+			for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+			{// ノードの数だけ回る
+				// 差分を求める
+				fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
+
+				if (fMinLength > fLength)
+				{// 差分の最小値を求める
+					fMinLength = fLength;
+					m_nStartNode = nCntNode;
+				}
+			}
+			m_nEndNode = m_nMovePoint[rand() % 7];
+
+			// ポイント検索
+			CPlayer::NodeSearch();
+			// ポイントへの経路探索
+			CPlayer::RootSearch();
+		}
 
 	return S_OK;
 }
@@ -1364,115 +1373,6 @@ void CPlayer::SelectRespawn(void)
 }
 
 //=============================================================================
-// ルート探索用ファイルの読み込み
-//=============================================================================
-void CPlayer::FileLoad(char* pFileName)
-{
-	FILE* pFile = NULL;		// ファイルポインタ
-	char ReadText[256];		// 読み込んだ文字列を入れておく
-	char HeadText[256];		// 比較用
-	char DustBox[256];		// 使用しないものを入れておく
-	int nCount = 0;
-	int nCntIndex = 0;
-
-	// 一時データベース
-	std::vector<NodeState> LoadState; LoadState.clear();
-
-	// 初期化
-	NodeState OneState = {};
-
-	// ファイルオープン
-	pFile = fopen(LOAD_FILENAME, "r");
-
-	if (pFile != NULL)
-	{// ファイルが開かれていれば
-		while (strcmp(HeadText, "START_LOAD") != 0)
-		{// "START_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-			fgets(ReadText, sizeof(ReadText), pFile);
-			sscanf(ReadText, "%s", &HeadText);
-		}
-		if (strcmp(HeadText, "START_LOAD") == 0)
-		{// "START_LOAD" が読み取れた場合、処理開始
-			while (strcmp(HeadText, "END_LOAD") != 0)
-			{// "END_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-				fgets(ReadText, sizeof(ReadText), pFile);
-				sscanf(ReadText, "%s", &HeadText);
-
-				if (strcmp(HeadText, "\n") == 0)
-				{// 文字列の先頭が [\n](改行) の場合処理しない
-
-				}
-				else if (strcmp(HeadText, "START_DATA") == 0)
-				{// "START_DATA" が読み取れた場合
-					nCount = 0;
-					while (strcmp(HeadText, "END_DATA") != 0)
-					{// "END_DATA" が読み込まれるまで繰り返し文字列を読み取る
-						fgets(ReadText, sizeof(ReadText), pFile);
-						sscanf(ReadText, "%s", &HeadText);
-
-						if (strcmp(HeadText, "\n") == 0)
-						{// 文字列の先頭が [\n](改行) の場合処理しない
-
-						}
-						else if (strcmp(HeadText, "NODESET") == 0)
-						{// "NODESET" が読み取れた場合
-							while (strcmp(HeadText, "END_NODESET") != 0)
-							{// "END_NODESET" が読み込まれるまで繰り返し文字列を読み取る
-								fgets(ReadText, sizeof(ReadText), pFile);
-								sscanf(ReadText, "%s", &HeadText);
-
-								if (strcmp(HeadText, "\n") == 0)
-								{// 文字列の先頭が [\n](改行) の場合処理しない
-
-								}
-								else if (strcmp(HeadText, "NODE_POS") == 0)	// ノードの位置
-								{
-									sscanf(ReadText, "%s %c %f %f %f",
-										&DustBox, &DustBox,
-										&OneState.pos[nCount].x,
-										&OneState.pos[nCount].y,
-										&OneState.pos[nCount].z);
-								}
-								else if (strcmp(HeadText, "CONNECT_NUM") == 0)	// 接続ノードの数
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectNum[nCount]);
-								}
-								else if (strcmp(HeadText, "CONNECT_INDEX") == 0)	// 接続ノードの番号
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectIndex[nCount][nCntIndex]);
-									nCntIndex++;
-								}
-							}
-
-							OneState.index[nCount] = nCount;
-							nCntIndex = 0;
-							nCount++;
-						}
-					}
-					OneState.nodeMax = nCount; // ノードの総数
-
-											   // 一つのデータを読み込んだ後,一時データベースに格納
-					LoadState.emplace_back(OneState);
-				}
-			}
-		}
-
-		// ファイルクローズ
-		if (pFile != NULL)
-		{
-			fclose(pFile);
-			pFile = NULL;
-		}
-	}
-
-	m_NodeData = OneState;	// データの代入
-}
-
-//=============================================================================
 //	AI更新処理
 //=============================================================================
 void CPlayer::AIUpdate(void)
@@ -1486,112 +1386,7 @@ void CPlayer::AIUpdate(void)
 	//CDebugProc::Print("現在の移動回数: %d\n", m_nPoint);
 	//CDebugProc::Print("目標までの移動回数: %d\n", m_nCountPoint);
 	//CDebugProc::Print("ゴールした回数: %d\n", m_nGoalCount);
-	//CDebugProc::Print("合計値 x : %.1f / z : %.1f\n", m_totalCollectPos.x, m_totalCollectPos.z);
-	//CDebugProc::Print("平均値に最も近いノード[%d] x : %.1f / z : %.1f\n", m_nNearTotalCollectNumber, m_NodeData.pos[m_nNearTotalCollectNumber].x, m_NodeData.pos[m_nNearTotalCollectNumber].z);
 	//CDebugProc::Print("\n");
-
-	//for (int nCntEnemy = 0; nCntEnemy < CEnemy::GetEnemyMax(); nCntEnemy++)
-	//{// エネミーの数分回る
-	//	CDebugProc::Print("エネミー[%d]\n", nCntEnemy);
-	//	for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
-	//	{// 収集データの最大値分回る
-	//		CDebugProc::Print("収集したデータ[%d] x : %.1f / z : %.1f\n", nCntCollect, m_collectionPos[nCntEnemy][nCntCollect].x, m_collectionPos[nCntEnemy][nCntCollect].z);
-	//	}
-	//	CDebugProc::Print("\n");
-	//}
-
-	//float fMinLength = 100000, fLength = 100000;	// 差分系
-	//D3DXVECTOR3 total = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 収集したデータの合計値
-	//int nCntEnemyMax = 0;	// エネミー検索時のカウンタ
-	//CScene *pScene = CScene::GetSceneTop(ENEMY_PRIORITY);// プライオリティーチェック
-	//m_nCollectionTimer--;	// データ収集のカウンタを進める
-
-	//						// エネミーのポインタの取得
-	//while (pScene != NULL)
-	//{// シーンのNULLチェック
-	// // UpdateでUninitされてしまう場合　Nextが消える可能性があるからNextにデータを残しておく
-	//	CScene *pSceneNext = pScene->GetSceneNext();
-	//	if (pScene->GetDeath() == false)
-	//	{// 死亡フラグが立っていない
-	//		if (pScene->GetObjType() == OBJTYPE_ENEMY)
-	//		{// タイプがエネミー
-	//			m_pEnemy[nCntEnemyMax] = ((CEnemy*)pScene)->GetEnemy();// エネミーの情報の取得
-	//			nCntEnemyMax++;// カウンタを進める
-	//		}
-	//	}
-	//	// Nextに次のSceneを入れる
-	//	pScene = pSceneNext;
-	//}
-
-	//// データの収集
-	//if (m_nCollectionTimer <= 0)
-	//{// 既定時間ごとにデータ収集
-	// // 位置データの取得
-	//	for (int nCntEnemy = 0; nCntEnemy < nCntEnemyMax; nCntEnemy++)
-	//	{// エネミーの数だけ回る
-	//		if (m_pEnemy[nCntEnemy] != NULL)
-	//		{// エネミーのNULLチェック
-	//			m_collectionPos[nCntEnemy][m_nCountCollect] = m_pEnemy[nCntEnemy]->GetPos();	// 敵の位置情報を取得
-	//			m_nCollectionTimer = COLLECT_TIME * 60;	// 時間を戻す
-	//		}
-	//	}
-
-	//	// 収集したデータを合計する
-	//	for (int nCntEnemy = 0; nCntEnemy < nCntEnemyMax; nCntEnemy++)
-	//	{// エネミーの数だけ回る
-	//		if (m_pEnemy[nCntEnemy] != NULL)
-	//		{// エネミーのNULLチェック
-	//			if (!m_bCollectSwitch)
-	//			{// 1週目
-	//				for (int nCntCollect = 0; nCntCollect < m_nCountCollect + 1; nCntCollect++)
-	//				{// 収集したデータの数だけ回る
-	//					total += m_collectionPos[nCntEnemy][nCntCollect];	// 収集データを合計する
-	//				}
-	//			}
-	//			else
-	//			{// 2週目以降
-	//				for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
-	//				{// 収集できるデータの最大数だけ回る
-	//					total += m_collectionPos[nCntEnemy][nCntCollect];	// 収集データを合計する
-	//				}
-	//			}
-	//		}
-	//	}
-
-	//	// 収集データの平均値を取る
-	//	if (!m_bCollectSwitch)
-	//	{// 1週目の場合
-	//		m_totalCollectPos = total / (float)(m_nCountCollect + 1);
-	//	}
-	//	else
-	//	{// 2週目以降
-	//		m_totalCollectPos = total / (float)COLLECTIONDATA_MAX;
-	//	}
-
-	//	// データを収集した回数のカウント
-	//	if (m_nCountCollect < COLLECTIONDATA_MAX - 1)
-	//	{// 収集最大に達していない場合
-	//		m_nCountCollect++;	// 収集カウントを進める
-	//	}
-	//	else
-	//	{// 収集最大に達した場合
-	//		m_bCollectSwitch = true;// 平均値の割り出し方法を切り替える
-	//		m_nCountCollect = 0;	// 収集カウントを最初からにする
-	//	}
-
-	//	// 平均値の最も近いノードを検索する
-	//	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
-	//	{// ノードの数だけ回る
-	//	 // 差分を求める
-	//		float fLength = (m_NodeData.pos[nCntNode].x - m_totalCollectPos.x) * (m_NodeData.pos[nCntNode].x - m_totalCollectPos.x) + (m_NodeData.pos[nCntNode].z - m_totalCollectPos.z) * (m_NodeData.pos[nCntNode].z - m_totalCollectPos.z);
-
-	//		if (fMinLength > fLength)
-	//		{// 差分の最小値を求める
-	//			fMinLength = fLength;
-	//			m_nNearTotalCollectNumber = nCntNode;
-	//		}
-	//	}
-	//}
 
 	// 自動移動処理
 	CPlayer::AutoMove();
@@ -1603,9 +1398,9 @@ void CPlayer::AIUpdate(void)
 void CPlayer::AutoMove()
 {
 	CMotionManager::TYPE type = CMotionManager::TYPE_NEUTRAL;	// モーションの種類
-	bool bMoveKey = false;	// 移動キー押下フラグ
+	bool bKey = false;	// ボタン押下フラグ
 
-							// 目標地点を設定
+	// 目標地点を設定
 	m_posDest = m_waypoint[m_nPoint];
 
 	// 目的との差分を出す
@@ -1614,14 +1409,14 @@ void CPlayer::AutoMove()
 
 	if (fLength > MOVE_ACCEPTABLE)
 	{// 差分が許容値内に収まるまで目的地に移動する
-		bMoveKey = true;
+		bKey = true;
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_rot.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
 	}
 	else if (m_nBreaktime < 0)
-	{// 移動後休憩
-		bMoveKey = false;
+	{// 移動中
+		bKey = true;
 		m_nBreaktime = PLAYER_BREAKTIME;
 
 		if (m_nPoint == m_nCountPoint)
@@ -1634,7 +1429,7 @@ void CPlayer::AutoMove()
 			m_nCountPoint = -1;	// 目的までの移動回数の初期化
 			m_nGoalCount++;		// ゴールした回数を増やす
 
-								// ポイント検索
+			// ポイント検索
 			CPlayer::NodeSearch();
 			// ポイントへの経路探索
 			CPlayer::RootSearch();
@@ -1642,12 +1437,33 @@ void CPlayer::AutoMove()
 	}
 	else if (m_nBreaktime == 0 && m_nPoint < m_nCountPoint)
 	{// 休憩終了
+		bKey = true;
 		m_nPoint++;
 	}
 	else if (m_nBreaktime > 0)
 	{// 休憩中
+		bKey = false;
 		m_move = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 停止する
 	}
+
+	if (m_pUpperMotion && m_pLowerMotion)
+	{// モーションクラスが使われている
+		if (bKey)
+		{// 移動している
+			// 移動モーション
+			m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
+			m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
+		}
+		else
+		{// 移動していない
+			// ニュートラルモーション
+			m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+			m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+		}
+	}
+
+	m_move.x += (0 - m_move.x) * 0.4f;
+	m_move.z += (0 - m_move.z) * 0.4f;
 
 	// 位置の更新
 	m_pos.x += m_move.x;
@@ -1663,19 +1479,12 @@ void CPlayer::NodeSearch()
 	int nNearEnemyNumber = 0;	// 最も近い敵の番号
 	int nMovePoint = 0;
 
-	// 目的の設定
-	//if (m_nGoalCount % DATA_REFERENCE_TIME == 0)
-	//{// 定期的に収集したデータに基づいた移動を行う
-	//	m_nNewEndNode = m_nNearTotalCollectNumber;
-	//}
-	//else
-	//{// 新規目的地を指定地点からランダムで決定する
-		do
-		{// 同じ地点だった場合はもう1度決める
-			nMovePoint = m_nMovePoint[rand() % RANDOM_MOVE_POINT];
-		} while (m_nNewEndNode == nMovePoint);
-		m_nNewEndNode = nMovePoint;
-	//}
+	// 移動先の設定
+	do
+	{// 同じ地点だった場合はもう1度決める
+		nMovePoint = m_nMovePoint[rand() % RANDOM_MOVE_POINT];
+	} while (m_nNewEndNode == nMovePoint);
+	m_nNewEndNode = nMovePoint;
 
 	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
 	{// ノードの数だけ回る
@@ -1701,36 +1510,6 @@ void CPlayer::NodeSearch()
 			}
 		}
 	}
-
-	//// 自分に最も近いエネミーを探す
-	//for (int nCntEnemy = 0; nCntEnemy < CEnemy::GetEnemyMax(); nCntEnemy++)
-	//{// エネミーの数だけ回る
-	//	if (m_pEnemy[nCntEnemy] != NULL)
-	//	{// エネミーのNULLチェック
-	//	 // 全てのエネミーとプレイヤーとの差分を出す
-	//		fLength = (m_pEnemy[nCntEnemy]->GetPos().x - m_pos.x) * (m_pEnemy[nCntEnemy]->GetPos().x - m_pos.x) + (m_pEnemy[nCntEnemy]->GetPos().z - m_pos.z) * (m_pEnemy[nCntEnemy]->GetPos().z - m_pos.z);
-
-	//		if (fMinLength > fLength)
-	//		{// 差分の最小値を求める
-	//			fMinLength = fLength;
-	//			nNearEnemyNumber = nCntEnemy;
-	//		}
-	//	}
-	//}
-
-	//for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
-	//{// ノードの数だけ回る
-	//	if (m_pEnemy[nNearEnemyNumber] != NULL)
-	//	{// エネミーのNULLチェック
-	//		if (m_NodeData.pos[nCntNode].x + POS_ACCEPTABLE > m_pEnemy[nNearEnemyNumber]->GetPos().x
-	//			&& m_NodeData.pos[nCntNode].x - POS_ACCEPTABLE < m_pEnemy[nNearEnemyNumber]->GetPos().x
-	//			&& m_NodeData.pos[nCntNode].z + POS_ACCEPTABLE > m_pEnemy[nNearEnemyNumber]->GetPos().z
-	//			&& m_NodeData.pos[nCntNode].z - POS_ACCEPTABLE < m_pEnemy[nNearEnemyNumber]->GetPos().z)
-	//		{// 最も近い敵の位置が許容範囲内
-	//			m_nEndNode = nCntNode;
-	//		}
-	//	}
-	//}
 }
 
 //=============================================================================
@@ -1738,12 +1517,12 @@ void CPlayer::NodeSearch()
 //=============================================================================
 void CPlayer::RootSearch()
 {
-	Node node[NODEPOINT_MAX];	// ノードの情報
+	Node node[NODEPOINT_MAX];		// ノードの情報
 	float weight[NODEPOINT_MAX];	// 各エッジのコスト
-	int nCntWeight = 0;		// コストのカウンタ
-	std::vector<int> path;	// 最短経路の情報を保持するvector
+	int nCntWeight = 0;				// コストのカウンタ
+	std::vector<int> path;			// 最短経路の情報を保持するvector
 
-							//======= エッジコストの算出 =========================================================================
+	//======= エッジコストの算出 =========================================================================
 	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		weight[nCntWeight] = sqrt((m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) * (m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) + (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z) * (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z));
@@ -1856,4 +1635,113 @@ void CPlayer::Dijkstra(int nodeMax, int start, int end, Node *node)
 			}
 		}
 	}
+}
+
+//=============================================================================
+// ルート探索用ファイルの読み込み
+//=============================================================================
+void CPlayer::FileLoad(char* pFileName)
+{
+	FILE* pFile = NULL;		// ファイルポインタ
+	char ReadText[256];		// 読み込んだ文字列を入れておく
+	char HeadText[256];		// 比較用
+	char DustBox[256];		// 使用しないものを入れておく
+	int nCount = 0;
+	int nCntIndex = 0;
+
+	// 一時データベース
+	std::vector<NodeState> LoadState; LoadState.clear();
+
+	// 初期化
+	NodeState OneState = {};
+
+	// ファイルオープン
+	pFile = fopen(pFileName, "r");
+
+	if (pFile != NULL)
+	{// ファイルが開かれていれば
+		while (strcmp(HeadText, "START_LOAD") != 0)
+		{// "START_LOAD" が読み込まれるまで繰り返し文字列を読み取る
+			fgets(ReadText, sizeof(ReadText), pFile);
+			sscanf(ReadText, "%s", &HeadText);
+		}
+		if (strcmp(HeadText, "START_LOAD") == 0)
+		{// "START_LOAD" が読み取れた場合、処理開始
+			while (strcmp(HeadText, "END_LOAD") != 0)
+			{// "END_LOAD" が読み込まれるまで繰り返し文字列を読み取る
+				fgets(ReadText, sizeof(ReadText), pFile);
+				sscanf(ReadText, "%s", &HeadText);
+
+				if (strcmp(HeadText, "\n") == 0)
+				{// 文字列の先頭が [\n](改行) の場合処理しない
+
+				}
+				else if (strcmp(HeadText, "START_DATA") == 0)
+				{// "START_DATA" が読み取れた場合
+					nCount = 0;
+					while (strcmp(HeadText, "END_DATA") != 0)
+					{// "END_DATA" が読み込まれるまで繰り返し文字列を読み取る
+						fgets(ReadText, sizeof(ReadText), pFile);
+						sscanf(ReadText, "%s", &HeadText);
+
+						if (strcmp(HeadText, "\n") == 0)
+						{// 文字列の先頭が [\n](改行) の場合処理しない
+
+						}
+						else if (strcmp(HeadText, "NODESET") == 0)
+						{// "NODESET" が読み取れた場合
+							while (strcmp(HeadText, "END_NODESET") != 0)
+							{// "END_NODESET" が読み込まれるまで繰り返し文字列を読み取る
+								fgets(ReadText, sizeof(ReadText), pFile);
+								sscanf(ReadText, "%s", &HeadText);
+
+								if (strcmp(HeadText, "\n") == 0)
+								{// 文字列の先頭が [\n](改行) の場合処理しない
+
+								}
+								else if (strcmp(HeadText, "NODE_POS") == 0)	// ノードの位置
+								{
+									sscanf(ReadText, "%s %c %f %f %f",
+										&DustBox, &DustBox,
+										&OneState.pos[nCount].x,
+										&OneState.pos[nCount].y,
+										&OneState.pos[nCount].z);
+								}
+								else if (strcmp(HeadText, "CONNECT_NUM") == 0)	// 接続ノードの数
+								{
+									sscanf(ReadText, "%s %c %d",
+										&DustBox, &DustBox,
+										&OneState.connectNum[nCount]);
+								}
+								else if (strcmp(HeadText, "CONNECT_INDEX") == 0)	// 接続ノードの番号
+								{
+									sscanf(ReadText, "%s %c %d",
+										&DustBox, &DustBox,
+										&OneState.connectIndex[nCount][nCntIndex]);
+									nCntIndex++;
+								}
+							}
+
+							OneState.index[nCount] = nCount;
+							nCntIndex = 0;
+							nCount++;
+						}
+					}
+					OneState.nodeMax = nCount; // ノードの総数
+
+											   // 一つのデータを読み込んだ後,一時データベースに格納
+					LoadState.emplace_back(OneState);
+				}
+			}
+		}
+
+		// ファイルクローズ
+		if (pFile != NULL)
+		{
+			fclose(pFile);
+			pFile = NULL;
+		}
+	}
+
+	m_NodeData = OneState;	// データの代入
 }

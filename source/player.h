@@ -14,15 +14,15 @@
 // マクロ定義
 //*****************************************************************************
 #define PLAYER_PRIORITY		(4)		// 処理の優先番号
-#define TEAM_BLUE				(100)
-#define TEAM_RED				(100)
-#define MAX_UITEX				(10)		// UIテクスチャ枚数
+#define TEAM_BLUE			(100)
+#define TEAM_RED			(100)
+#define MAX_UITEX			(10)	// UIテクスチャ枚数
 #define PLAYER_UI_NUM		(2)		// 数字UIの枚数
 #define PLAYER_BOTTON		(4)		// リスポーン時ボタンの数
-#define COLLECTIONDATA_MAX	(12)// 収集するデータの最大
-#define RANDOM_MOVE_POINT	(9)	// ランダム移動の地点数
-#define ENEMY_PLAYER_MAX	(2)	// 敵プレイヤーの数
-#define NODE_MAX	(256)		// ノードの最大数
+#define COLLECTIONDATA_MAX	(12)	// 収集するデータの最大数
+#define RANDOM_MOVE_POINT	(10)	// ランダム移動の地点数
+#define ENEMY_PLAYER_MAX	(2)		// 敵プレイヤーの数
+#define NODE_MAX			(256)	// ノードの最大数
 
 //*****************************************************************************
 // 前方宣言
@@ -79,7 +79,7 @@ public:
 		std::vector<int> to;		// どのノードとつながっているか
 		std::vector<float> cost;	// エッジのコスト
 
-									// ダイクストラ法のために必要な情報
+		// ダイクストラ法のために必要な情報
 		bool done;		// 確定ノードかどうか
 		float minCost;	// スタートノードからの最小コスト
 		int from;		// どのノードから来たか
@@ -88,7 +88,6 @@ public:
 	typedef struct
 	{
 		int nodeMax;							// ノードの総数
-		int edgeMax;							// エッジの総数
 		int	index[NODE_MAX];					// 自分のノード番号
 		int connectNum[NODE_MAX];				// 接続ノード数
 		int connectIndex[NODE_MAX][NODE_MAX];	// 接続ノード番号
@@ -253,11 +252,10 @@ private:
 	bool m_bCollectSwitch;				// 平均値割り出し方法の切り替え
 	static	D3DXVECTOR3	m_searchPos;	// クリック時位置
 
-	int m_nMovePoint[RANDOM_MOVE_POINT] = { 26, 49, 73, 92, 115, 143, 171, 176, 202 };	// ランダム移動の登録地点
+	int m_nMovePoint[RANDOM_MOVE_POINT] = {5, 26, 49, 73, 92, 115, 143, 171, 176, 202 };	// ランダム移動の登録地点
 
 	NodeState m_NodeData;						// マップ情報へのポインタ
 	static CPlayer *m_pPlayer;					// プレイヤークラスへのポインタ
-	//static CEnemy *m_pEnemy[ENEMY_PLAYER_MAX];			// エネミーへのポインタ
 };
 
 #endif
