@@ -236,6 +236,7 @@ private:
 	D3DXVECTOR3 m_waypoint[NODEPOINT_MAX];	// 中間地点
 	D3DXVECTOR3 m_collectionPos[ENEMY_PLAYER_MAX][COLLECTIONDATA_MAX];	// 収集したデータ
 	D3DXVECTOR3	m_posDest;				// 目標位置
+	D3DXVECTOR3	m_rotDest;				// 目標方向
 	D3DXVECTOR3 m_totalCollectPos;		// 収集したデータの合計値
 	int m_nCollectionTimer;				// 収集する時間
 	int m_nBreaktime;					// 休憩時間
@@ -247,6 +248,7 @@ private:
 	int m_nPoint;						// 現在の移動回数
 	int m_nNearTotalCollectNumber;		// 平均値に一番近いノードのナンバー
 	int m_nGoalCount;					// 最終目的地に到達した回数
+	int m_nVigilanceCount;					// 警戒時の見る方向のカウント
 	bool m_bGoal;						// 目的地に到着したか
 	bool m_bPartSwitch;					// アクションとストラテジーの切り替え
 	bool m_bCollectSwitch;				// 平均値割り出し方法の切り替え

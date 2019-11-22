@@ -453,7 +453,7 @@ HRESULT CPlayer::Init(void)
 		// カメラの向きの設定
 		CManager::GetCamera()->SetRot(D3DXVECTOR3(D3DX_PI * 0.5f, D3DX_PI * 0.5f, 0.0f));
 	}
-	else if(m_nPlayerIdx == 2 || m_nPlayerIdx == 3)
+	else if (m_nPlayerIdx == 2 || m_nPlayerIdx == 3)
 	{
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{
@@ -468,58 +468,59 @@ HRESULT CPlayer::Init(void)
 
 	CAIMecha::Create(this, CAIMecha::MECHATYPE_DRONE, D3DXVECTOR3(0.0f, 70.0f, 0.0f));
 
-		// 数値の初期化==============================================================================
-		m_posDest = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-		m_nPoint = 0;
-		m_nCountPoint = 0;
-		m_nCountCollect = 0;
-		m_nBreaktime = 0;
-		m_nGoalCount = 0;
-		m_nCollectionTimer = COLLECT_TIME * 60;
-		m_bGoal = false;
-		m_bPartSwitch = false;
-		m_bCollectSwitch = false;
+	// 数値の初期化==============================================================================
+	m_posDest = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_nPoint = 0;
+	m_nCountPoint = 0;
+	m_nCountCollect = 0;
+	m_nBreaktime = 0;
+	m_nGoalCount = 0;
+	m_nVigilanceCount = 0;
+	m_nCollectionTimer = COLLECT_TIME * 60;
+	m_bGoal = false;
+	m_bPartSwitch = false;
+	m_bCollectSwitch = false;
 
-		for (int nCntEnemy = 0; nCntEnemy < ENEMY_PLAYER_MAX; nCntEnemy++)
-		{// エネミーの最大値分回る
-			for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
-			{// 収集データの最大値分回る
-				m_collectionPos[nCntEnemy][nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	for (int nCntEnemy = 0; nCntEnemy < ENEMY_PLAYER_MAX; nCntEnemy++)
+	{// エネミーの最大値分回る
+		for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+		{// 収集データの最大値分回る
+			m_collectionPos[nCntEnemy][nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		}
+	}
+
+	for (int nCntNode = 0; nCntNode < NODE_MAX; nCntNode++)
+	{// ノードの最大値分回る
+		m_waypoint[nCntNode] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	}
+
+	if (!m_bConnect)
+	{// 人間が接続していない場合
+		// マップ関係==============================================================================
+		CPlayer::FileLoad(LOAD_FILENAME);
+
+		// 開始時点のノードの初期化
+		float fMinLength = 100000, fLength = 100000;	// 差分系
+
+		// 開始時点のノードの初期化
+		for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+		{// ノードの数だけ回る
+			// 差分を求める
+			fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
+
+			if (fMinLength > fLength)
+			{// 差分の最小値を求める
+				fMinLength = fLength;
+				m_nStartNode = nCntNode;
 			}
 		}
+		m_nEndNode = m_nMovePoint[rand() % 7];
 
-		for (int nCntNode = 0; nCntNode < NODE_MAX; nCntNode++)
-		{// ノードの最大値分回る
-			m_waypoint[nCntNode] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-		}
-
-		if (!m_bConnect)
-		{// 人間が接続していない場合
-			// マップ関係==============================================================================
-			CPlayer::FileLoad(LOAD_FILENAME);
-
-			// 開始時点のノードの初期化
-			float fMinLength = 100000, fLength = 100000;	// 差分系
-
-			// 開始時点のノードの初期化
-			for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
-			{// ノードの数だけ回る
-				// 差分を求める
-				fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
-
-				if (fMinLength > fLength)
-				{// 差分の最小値を求める
-					fMinLength = fLength;
-					m_nStartNode = nCntNode;
-				}
-			}
-			m_nEndNode = m_nMovePoint[rand() % 7];
-
-			// ポイント検索
-			CPlayer::NodeSearch();
-			// ポイントへの経路探索
-			CPlayer::RootSearch();
-		}
+		// ポイント検索
+		CPlayer::NodeSearch();
+		// ポイントへの経路探索
+		CPlayer::RootSearch();
+	}
 
 	return S_OK;
 }
@@ -1398,7 +1399,8 @@ void CPlayer::AIUpdate(void)
 void CPlayer::AutoMove()
 {
 	CMotionManager::TYPE type = CMotionManager::TYPE_NEUTRAL;	// モーションの種類
-	bool bKey = false;	// ボタン押下フラグ
+	bool bMove = false;	// ボタン押下フラグ
+	float VigilanceRot[CONNECT_MAX];
 
 	// 目標地点を設定
 	m_posDest = m_waypoint[m_nPoint];
@@ -1409,14 +1411,14 @@ void CPlayer::AutoMove()
 
 	if (fLength > MOVE_ACCEPTABLE)
 	{// 差分が許容値内に収まるまで目的地に移動する
-		bKey = true;
+		bMove = true;
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_rot.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
 	}
 	else if (m_nBreaktime < 0)
 	{// 移動中
-		bKey = true;
+		bMove = true;
 		m_nBreaktime = PLAYER_BREAKTIME;
 
 		if (m_nPoint == m_nCountPoint)
@@ -1437,18 +1439,34 @@ void CPlayer::AutoMove()
 	}
 	else if (m_nBreaktime == 0 && m_nPoint < m_nCountPoint)
 	{// 休憩終了
-		bKey = true;
+		bMove = true;
 		m_nPoint++;
 	}
 	else if (m_nBreaktime > 0)
 	{// 休憩中
-		bKey = false;
+		bMove = false;
 		m_move = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 停止する
+
+		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[m_nStartNode]; nCntConnect++)
+		{// 繋がってるノードの数だけ回る
+			VigilanceRot[nCntConnect] = atan2f(m_NodeData.pos[m_NodeData.connectIndex[m_nStartNode][nCntConnect]].x - m_pos.x, m_NodeData.pos[m_NodeData.connectIndex[m_nStartNode][nCntConnect]].z - m_pos.z) + D3DX_PI;
+		}
+
+		if (m_nBreaktime == PLAYER_FINALPOINT_BREAKTIME - 1 || m_nBreaktime % (PLAYER_FINALPOINT_BREAKTIME / m_NodeData.connectNum[m_nStartNode]) == 0)
+		{// 繋がってるノードの方向すべてを見る
+			m_rot.y = VigilanceRot[m_nVigilanceCount];
+			m_nVigilanceCount++;
+
+			if (m_nVigilanceCount >= m_NodeData.connectNum[m_nStartNode])
+			{// 上限まで行ったら初期化
+				m_nVigilanceCount = 0;
+			}
+		}
 	}
 
 	if (m_pUpperMotion && m_pLowerMotion)
 	{// モーションクラスが使われている
-		if (bKey)
+		if (bMove)
 		{// 移動している
 			// 移動モーション
 			m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
