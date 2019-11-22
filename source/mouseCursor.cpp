@@ -135,9 +135,9 @@ void CMouseCursor::Update(void)
 	//	CDebugProc::Print("===================\n\n");
 	//}
 
-	//CDebugProc::Print("=====マウス用3Dポリゴン======\n");
-	//CDebugProc::Print("カーソルの座標\n x : %.1f y : %.1f z : %.1f\n", m_pos.x, m_pos.y, m_pos.z);
-	//CDebugProc::Print("============================\n");
+	CDebugProc::Print("=====マウス用3Dポリゴン======\n");
+	CDebugProc::Print("カーソルの座標\n x : %.1f y : %.1f z : %.1f\n", m_pos.x, m_pos.y, m_pos.z);
+	CDebugProc::Print("============================\n");
 	//CDebugProc::Print("配置してるノードの数: %d\n", m_nNodeCounter);
 
 	//CDebugProc::Print("(LSHIFT)接続設定モード: %s\n", m_bConnectMode ? "ON" : "OFF");
@@ -406,14 +406,18 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 	{// カメラがNullじゃない
 	 // スクリーン座標をワールド座標へ変換
 		D3DXVECTOR3 MousePos((float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y, 1);
-		pDevice->GetViewport(&viewport);
+		viewport = CManager::GetCamera()->GetViewport(1);
 		D3DXMatrixIdentity(&matrix);
+		D3DXMATRIX proj, view;
+		CManager::GetCamera()->GetInfo(&viewport, &proj, &view);
 		D3DXVec3Unproject(&MousePos, &MousePos, &viewport, &m_pCamera->GetProjection(), &m_pCamera->GetView(), &matrix);
 
 		// カーソル位置の設定
 		m_pos.x = MousePos.x;
 		m_pos.y = 0.0f;
 		m_pos.z = MousePos.z;
+
+		CDebugProc::Print("スクリーン座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
 
 		//// ズーム倍率に応じたカーソルのサイズ変更
 		//switch ((int)m_pCamera->GetZoom())
@@ -652,7 +656,7 @@ void CMouseCursor::SaveLoad(CInputKeyboard *pKeyboard)
 	}
 }
 /****************************************************************/
-/*					3Dマウスカーソルのクラス					*/
+/*					2Dマウスカーソルのクラス					*/
 /****************************************************************/
 //=============================================================================
 // 生成処理

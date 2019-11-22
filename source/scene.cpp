@@ -206,6 +206,26 @@ void CScene::DrawAll(void)
 	}
 }
 
+//==================================
+// ストラテジー画面のオブジェクトの描画処理
+//==================================
+void CScene::DrawStrategy(void)
+{
+	CScene *pScene = m_apTop[6];	// 先頭から始める
+
+	while (pScene != NULL)
+	{// NULLでない限り回す
+		CScene *pSceneNext = pScene->m_pNext;		// 更新内で削除された時のために値を保持
+
+		if (OBJTYPE_BUTTON == pScene->m_objType || OBJTYPE_BUTTONLINE == pScene->m_objType)
+		{// マウスカーソル
+			if (!pScene->m_bDeath) { pScene->Draw(); }	// 描画処理
+		}
+
+		pScene = pSceneNext;						// 次のオブジェクトを入れる
+	}
+}
+
 //=========================================
 // コンストラクタ
 //=========================================

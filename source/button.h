@@ -9,12 +9,13 @@
 
 #include "scene3D.h"
 #include "scene2D.h"
+#include "line.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define BUTTON_PRIORITY			(7)		// 処理の優先番号
-#define BUTTON_MANAGER_PRIORITY	(7)		// 処理の優先番号
+#define BUTTON_PRIORITY			(6)		// 処理の優先番号
+#define BUTTON_MANAGER_PRIORITY	(6)		// 処理の優先番号
 
 //*****************************************************************************
 // 前方宣言
@@ -78,17 +79,21 @@ public:
 	bool GetSwitch(void) { return m_bSwitch; }
 	void SetSwitch(bool bSwitch) { m_bSwitch = bSwitch; }
 
+	bool GetDisp(void) { return m_bDisp; };
+	void SetDisp(bool bDisp) { m_bDisp = bDisp; };
+
 private:
 	bool m_bSwitch;			// 起動しているかどうか
 	bool m_bInRange;		// 範囲内かどうか
 	bool m_bRelease;		// リリースの判定に必要
 	D3DXVECTOR2 m_size;		// 大きさ
+	bool m_bDisp;			// 表示・非表示
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // ボタンをつなぐ線のクラス
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-class CButtonLine : public CScene3D
+class CButtonLine : public CScene2D
 {
 public:
 	CButtonLine(int nPriority = BUTTON_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_BUTTONLINE);
@@ -99,6 +104,9 @@ public:
 	void Draw(void);
 
 	static CButtonLine *Create(D3DXVECTOR3 start);
+
+	bool GetBoolLink(void) { return m_bLink; };
+	void SetBoolLink(bool bLink) { m_bLink = bLink; };
 
 	void Link(D3DXVECTOR3 end);
 
@@ -125,7 +133,9 @@ public:
 	void ButtonUninit(int nLogic);
 
 	int GetSelectAIType(void) { return m_nSelectAIType; }
-	int GetSelectLogic(int nHierarchy) { return m_aSelectLogic[nHierarchy]; }	// 上から0,1,2…
+	int GetSelectLogic(int nHierarchy) { return m_aSelectLogic[nHierarchy]; }
+
+	bool GetSelectFinish(void) { return m_bFinish; }
 
 private:
 	void AITypeSelect(void);
@@ -134,20 +144,22 @@ private:
 	void ThirdHierarchy(void);
 	void FourthHierarchy(void);
 
-	CButton3D *m_pAIType[2];		// ドローンかワーカーどちらか
-	CButton3D **m_pFirst;			// ロジックツリーの１階層目のボタン
-	CButton3D **m_pSecond;			// ロジックツリーの２階層目のボタン
-	CButton3D **m_pThird;			// ロジックツリーの３階層目のボタン
-	CButton3D **m_pFourth;			// ロジックツリーの４階層目のボタン
+	CButton2D *m_pAIType[2];		// ドローンかワーカーどちらか
+	CButton2D **m_pFirst;			// ロジックツリーの１階層目のボタン
+	CButton2D **m_pSecond;			// ロジックツリーの２階層目のボタン
+	CButton2D **m_pThird;			// ロジックツリーの３階層目のボタン
+	CButton2D **m_pFourth;			// ロジックツリーの４階層目のボタン
 
 	CButtonLine *m_pLine[4];		// ボタン同士をつなぐ線のクラス
 
 	int m_aNumLogic[4];				// ロジックツリーの階層ごとのボタンの数
 
-	int m_nSelectAIType;			// ドローンかワーカーの選択中
-	int m_aSelectLogic[4];			// 階層ごとの選択中ボタン
+	int m_nSelectAIType;			// ドローンかワーカーの選択
+	int m_aSelectLogic[4];			// 階層ごとの選択ボタン
 
-	CScene3D *m_apSelectIcon[4];	// 選択した項目を表示
+	CScene2D *m_apSelectIcon[4];	// 選択した項目を表示
+
+	bool	m_bFinish;				// 選択が終了した
 
 #ifdef _DEBUG
 	bool	m_bDisp;

@@ -92,6 +92,8 @@ private:
 
 	static CCamera *m_pCamera;		// カメラへのポインタ
 	static CNodePointer *m_pNodePointer[NODEPOINT_MAX];	// ノードポリゴンへのポインタ
+
+
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++

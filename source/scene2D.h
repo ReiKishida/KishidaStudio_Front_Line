@@ -26,6 +26,9 @@ public:
 
 	bool Collision(D3DXVECTOR3 pos, float vtxMaxX);			// 当たり判定
 
+	void SetRot(float fRotate);							// 頂点の回転
+	void MoveMatrix(float fPosX, float fPosY);			// 行列を使った移動
+
 	D3DXVECTOR3 GetPos(void) { return m_pos; };				// 位置の取得
 	void SetPos(D3DXVECTOR3 pos);						// 位置の設定
 
@@ -45,6 +48,8 @@ public:
 
 	LPDIRECT3DVERTEXBUFFER9 GetVtxBuff(void) { return m_pVtxBuff; };
 	void SetVtxBuff(LPDIRECT3DVERTEXBUFFER9 vtxBuff) { m_pVtxBuff = vtxBuff; };
+
+	void SetPosVtx(D3DXVECTOR3 *pPosVtx);
 
 	bool GetDisp(void) { return m_bDisp; }
 	void SetDisp(bool bDisp) { m_bDisp = bDisp; }
@@ -66,6 +71,7 @@ private:
 	D3DXCOLOR				m_col;			// 色
 	int						m_nCntFlash;	// 点滅用カウンタ
 	bool					m_bDisp;		// 表示か非表示か
+	D3DXVECTOR3				m_aPosVtx[4];	// 頂点座標
 };
 
 #endif

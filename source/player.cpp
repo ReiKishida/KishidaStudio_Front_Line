@@ -53,14 +53,29 @@
 #define PLAYER_BOTTON_INT			(40.0f)	// ボタンとボタンの間隔
 #define PLAYER_UI_HEIGHT				(630.0f)
 
+// =============================================================
+// AI関係
+// =============================================================
+#define	LOAD_FILENAME		("data/TEXT/NODE_DATA/NodeData.txt")	// マップデータを読み込むファイルの名前
+#define MOVE_ACCEPTABLE		(20.0f)		// 移動字の誤差の許容範囲
+#define POS_ACCEPTABLE		(30.0f)		// 検索時の誤差の許容範囲
+#define MOUSE_ACCEPTABLE	(20.0f)		// マウスの誤差の許容範囲
+#define COLLECT_TIME		(5)			// データの収集を行う間隔(秒)
+#define DATA_REFERENCE_TIME	(5)			// データの参照を行う間隔(回)
+#define PLAYER_BREAKTIME	(1)			// 休憩時間(フレーム)
+#define PLAYER_FINALPOINT_BREAKTIME	(120)	// 最終地点の休憩時間(フレーム)
+
+
 //==================================
 // 静的メンバ変数宣言
 //==================================
+D3DXVECTOR3 CPlayer::m_searchPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+CPlayer *CPlayer::m_pPlayer = NULL;
 
 //==================================
 // 生成処理
 //==================================
-CPlayer* CPlayer::Create(int nPlayerIdx, CMechaSelect::MECHATYPE mecha, D3DXVECTOR3 pos)
+CPlayer* CPlayer::Create(int nPlayerIdx, CMechaSelect::MECHATYPE mecha, D3DXVECTOR3 pos, bool bConnect)
 {
 	CPlayer *pPlayer;
 
@@ -71,6 +86,7 @@ CPlayer* CPlayer::Create(int nPlayerIdx, CMechaSelect::MECHATYPE mecha, D3DXVECT
 		pPlayer->SetPlayerIdx(nPlayerIdx);
 		pPlayer->m_mecha = mecha;
 		pPlayer->m_pos = pos;
+		pPlayer->m_bConnect = bConnect;
 		pPlayer->Init();
 	}
 
@@ -143,6 +159,8 @@ CPlayer::~CPlayer()
 //=========================================
 HRESULT CPlayer::Init(void)
 {
+	srand((unsigned int)time(0));
+
 	// デバイスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
 	LPDIRECT3DDEVICE9 pDevice;
@@ -453,6 +471,47 @@ HRESULT CPlayer::Init(void)
 
 	CAIMecha::Create(this, CAIMecha::MECHATYPE_DRONE, D3DXVECTOR3(0.0f, 70.0f, 0.0f));
 
+	// 数値の初期化==============================================================================
+	m_posDest = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_nPoint = 0;
+	m_nCountPoint = 0;
+	m_nCountCollect = 0;
+	m_nBreaktime = 0;
+	m_nGoalCount = 0;
+	m_nCollectionTimer = COLLECT_TIME * 60;
+	m_bGoal = false;
+	m_bPartSwitch = false;
+	m_bCollectSwitch = false;
+
+	for (int nCntEnemy = 0; nCntEnemy < ENEMY_PLAYER_MAX; nCntEnemy++)
+	{// エネミーの最大値分回る
+		for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+		{// 収集データの最大値分回る
+			m_collectionPos[nCntEnemy][nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		}
+	}
+
+	// マップ関係==============================================================================
+	CPlayer::FileLoad("data/TEXT/NODE_DATA/NodeData.txt");
+
+	// 開始時点のノードの初期化
+	float fMinLength = 100000, fLength = 100000;	// 差分系
+
+													// 開始時点のノードの初期化
+	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	{// ノードの数だけ回る
+		m_waypoint[nCntNode] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	 // 差分を求める
+		fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
+
+		if (fMinLength > fLength)
+		{// 差分の最小値を求める
+			fMinLength = fLength;
+			m_nStartNode = nCntNode;
+		}
+	}
+	m_nEndNode = m_nMovePoint[rand() % 7];
+
 	return S_OK;
 }
 
@@ -517,152 +576,159 @@ void CPlayer::Uninit(void)
 //=========================================
 void CPlayer::Update(void)
 {
-	if (m_Respawn == RESPAWN_START)
-	{	// 戦闘開始 状態
-		Respawn(RESPAWN_START);
-	}
-
-	if (CMenu::GetMode() == CMenu::MODE_MULTI)
+	if (m_bConnect)
 	{
-		if (m_nPlayerIdx != CManager::GetClient()->GetPlayerIdx())
-		{// プレイヤーの番号がクライアント番号と違う場合
-			if (m_pUpperMotion != NULL && m_pLowerMotion != NULL)
-			{// モーションクラスが使われている
-				if (m_pos != m_posOld)
-				{//過去の位置と現在の位置がずれていた場合
-				 //歩きモーションにする
-					m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
-					m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
-				}
-				else
-				{//ニュートラルモーションにする
-					m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-					m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-				}
-			}
-			m_posOld = m_pos;
+		if (m_Respawn == RESPAWN_START)
+		{	// 戦闘開始 状態
+			Respawn(RESPAWN_START);
 		}
-	}
 
-	if (CMenu::GetMode() == CMenu::MODE_MULTI)
-	{
-		if (m_nPlayerIdx == CManager::GetClient()->GetPlayerIdx())
-		{//プレイヤーの番号がクライアント番号と同じ場合
-			m_pReticle->SetDisp(false);
-
-			if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
-			{// アクションパート
-				CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
-				CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
-
-				if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
-				{	// ライフある && 戦闘開始状態の時
-					if (m_nDiff > 0)
-					{	// ダメージ量が0以上の時
-						m_nLife--;
-						m_nDiff--;
-					}
-					if (m_nLife <= 0)
-					{	// ライフがなくなった
-						m_Respawn = RESPAWN_DEATH;		// 行動不能状態
-					}
-
-					// 移動の処理
-					Movement();
-
-					// 弾を撃つ
-					Shoot();
-
-					D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
-					D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
-
-					m_pReticle->SetDisp(true);
-					m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
-
-					for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-					{// パーツモデルの更新
-						m_pModel[nCntModel]->Update();
-					}
-					CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
-				}
-				if (m_Respawn == RESPAWN_DEATH)
-				{	// 行動不能状態
-					Respawn(m_Respawn);		// リスポーン処理
-				}
-				if (m_Respawn == RESPAWN_SELECT)
-				{	// リスポーン選択状態
-					SelectRespawn();				// リスポーン位置選択
-				}
-
-				// 角度の更新
-				Angle();
-
-				// ライフの設定
-				m_pUINum[1]->SetPlayerLife(m_nLife);
-			}
-		}
-	}
-	else if(CMenu::GetMode() == CMenu::MODE_SINGLE)
-	{
-		if (m_nPlayerIdx == 0)
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
 		{
-			m_pReticle->SetDisp(false);
-
-			if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
-			{// アクションパート
-				CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
-				CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
-
-				if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
-				{	// ライフある && 戦闘開始状態の時
-					if (m_nDiff > 0)
-					{	// ダメージ量が0以上の時
-						m_nLife--;
-						m_nDiff--;
+			if (m_nPlayerIdx != CManager::GetClient()->GetPlayerIdx())
+			{// プレイヤーの番号がクライアント番号と違う場合
+				if (m_pUpperMotion != NULL && m_pLowerMotion != NULL)
+				{// モーションクラスが使われている
+					if (m_pos != m_posOld)
+					{//過去の位置と現在の位置がずれていた場合
+					 //歩きモーションにする
+						m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
+						m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
 					}
-					if (m_nLife <= 0)
-					{	// ライフがなくなった
-						m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+					else
+					{//ニュートラルモーションにする
+						m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+						m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
 					}
-
-					// 移動の処理
-					Movement();
-
-					// 弾を撃つ
-					Shoot();
-
-					// 重力
-					//m_move.y -= GRAVITY;
-
-					D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
-					D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
-
-					m_pReticle->SetDisp(true);
-					m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
-
-					for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-					{// パーツモデルの更新
-						m_pModel[nCntModel]->Update();
-					}
-					CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
 				}
-				if (m_Respawn == RESPAWN_DEATH)
-				{	// 行動不能状態
-					Respawn(m_Respawn);		// リスポーン処理
-				}
-				if (m_Respawn == RESPAWN_SELECT)
-				{	// リスポーン選択状態
-					SelectRespawn();				// リスポーン位置選択
-				}
-
-				// 角度の更新
-				Angle();
-
-				// ライフの設定
-				m_pUINum[1]->SetPlayerLife(m_nLife);
+				m_posOld = m_pos;
 			}
 		}
 
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{
+			if (m_nPlayerIdx == CManager::GetClient()->GetPlayerIdx())
+			{//プレイヤーの番号がクライアント番号と同じ場合
+				m_pReticle->SetDisp(false);
+
+				if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+				{// アクションパート
+					CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+					CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
+
+					if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
+					{	// ライフある && 戦闘開始状態の時
+						if (m_nDiff > 0)
+						{	// ダメージ量が0以上の時
+							m_nLife--;
+							m_nDiff--;
+						}
+						if (m_nLife <= 0)
+						{	// ライフがなくなった
+							m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+						}
+
+						// 移動の処理
+						Movement();
+
+						// 弾を撃つ
+						Shoot();
+
+						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
+						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+
+						m_pReticle->SetDisp(true);
+						m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
+
+						for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+						{// パーツモデルの更新
+							m_pModel[nCntModel]->Update();
+						}
+						CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
+					}
+					if (m_Respawn == RESPAWN_DEATH)
+					{	// 行動不能状態
+						Respawn(m_Respawn);		// リスポーン処理
+					}
+					if (m_Respawn == RESPAWN_SELECT)
+					{	// リスポーン選択状態
+						SelectRespawn();				// リスポーン位置選択
+					}
+
+					// 角度の更新
+					Angle();
+
+					// ライフの設定
+					m_pUINum[1]->SetPlayerLife(m_nLife);
+				}
+			}
+		}
+		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+		{
+			if (m_nPlayerIdx == 0)
+			{
+				m_pReticle->SetDisp(false);
+
+				if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+				{// アクションパート
+					CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+					CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
+
+					if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
+					{	// ライフある && 戦闘開始状態の時
+						if (m_nDiff > 0)
+						{	// ダメージ量が0以上の時
+							m_nLife--;
+							m_nDiff--;
+						}
+						if (m_nLife <= 0)
+						{	// ライフがなくなった
+							m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+						}
+
+						// 移動の処理
+						Movement();
+
+						// 弾を撃つ
+						Shoot();
+
+						// 重力
+						//m_move.y -= GRAVITY;
+
+						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
+						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+
+						m_pReticle->SetDisp(true);
+						m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
+
+						for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+						{// パーツモデルの更新
+							m_pModel[nCntModel]->Update();
+						}
+						CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
+					}
+					if (m_Respawn == RESPAWN_DEATH)
+					{	// 行動不能状態
+						Respawn(m_Respawn);		// リスポーン処理
+					}
+					if (m_Respawn == RESPAWN_SELECT)
+					{	// リスポーン選択状態
+						SelectRespawn();				// リスポーン位置選択
+					}
+
+					// 角度の更新
+					Angle();
+
+					// ライフの設定
+					m_pUINum[1]->SetPlayerLife(m_nLife);
+				}
+			}
+
+		}
+	}
+	else
+	{
+		AIUpdate();
 	}
 }
 
@@ -1029,10 +1095,12 @@ void CPlayer::Reload(void)
 		if (m_pUITex[0] == NULL)
 		{	// 弾のところ
 			m_pUITex[0] = CUI_TEXTURE::Create(D3DXVECTOR3(1100.0f, 650.0f, 0.0f), 200.0f, 80.0f, CUI_TEXTURE::UIFLAME_RELOAD);
+			m_pUITex[0]->SetObjType(CScene::OBJTYPE_NONE);
 		}
 		if (m_pUITex[1] == NULL)
 		{	// 画面中央
 			m_pUITex[1] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 200.0f, 80.0f, CUI_TEXTURE::UIFLAME_RELOAD);
+			m_pUITex[1]->SetObjType(CScene::OBJTYPE_NONE);
 		}
 
 		// リロードロゴ点滅
@@ -1293,4 +1361,499 @@ void CPlayer::SelectRespawn(void)
 #ifdef _DEBUG
 	CDebugProc::Print("リスポーン選択中");
 #endif
+}
+
+//=============================================================================
+// ルート探索用ファイルの読み込み
+//=============================================================================
+void CPlayer::FileLoad(char* pFileName)
+{
+	FILE* pFile = NULL;		// ファイルポインタ
+	char ReadText[256];		// 読み込んだ文字列を入れておく
+	char HeadText[256];		// 比較用
+	char DustBox[256];		// 使用しないものを入れておく
+	int nCount = 0;
+	int nCntIndex = 0;
+
+	// 一時データベース
+	std::vector<NodeState> LoadState; LoadState.clear();
+
+	// 初期化
+	NodeState OneState = {};
+
+	// ファイルオープン
+	pFile = fopen(LOAD_FILENAME, "r");
+
+	if (pFile != NULL)
+	{// ファイルが開かれていれば
+		while (strcmp(HeadText, "START_LOAD") != 0)
+		{// "START_LOAD" が読み込まれるまで繰り返し文字列を読み取る
+			fgets(ReadText, sizeof(ReadText), pFile);
+			sscanf(ReadText, "%s", &HeadText);
+		}
+		if (strcmp(HeadText, "START_LOAD") == 0)
+		{// "START_LOAD" が読み取れた場合、処理開始
+			while (strcmp(HeadText, "END_LOAD") != 0)
+			{// "END_LOAD" が読み込まれるまで繰り返し文字列を読み取る
+				fgets(ReadText, sizeof(ReadText), pFile);
+				sscanf(ReadText, "%s", &HeadText);
+
+				if (strcmp(HeadText, "\n") == 0)
+				{// 文字列の先頭が [\n](改行) の場合処理しない
+
+				}
+				else if (strcmp(HeadText, "START_DATA") == 0)
+				{// "START_DATA" が読み取れた場合
+					nCount = 0;
+					while (strcmp(HeadText, "END_DATA") != 0)
+					{// "END_DATA" が読み込まれるまで繰り返し文字列を読み取る
+						fgets(ReadText, sizeof(ReadText), pFile);
+						sscanf(ReadText, "%s", &HeadText);
+
+						if (strcmp(HeadText, "\n") == 0)
+						{// 文字列の先頭が [\n](改行) の場合処理しない
+
+						}
+						else if (strcmp(HeadText, "NODESET") == 0)
+						{// "NODESET" が読み取れた場合
+							while (strcmp(HeadText, "END_NODESET") != 0)
+							{// "END_NODESET" が読み込まれるまで繰り返し文字列を読み取る
+								fgets(ReadText, sizeof(ReadText), pFile);
+								sscanf(ReadText, "%s", &HeadText);
+
+								if (strcmp(HeadText, "\n") == 0)
+								{// 文字列の先頭が [\n](改行) の場合処理しない
+
+								}
+								else if (strcmp(HeadText, "NODE_POS") == 0)	// ノードの位置
+								{
+									sscanf(ReadText, "%s %c %f %f %f",
+										&DustBox, &DustBox,
+										&OneState.pos[nCount].x,
+										&OneState.pos[nCount].y,
+										&OneState.pos[nCount].z);
+								}
+								else if (strcmp(HeadText, "CONNECT_NUM") == 0)	// 接続ノードの数
+								{
+									sscanf(ReadText, "%s %c %d",
+										&DustBox, &DustBox,
+										&OneState.connectNum[nCount]);
+								}
+								else if (strcmp(HeadText, "CONNECT_INDEX") == 0)	// 接続ノードの番号
+								{
+									sscanf(ReadText, "%s %c %d",
+										&DustBox, &DustBox,
+										&OneState.connectIndex[nCount][nCntIndex]);
+									nCntIndex++;
+								}
+							}
+
+							OneState.index[nCount] = nCount;
+							nCntIndex = 0;
+							nCount++;
+						}
+					}
+					OneState.nodeMax = nCount; // ノードの総数
+
+											   // 一つのデータを読み込んだ後,一時データベースに格納
+					LoadState.emplace_back(OneState);
+				}
+			}
+		}
+
+		// ファイルクローズ
+		if (pFile != NULL)
+		{
+			fclose(pFile);
+			pFile = NULL;
+		}
+	}
+
+	m_NodeData = OneState;	// データの代入
+}
+
+//=============================================================================
+//	AI更新処理
+//=============================================================================
+void CPlayer::AIUpdate(void)
+{
+	//CDebugProc::Print("========プレイヤー========\n");
+	//CDebugProc::Print("プレイヤーの位置 x : %.1f / z : %.1f\n", m_pos.x, m_pos.z);
+	//CDebugProc::Print("開始地点 : %d\n", m_nStartNode);
+	//CDebugProc::Print("目的地 : %d\n", m_nEndNode);
+	//CDebugProc::Print("休憩時間: %d\n", m_nBreaktime);
+	//CDebugProc::Print("データ収集カウンター : %d\n", m_nCollectionTimer);
+	//CDebugProc::Print("現在の移動回数: %d\n", m_nPoint);
+	//CDebugProc::Print("目標までの移動回数: %d\n", m_nCountPoint);
+	//CDebugProc::Print("ゴールした回数: %d\n", m_nGoalCount);
+	//CDebugProc::Print("合計値 x : %.1f / z : %.1f\n", m_totalCollectPos.x, m_totalCollectPos.z);
+	//CDebugProc::Print("平均値に最も近いノード[%d] x : %.1f / z : %.1f\n", m_nNearTotalCollectNumber, m_NodeData.pos[m_nNearTotalCollectNumber].x, m_NodeData.pos[m_nNearTotalCollectNumber].z);
+	//CDebugProc::Print("\n");
+
+	//for (int nCntEnemy = 0; nCntEnemy < CEnemy::GetEnemyMax(); nCntEnemy++)
+	//{// エネミーの数分回る
+	//	CDebugProc::Print("エネミー[%d]\n", nCntEnemy);
+	//	for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+	//	{// 収集データの最大値分回る
+	//		CDebugProc::Print("収集したデータ[%d] x : %.1f / z : %.1f\n", nCntCollect, m_collectionPos[nCntEnemy][nCntCollect].x, m_collectionPos[nCntEnemy][nCntCollect].z);
+	//	}
+	//	CDebugProc::Print("\n");
+	//}
+
+	//float fMinLength = 100000, fLength = 100000;	// 差分系
+	//D3DXVECTOR3 total = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 収集したデータの合計値
+	//int nCntEnemyMax = 0;	// エネミー検索時のカウンタ
+	//CScene *pScene = CScene::GetSceneTop(ENEMY_PRIORITY);// プライオリティーチェック
+	//m_nCollectionTimer--;	// データ収集のカウンタを進める
+
+	//						// エネミーのポインタの取得
+	//while (pScene != NULL)
+	//{// シーンのNULLチェック
+	// // UpdateでUninitされてしまう場合　Nextが消える可能性があるからNextにデータを残しておく
+	//	CScene *pSceneNext = pScene->GetSceneNext();
+	//	if (pScene->GetDeath() == false)
+	//	{// 死亡フラグが立っていない
+	//		if (pScene->GetObjType() == OBJTYPE_ENEMY)
+	//		{// タイプがエネミー
+	//			m_pEnemy[nCntEnemyMax] = ((CEnemy*)pScene)->GetEnemy();// エネミーの情報の取得
+	//			nCntEnemyMax++;// カウンタを進める
+	//		}
+	//	}
+	//	// Nextに次のSceneを入れる
+	//	pScene = pSceneNext;
+	//}
+
+	//// データの収集
+	//if (m_nCollectionTimer <= 0)
+	//{// 既定時間ごとにデータ収集
+	// // 位置データの取得
+	//	for (int nCntEnemy = 0; nCntEnemy < nCntEnemyMax; nCntEnemy++)
+	//	{// エネミーの数だけ回る
+	//		if (m_pEnemy[nCntEnemy] != NULL)
+	//		{// エネミーのNULLチェック
+	//			m_collectionPos[nCntEnemy][m_nCountCollect] = m_pEnemy[nCntEnemy]->GetPos();	// 敵の位置情報を取得
+	//			m_nCollectionTimer = COLLECT_TIME * 60;	// 時間を戻す
+	//		}
+	//	}
+
+	//	// 収集したデータを合計する
+	//	for (int nCntEnemy = 0; nCntEnemy < nCntEnemyMax; nCntEnemy++)
+	//	{// エネミーの数だけ回る
+	//		if (m_pEnemy[nCntEnemy] != NULL)
+	//		{// エネミーのNULLチェック
+	//			if (!m_bCollectSwitch)
+	//			{// 1週目
+	//				for (int nCntCollect = 0; nCntCollect < m_nCountCollect + 1; nCntCollect++)
+	//				{// 収集したデータの数だけ回る
+	//					total += m_collectionPos[nCntEnemy][nCntCollect];	// 収集データを合計する
+	//				}
+	//			}
+	//			else
+	//			{// 2週目以降
+	//				for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+	//				{// 収集できるデータの最大数だけ回る
+	//					total += m_collectionPos[nCntEnemy][nCntCollect];	// 収集データを合計する
+	//				}
+	//			}
+	//		}
+	//	}
+
+	//	// 収集データの平均値を取る
+	//	if (!m_bCollectSwitch)
+	//	{// 1週目の場合
+	//		m_totalCollectPos = total / (float)(m_nCountCollect + 1);
+	//	}
+	//	else
+	//	{// 2週目以降
+	//		m_totalCollectPos = total / (float)COLLECTIONDATA_MAX;
+	//	}
+
+	//	// データを収集した回数のカウント
+	//	if (m_nCountCollect < COLLECTIONDATA_MAX - 1)
+	//	{// 収集最大に達していない場合
+	//		m_nCountCollect++;	// 収集カウントを進める
+	//	}
+	//	else
+	//	{// 収集最大に達した場合
+	//		m_bCollectSwitch = true;// 平均値の割り出し方法を切り替える
+	//		m_nCountCollect = 0;	// 収集カウントを最初からにする
+	//	}
+
+	//	// 平均値の最も近いノードを検索する
+	//	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	//	{// ノードの数だけ回る
+	//	 // 差分を求める
+	//		float fLength = (m_NodeData.pos[nCntNode].x - m_totalCollectPos.x) * (m_NodeData.pos[nCntNode].x - m_totalCollectPos.x) + (m_NodeData.pos[nCntNode].z - m_totalCollectPos.z) * (m_NodeData.pos[nCntNode].z - m_totalCollectPos.z);
+
+	//		if (fMinLength > fLength)
+	//		{// 差分の最小値を求める
+	//			fMinLength = fLength;
+	//			m_nNearTotalCollectNumber = nCntNode;
+	//		}
+	//	}
+	//}
+
+	// 自動移動処理
+	CPlayer::AutoMove();
+}
+
+//=============================================================================
+//	自動移動処理
+//=============================================================================
+void CPlayer::AutoMove()
+{
+	CMotionManager::TYPE type = CMotionManager::TYPE_NEUTRAL;	// モーションの種類
+	bool bMoveKey = false;	// 移動キー押下フラグ
+
+							// 目標地点を設定
+	m_posDest = m_waypoint[m_nPoint];
+
+	// 目的との差分を出す
+	float fLength = (m_pos.x - m_posDest.x) * (m_pos.x - m_posDest.x) + (m_pos.z - m_posDest.z) * (m_pos.z - m_posDest.z);
+	m_nBreaktime--;
+
+	if (fLength > MOVE_ACCEPTABLE)
+	{// 差分が許容値内に収まるまで目的地に移動する
+		bMoveKey = true;
+		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
+		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
+		m_rot.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
+	}
+	else if (m_nBreaktime < 0)
+	{// 移動後休憩
+		bMoveKey = false;
+		m_nBreaktime = PLAYER_BREAKTIME;
+
+		if (m_nPoint == m_nCountPoint)
+		{// 最終目標地点に到着したら次の目的地を探す
+			if (m_nGoalCount != 0)
+			{// 最初以外に最終地点用の休憩時間を与える
+				m_nBreaktime = PLAYER_FINALPOINT_BREAKTIME;
+			}
+			m_nPoint = 0;		// 現在の移動回数の初期化
+			m_nCountPoint = -1;	// 目的までの移動回数の初期化
+			m_nGoalCount++;		// ゴールした回数を増やす
+
+								// ポイント検索
+			CPlayer::NodeSearch();
+			// ポイントへの経路探索
+			CPlayer::RootSearch();
+		}
+	}
+	else if (m_nBreaktime == 0 && m_nPoint < m_nCountPoint)
+	{// 休憩終了
+		m_nPoint++;
+	}
+	else if (m_nBreaktime > 0)
+	{// 休憩中
+		m_move = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 停止する
+	}
+
+	// 位置の更新
+	m_pos.x += m_move.x;
+	m_pos.z += m_move.z;
+}
+
+//=============================================================================
+//	ノード検索処理
+//=============================================================================
+void CPlayer::NodeSearch()
+{
+	float fMinLength = 100000, fLength = 100000;	// 差分系
+	int nNearEnemyNumber = 0;	// 最も近い敵の番号
+	int nMovePoint = 0;
+
+	// 目的の設定
+	//if (m_nGoalCount % DATA_REFERENCE_TIME == 0)
+	//{// 定期的に収集したデータに基づいた移動を行う
+	//	m_nNewEndNode = m_nNearTotalCollectNumber;
+	//}
+	//else
+	//{// 新規目的地を指定地点からランダムで決定する
+		do
+		{// 同じ地点だった場合はもう1度決める
+			nMovePoint = m_nMovePoint[rand() % RANDOM_MOVE_POINT];
+		} while (m_nNewEndNode == nMovePoint);
+		m_nNewEndNode = nMovePoint;
+	//}
+
+	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	{// ノードの数だけ回る
+		if (m_NodeData.pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
+			&& m_NodeData.pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
+			&& m_NodeData.pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
+			&& m_NodeData.pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
+		{// プレイヤーの位置が許容範囲内
+			m_nStartNode = m_nEndNode;	// 前回の目的地を開始地点として登録
+		}
+	}
+
+	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	{// ノードの数だけ回る
+		if (m_NodeData.pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
+			&& m_NodeData.pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
+			&& m_NodeData.pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
+			&& m_NodeData.pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
+		{// プレイヤーの位置が目的地の許容範囲内
+			if (m_NodeData.pos[nCntNode] != m_NodeData.pos[m_nNewEndNode])
+			{// 新規目的地が前回の目的地と同じじゃない場合
+				m_nEndNode = m_nNewEndNode;	// 目的地を登録
+			}
+		}
+	}
+
+	//// 自分に最も近いエネミーを探す
+	//for (int nCntEnemy = 0; nCntEnemy < CEnemy::GetEnemyMax(); nCntEnemy++)
+	//{// エネミーの数だけ回る
+	//	if (m_pEnemy[nCntEnemy] != NULL)
+	//	{// エネミーのNULLチェック
+	//	 // 全てのエネミーとプレイヤーとの差分を出す
+	//		fLength = (m_pEnemy[nCntEnemy]->GetPos().x - m_pos.x) * (m_pEnemy[nCntEnemy]->GetPos().x - m_pos.x) + (m_pEnemy[nCntEnemy]->GetPos().z - m_pos.z) * (m_pEnemy[nCntEnemy]->GetPos().z - m_pos.z);
+
+	//		if (fMinLength > fLength)
+	//		{// 差分の最小値を求める
+	//			fMinLength = fLength;
+	//			nNearEnemyNumber = nCntEnemy;
+	//		}
+	//	}
+	//}
+
+	//for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	//{// ノードの数だけ回る
+	//	if (m_pEnemy[nNearEnemyNumber] != NULL)
+	//	{// エネミーのNULLチェック
+	//		if (m_NodeData.pos[nCntNode].x + POS_ACCEPTABLE > m_pEnemy[nNearEnemyNumber]->GetPos().x
+	//			&& m_NodeData.pos[nCntNode].x - POS_ACCEPTABLE < m_pEnemy[nNearEnemyNumber]->GetPos().x
+	//			&& m_NodeData.pos[nCntNode].z + POS_ACCEPTABLE > m_pEnemy[nNearEnemyNumber]->GetPos().z
+	//			&& m_NodeData.pos[nCntNode].z - POS_ACCEPTABLE < m_pEnemy[nNearEnemyNumber]->GetPos().z)
+	//		{// 最も近い敵の位置が許容範囲内
+	//			m_nEndNode = nCntNode;
+	//		}
+	//	}
+	//}
+}
+
+//=============================================================================
+//	ルート検索処理
+//=============================================================================
+void CPlayer::RootSearch()
+{
+	Node node[NODEPOINT_MAX];	// ノードの情報
+	float weight[NODEPOINT_MAX];	// 各エッジのコスト
+	int nCntWeight = 0;		// コストのカウンタ
+	std::vector<int> path;	// 最短経路の情報を保持するvector
+
+							//======= エッジコストの算出 =========================================================================
+	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++, nCntWeight++)
+	{// ノードの数だけ回る
+		weight[nCntWeight] = sqrt((m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) * (m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) + (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z) * (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z));
+	}
+
+	//======= エッジ追加 =========================================================================
+	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	{// ノードの数だけ回る
+		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[nCntNode]; nCntConnect++)
+		{// 繋がってるノードの数だけ回る
+			CPlayer::AddEdge(nCntNode, m_NodeData.connectIndex[nCntNode][nCntConnect], weight[nCntNode], node);
+		}
+	}
+
+	//======= 最短経路を調べる =========================================================================
+	CPlayer::Dijkstra(m_NodeData.nodeMax, m_nStartNode, m_nEndNode, node);
+
+	for (int nCntNode = m_nEndNode; nCntNode != m_nStartNode; nCntNode = node[nCntNode].from)
+	{// 最短経路をゴールから順にスタートまでたどる
+		path.push_back(nCntNode);
+	}
+	path.push_back(m_nStartNode);
+
+	//======= 最短経路の出力 =========================================================================
+	for (int nCntNode = path.size() - 1; nCntNode >= 0; nCntNode--)
+	{
+		if (m_nCountPoint < nCntNode)
+		{// 最大値を代入
+		 // 目的までの移動回数を取得する
+			m_nCountPoint = nCntNode;
+		}
+	}
+
+	//======= 目標地点の設定 =========================================================================
+	for (int nCntNodeMax = 0; nCntNodeMax < m_NodeData.nodeMax; )
+	{// ノードの数だけ回る
+		for (int nCntNode = path.size() - 1; nCntNode >= 0; nCntNode--, nCntNodeMax++)
+		{
+			m_waypoint[nCntNodeMax] = m_NodeData.pos[path[nCntNode]];
+		}
+	}
+}
+
+//=============================================================================
+// エッジ追加処理
+//=============================================================================
+void CPlayer::AddEdge(int first, int second, float weight, Node *node)
+{
+	// ノードuはノードvとつながっている情報を入れる
+	node[second].to.push_back(first);
+	// ノードuとノードvのエッジの重みを入れる
+	node[second].cost.push_back(weight);
+}
+
+//=============================================================================
+// ダイクストラ法
+//=============================================================================
+void CPlayer::Dijkstra(int nodeMax, int start, int end, Node *node)
+{
+	// 変数の初期化
+	for (int nCntNode = 0; nCntNode < nodeMax; nCntNode++)
+	{
+		node[nCntNode].done = false;
+		node[nCntNode].minCost = -1;
+	}
+
+	node[start].minCost = 0;	// スタートノードまでのコストは0
+	while (1)
+	{
+		int doneNode = -1;	// 最新の確定したノード番号(-1はNULLのかわり)
+		for (int nCntNode = 0; nCntNode < nodeMax; nCntNode++)
+		{
+			if (node[nCntNode].done == true)
+			{// ノードiが確定しているときcontinue
+				continue;
+			}
+
+			if (node[nCntNode].minCost < 0)
+			{// ノードiまでの現時点での最小コストが不明のとき
+				continue;
+			}
+
+			// 確定したノード番号が-1かノードiの現時点の最小コストが小さいとき
+			// 確定ノード番号を更新する
+			if (doneNode < 0 || node[nCntNode].minCost < node[doneNode].minCost)
+			{
+				doneNode = nCntNode;
+			}
+		}
+
+		if (doneNode == -1)
+		{
+			break;	// すべてのノードが確定したら終了
+		}
+
+		node[doneNode].done = true;	// ノードを確定させる
+
+		for (int nCntNodeSize = 0; nCntNodeSize < (int)node[doneNode].to.size(); nCntNodeSize++)
+		{
+			int to = node[doneNode].to[nCntNodeSize];
+			float cost = node[doneNode].minCost + node[doneNode].cost[nCntNodeSize];
+
+			// ノードtoはまだ訪れていないノード
+			// またはノードtoへより小さいコストの経路だったら
+			// ノードtoの最小コストを更新
+			if (node[to].minCost < 0.0f || cost < node[to].minCost)
+			{
+				node[to].minCost = cost;
+				node[to].from = doneNode;
+			}
+		}
+	}
 }

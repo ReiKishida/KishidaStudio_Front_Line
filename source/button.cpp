@@ -18,9 +18,14 @@
 // マクロ定義
 //*****************************************************************************
 #define BUTTON_UNSELECTED_COLOR		(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f))		// 非選択時の色
-#define BUTTON_LOGIC_WIDTH			(35.0f)									// ロジックツリーボタンの幅
-#define BUTTON_LOGIC_HEIGHT			(35.0f)									// ロジックツリーボタンの高さ
+#define BUTTON_LOGIC_WIDTH			(80.0f)									// ロジックツリーボタンの幅
+#define BUTTON_LOGIC_HEIGHT			(80.0f)									// ロジックツリーボタンの高さ
 #define BUTTON_LINE_THICK			(2.5f)									// 線の太さ
+
+#define BUTTON_NUM_FIRST_ICON		(2)
+#define BUTTON_NUM_SECOND_ICON		(2)
+#define BUTTON_NUM_THIRD_ICON		(2)
+#define BUTTON_NUM_FORTH_ICON		(2)
 
 //==================================
 // 静的メンバ変数宣言
@@ -214,6 +219,7 @@ CButton3D::CButton3D(int nPriority, CScene::OBJTYPE objType) : CScene3D(nPriorit
 	m_bSwitch = false;
 	m_bRelease = false;
 	m_size = D3DXVECTOR2(0.0f, 0.0f);
+	m_bDisp = true;
 }
 
 //=========================================
@@ -257,6 +263,9 @@ void CButton3D::Update(void)
 //=========================================
 void CButton3D::Draw(void)
 {
+	// 非表示の場合描画しない
+	if (!m_bDisp) { return; }
+
 	// デバイスの取得
 	LPDIRECT3DDEVICE9 pDevice = CManager::GetRenderer()->GetDevice();
 
@@ -384,9 +393,8 @@ CButtonLine* CButtonLine::Create(D3DXVECTOR3 start)
 //=========================================
 // コンストラクタ
 //=========================================
-CButtonLine::CButtonLine(int nPriority, CScene::OBJTYPE objType) : CScene3D(nPriority, objType)
+CButtonLine::CButtonLine(int nPriority, CScene::OBJTYPE objType) : CScene2D(nPriority, objType)
 {
-	m_start = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_bLink = false;
 }
 
@@ -403,10 +411,11 @@ CButtonLine::~CButtonLine()
 HRESULT CButtonLine::Init(D3DXVECTOR3 start)
 {
 	// ポリゴンの設定
-	CScene3D::Init();
+	CScene2D::Init();
 
 	// 位置の設定
-	CScene3D::SetPos(start);
+	CScene2D::SetPos(start);
+
 	m_start = start;
 
 	return S_OK;
@@ -417,7 +426,7 @@ HRESULT CButtonLine::Init(D3DXVECTOR3 start)
 //=========================================
 void CButtonLine::Uninit(void)
 {
-	CScene3D::Uninit();
+	CScene2D::Uninit();
 }
 
 //=========================================
@@ -425,41 +434,29 @@ void CButtonLine::Uninit(void)
 //=========================================
 void CButtonLine::Update(void)
 {
-	if (m_bLink) { return; }	// 接続しているときは抜ける
+	// 接続しているときは抜ける
+	if (m_bLink) { return; }
 
+	// マウスカーソルの位置を取得
 	D3DXVECTOR3 cursor = CManager::GetGame()->GetMouseCursor()->GetPos();
 
 	// カーソル位置への角度を計算
-	float fAngle = atan2f(cursor.x - m_start.x, cursor.z - m_start.z);
+	float fAngle = atan2f(cursor.x - m_start.x, cursor.y - m_start.y);
 
 	// 開始位置からカーソル位置への距離を計算
-	float fLength = sqrtf(powf(cursor.x - m_start.x, 2.0f) + powf(cursor.z - m_start.z, 2.0f));
+	float fLength = sqrtf(powf(cursor.x - m_start.x, 2.0f) + powf(cursor.y - m_start.y, 2.0f));
 
-	/*						*/
-	/*		長さの設定		*/
-	/*						*/
-	// 頂点情報の取得
-	LPDIRECT3DVERTEXBUFFER9 pVtxBuff = CScene3D::GetVtxBuff();
+	D3DXVECTOR3 posVtx[4];
+	posVtx[0] = D3DXVECTOR3(-BUTTON_LINE_THICK, 0.0f, 0.0f);
+	posVtx[1] = D3DXVECTOR3(BUTTON_LINE_THICK, 0.0f, 0.0f);
+	posVtx[2] = D3DXVECTOR3(-BUTTON_LINE_THICK, fLength, 0.0f);
+	posVtx[3] = D3DXVECTOR3(BUTTON_LINE_THICK, fLength, 0.0f);
 
-	// 頂点情報を設定
-	VERTEX_3D *pVtx;
-
-	//頂点バッファをロックし、頂点データへのポインタを取得
-	pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
-
-	pVtx[0].pos = D3DXVECTOR3(-BUTTON_LINE_THICK, 0.0f, fLength);
-	pVtx[1].pos = D3DXVECTOR3(BUTTON_LINE_THICK, 0.0f, fLength);
-	pVtx[2].pos = D3DXVECTOR3(-BUTTON_LINE_THICK, 0.0f, 0.0f);
-	pVtx[3].pos = D3DXVECTOR3(BUTTON_LINE_THICK, 0.0f, 0.0f);
-
-	//頂点バッファをアンロック
-	pVtxBuff->Unlock();
-
-	// 頂点情報の設定
-	CScene3D::SetVtxBuff(pVtxBuff);
+	// 頂点座標の設定
+	CScene2D::SetPosVtx(posVtx);
 
 	// 角度の設定
-	CScene3D::SetRot(D3DXVECTOR3(0.0f, fAngle, 0.0f));
+	CScene2D::SetRot(-fAngle);
 }
 
 //=========================================
@@ -467,26 +464,7 @@ void CButtonLine::Update(void)
 //=========================================
 void CButtonLine::Draw(void)
 {
-	// デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice = CManager::GetRenderer()->GetDevice();
-
-	// ライティングOFF
-	pDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
-
-	// ZテストOFF
-	pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-	pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
-
-	CScene3D::Draw();
-
-	// ZテストON
-	pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-	pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
-
-	// ライティングON
-	pDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
+	CScene2D::Draw();
 }
 
 //=========================================
@@ -497,37 +475,22 @@ void CButtonLine::Link(D3DXVECTOR3 end)
 	m_bLink = true;
 
 	// カーソル位置への角度を計算
-	float fAngle = atan2f(end.x - m_start.x, end.z - m_start.z);
+	float fAngle = atan2f(end.x - m_start.x, end.y - m_start.y);
 
 	// 開始位置からカーソル位置への距離を計算
-	float fLength = sqrtf(powf(end.x - m_start.x, 2.0f) + powf(end.z - m_start.z, 2.0f));
+	float fLength = sqrtf(powf(end.x - m_start.x, 2.0f) + powf(end.y - m_start.y, 2.0f));
 
-	/*						*/
-	/*		長さの設定		*/
-	/*						*/
-	// 頂点情報の取得
-	LPDIRECT3DVERTEXBUFFER9 pVtxBuff = CScene3D::GetVtxBuff();
+	D3DXVECTOR3 posVtx[4];
+	posVtx[0] = D3DXVECTOR3(-BUTTON_LINE_THICK, 0.0f, 0.0f);
+	posVtx[1] = D3DXVECTOR3(BUTTON_LINE_THICK, 0.0f, 0.0f);
+	posVtx[2] = D3DXVECTOR3(-BUTTON_LINE_THICK, fLength, 0.0f);
+	posVtx[3] = D3DXVECTOR3(BUTTON_LINE_THICK, fLength, 0.0f);
 
-	// 頂点情報を設定
-	VERTEX_3D *pVtx;
-
-	//頂点バッファをロックし、頂点データへのポインタを取得
-	pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
-
-	pVtx[0].pos = D3DXVECTOR3(-BUTTON_LINE_THICK, 0.0f, fLength);
-	pVtx[1].pos = D3DXVECTOR3(BUTTON_LINE_THICK, 0.0f, fLength);
-	pVtx[2].pos = D3DXVECTOR3(-BUTTON_LINE_THICK, 0.0f, 0.0f);
-	pVtx[3].pos = D3DXVECTOR3(BUTTON_LINE_THICK, 0.0f, 0.0f);
-
-	//頂点バッファをアンロック
-	pVtxBuff->Unlock();
-
-	// 頂点情報の設定
-	CScene3D::SetVtxBuff(pVtxBuff);
+	// 頂点座標の設定
+	CScene2D::SetPosVtx(posVtx);
 
 	// 角度の設定
-	CScene3D::SetRot(D3DXVECTOR3(0.0f, fAngle, 0.0f));
-
+	CScene2D::SetRot(-fAngle);
 }
 
 /****************************************************************/
@@ -564,6 +527,7 @@ CButtonManagerStrategy::CButtonManagerStrategy(int nPriority, CScene::OBJTYPE ob
 	m_pThird = NULL;
 	m_pFourth = NULL;
 	m_nSelectAIType = -1;
+	m_bFinish = false;
 
 	for (int nCntHierarchy = 0; nCntHierarchy < 4; nCntHierarchy++)
 	{
@@ -573,9 +537,7 @@ CButtonManagerStrategy::CButtonManagerStrategy(int nPriority, CScene::OBJTYPE ob
 		m_apSelectIcon[nCntHierarchy] = NULL;
 	}
 
-#ifdef _DEBUG
-	m_bDisp = true;
-#endif
+	m_bDisp = false;
 }
 
 //=========================================
@@ -591,8 +553,8 @@ CButtonManagerStrategy::~CButtonManagerStrategy()
 HRESULT CButtonManagerStrategy::Init(void)
 {
 	// ドローンとウォーカーのボタンの生成
-	m_pAIType[0] = CButton3D::Create(D3DXVECTOR3(-235.0f, 0.0f, 0.0f), 80.0f, 80.0f);
-	m_pAIType[1] = CButton3D::Create(D3DXVECTOR3(-235.0f, 0.0f, -230.0f), 80.0f, 80.0f);
+	m_pAIType[0] = CButton2D::Create(D3DXVECTOR3(405.0f, 370.0f, 0.0f), 150.0f, 150.0f);
+	m_pAIType[1] = CButton2D::Create(D3DXVECTOR3(405.0f, 570.0f, 0.0f), 150.0f, 150.0f);
 
 	m_pAIType[0]->SetColor(BUTTON_UNSELECTED_COLOR);
 	m_pAIType[1]->SetColor(BUTTON_UNSELECTED_COLOR);
@@ -705,42 +667,30 @@ void CButtonManagerStrategy::Uninit(void)
 //=========================================
 void CButtonManagerStrategy::Update(void)
 {
-#ifdef _DEBUG
-	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
-
-	if (pKeyboard->GetTrigger(DIK_X))
+	if (!m_bFinish)
 	{
-		m_bDisp = m_bDisp ? false : true;
-	}
+		// ドローンかウォーカーの選択処理
+		AITypeSelect();
 
-	if (!m_bDisp)
-	{
-		m_pAIType[0]->SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.0f));
-		m_pAIType[1]->SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.0f));
-	}
-#endif
+		if (NULL != m_pFirst)
+		{// １階層目の処理
+			FirstHierarchy();
+		}
 
-	// ドローンかウォーカーの選択処理
-	AITypeSelect();
+		if (NULL != m_pSecond)
+		{// ２階層目の処理
+			SecondHierarchy();
+		}
 
-	if (NULL != m_pFirst)
-	{// １階層目の処理
-		FirstHierarchy();
-	}
+		if (NULL != m_pThird)
+		{// ３階層目の処理
+			ThirdHierarchy();
+		}
 
-	if (NULL != m_pSecond)
-	{// ２階層目の処理
-		SecondHierarchy();
-	}
-
-	if (NULL != m_pThird)
-	{// ３階層目の処理
-		ThirdHierarchy();
-	}
-
-	if (NULL != m_pFourth)
-	{// ４階層目の処理
-		FourthHierarchy();
+		if (NULL != m_pFourth)
+		{// ４階層目の処理
+			FourthHierarchy();
+		}
 	}
 
 	CDebugProc::Print("選択ボタン：%d %d %d %d", m_aSelectLogic[0], m_aSelectLogic[1], m_aSelectLogic[2], m_aSelectLogic[3]);
@@ -773,16 +723,19 @@ void CButtonManagerStrategy::AITypeSelect(void)
 					m_nSelectAIType = nCntAIType;
 
 					m_aNumLogic[0] = 2;		// １階層目のボタンの数
-					m_pFirst = new CButton3D*[m_aNumLogic[0]];
+					m_pFirst = new CButton2D*[m_aNumLogic[0]];
 					for (int nCntButton = 0; nCntButton < m_aNumLogic[0]; nCntButton++)
 					{// ボタンの生成
-						float posZ = (-110.0f - (nCntButton * (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[0]))) + ((BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[0]) * (m_aNumLogic[0] / 2.0f)) - (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[0]) / 2.0f;
-						m_pFirst[nCntButton] = CButton3D::Create(D3DXVECTOR3(-20.0f, 0.0f, posZ), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
-						m_pFirst[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntButton)));
+						float posY = (480.0f + (nCntButton * BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[0]))) - (BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[0]) * (m_aNumLogic[0] / 2.0f)) + BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[0]) / 2.0f;
+						m_pFirst[nCntButton] = CButton2D::Create(D3DXVECTOR3(580.0f, posY, 0.0f), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+						m_pFirst[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
 					}
 
+					m_pFirst[0]->SetTex(0, 1, 17);
+					m_pFirst[1]->SetTex(10, 1, 17);
+
 					// 線の生成
-					if (NULL == m_pLine[0]) { m_pLine[0] = CButtonLine::Create(m_pAIType[m_nSelectAIType]->GetPos() + D3DXVECTOR3(m_pAIType[m_nSelectAIType]->GetWidth() - BUTTON_LINE_THICK, 0.0f, 0.0f)); }
+					if (NULL == m_pLine[0]) { m_pLine[0] = CButtonLine::Create(m_pAIType[nCntAIType]->GetPos() + D3DXVECTOR3(m_pAIType[m_nSelectAIType]->GetWidth() * 0.5f, 0.0f, 0.0f)); }
 				}
 				else
 				{// 停止時
@@ -809,47 +762,48 @@ void CButtonManagerStrategy::FirstHierarchy(void)
 				if (m_pFirst[nCntFirst]->GetSwitch())
 				{// 起動時
 					m_aSelectLogic[0] = nCntFirst;
-					m_pLine[0]->Link(m_pFirst[nCntFirst]->GetPos() + D3DXVECTOR3(-m_pFirst[nCntFirst]->GetWidth(), 0.0f, 0.0f));
+					m_pLine[0]->Link(m_pFirst[nCntFirst]->GetPos() + D3DXVECTOR3(-m_pFirst[nCntFirst]->GetWidth() * 0.5f, 0.0f, 0.0f));
 
 					if (0 == nCntFirst)
 					{// 0番目のボタン
 						m_aNumLogic[1] = 2;		// ２階層目のボタンの数
-						m_pSecond = new CButton3D*[m_aNumLogic[1]];
+						m_pSecond = new CButton2D*[m_aNumLogic[1]];
 						for (int nCntButton = 0; nCntButton < m_aNumLogic[1]; nCntButton++)
 						{// ボタンの生成
-							float posZ = (-110.0f - (nCntButton * (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[1]))) + ((BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[1]) * (m_aNumLogic[1] / 2.0f)) - (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[1]) / 2.0f;
-							m_pSecond[nCntButton] = CButton3D::Create(D3DXVECTOR3(160.0f, 0.0f, posZ), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
-							m_pSecond[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntButton)));
+							float posY = (480.0f + (nCntButton * BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[1]))) - (BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[1]) * (m_aNumLogic[1] / 2.0f)) + BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[1]) / 2.0f;
+							m_pSecond[nCntButton] = CButton2D::Create(D3DXVECTOR3(786.0f, posY, 0.0f), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+							m_pSecond[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+							m_pSecond[nCntButton]->SetTex(nCntButton + 1, 1, 17);
 						}
 					}
 					else
 					{// 1番目のボタン
 						m_aNumLogic[1] = 2;		// ２階層目のボタンの数
-						m_pSecond = new CButton3D*[m_aNumLogic[1]];
+						m_pSecond = new CButton2D*[m_aNumLogic[1]];
 						for (int nCntButton = 0; nCntButton < m_aNumLogic[1]; nCntButton++)
 						{// ボタンの生成
-							float posZ = (-110.0f - (nCntButton * (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[1]))) + ((BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[1]) * (m_aNumLogic[1] / 2.0f)) - (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[1]) / 2.0f;
-							m_pSecond[nCntButton] = CButton3D::Create(D3DXVECTOR3(250.0f, 0.0f, posZ), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
-							m_pSecond[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntButton)));
+							float posY = (480.0f + (nCntButton * BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[1]))) - (BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[1]) * (m_aNumLogic[1] / 2.0f)) + BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[1]) / 2.0f;
+							m_pSecond[nCntButton] = CButton2D::Create(D3DXVECTOR3(890.0f, posY, 0.0f), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+							m_pSecond[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+							m_pSecond[nCntButton]->SetTex(nCntButton + 11, 1, 17);
 						}
 					}
 
 					// 線の生成
-					if (NULL == m_pLine[1]) { m_pLine[1] = CButtonLine::Create(m_pFirst[m_aSelectLogic[0]]->GetPos() + D3DXVECTOR3(m_pFirst[m_aSelectLogic[0]]->GetWidth() - BUTTON_LINE_THICK, 0.0f, 0.0f)); }
+					if (NULL == m_pLine[1]) { m_pLine[1] = CButtonLine::Create(m_pFirst[m_aSelectLogic[0]]->GetPos() + D3DXVECTOR3(m_pFirst[m_aSelectLogic[0]]->GetWidth() * 0.5f, 0.0f, 0.0f)); }
 
 					if(NULL == m_apSelectIcon[0])
 					{// 選択した項目の生成
-						m_apSelectIcon[0] = CScene3D::Create();
+						m_apSelectIcon[0] = CScene2D::Create();
 						m_apSelectIcon[0]->SwapPriority(6);
-						m_apSelectIcon[0]->SetPos(D3DXVECTOR3(m_pFirst[0]->GetPos().x, 0.0f, 170.0f));
-						m_apSelectIcon[0]->SetSize(D3DXVECTOR3(BUTTON_LOGIC_WIDTH, 0.0f, BUTTON_LOGIC_HEIGHT));
-						m_apSelectIcon[0]->SetBoolLighting(false);
-						m_apSelectIcon[0]->SetBoolZtest(false);
-						m_apSelectIcon[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntFirst)));
+						m_apSelectIcon[0]->SetPos(D3DXVECTOR3(m_pFirst[0]->GetPos().x, 190.0f, 0.0f));
+						m_apSelectIcon[0]->SetSize(BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+						m_apSelectIcon[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+						m_apSelectIcon[0]->SetTex(m_aSelectLogic[0] * 10, 1, 17);
 					}
 					else
 					{
-						m_apSelectIcon[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntFirst)));
+						m_apSelectIcon[0]->SetTex(m_aSelectLogic[0] * 10, 1, 17);
 					}
 				}
 				else
@@ -885,61 +839,63 @@ void CButtonManagerStrategy::SecondHierarchy(void)
 				if (m_pSecond[nCntSecond]->GetSwitch())
 				{// 起動時
 					m_aSelectLogic[1] = nCntSecond;
-					m_pLine[1]->Link(m_pSecond[nCntSecond]->GetPos() + D3DXVECTOR3(-m_pSecond[nCntSecond]->GetWidth(), 0.0f, 0.0f));
+					m_pLine[1]->Link(m_pSecond[nCntSecond]->GetPos() + D3DXVECTOR3(-m_pSecond[nCntSecond]->GetWidth() * 0.5f, 0.0f, 0.0f));
 
 					if (0 == m_aSelectLogic[0])
 					{// 移動ロジックツリー
 						if (0 == nCntSecond)
 						{// 0番目のボタン
 							m_aNumLogic[2] = 3;		// ３階層目のボタンの数
-							m_pThird = new CButton3D*[m_aNumLogic[2]];
+							m_pThird = new CButton2D*[m_aNumLogic[2]];
 							for (int nCntButton = 0; nCntButton < m_aNumLogic[2]; nCntButton++)
 							{// ボタンの生成
-								float posZ = (-110.0f - (nCntButton * (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]))) + ((BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]) * (m_aNumLogic[2] / 2.0f)) - (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]) / 2.0f;
-								m_pThird[nCntButton] = CButton3D::Create(D3DXVECTOR3(340.0f, 0.0f, posZ), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
-								m_pThird[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntButton)));
+								float posY = (480.0f + (nCntButton * BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]))) - (BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]) * (m_aNumLogic[2] / 2.0f)) + BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]) / 2.0f;
+								m_pThird[nCntButton] = CButton2D::Create(D3DXVECTOR3(992.0f, posY, 0.0f), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+								m_pThird[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+								m_pThird[nCntButton]->SetTex(nCntButton + 3, 1, 17);
 							}
 						}
 						else
 						{// 1番目のボタン
 							m_aNumLogic[2] = 2;		// ３階層目のボタンの数
-							m_pThird = new CButton3D*[m_aNumLogic[2]];
+							m_pThird = new CButton2D*[m_aNumLogic[2]];
 							for (int nCntButton = 0; nCntButton < m_aNumLogic[2]; nCntButton++)
 							{// ボタンの生成
-								float posZ = (-110.0f - (nCntButton * (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]))) + ((BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]) * (m_aNumLogic[2] / 2.0f)) - (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]) / 2.0f;
-								m_pThird[nCntButton] = CButton3D::Create(D3DXVECTOR3(340.0f, 0.0f, posZ), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
-								m_pThird[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntButton)));
+								float posY = (480.0f + (nCntButton * BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]))) - (BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]) * (m_aNumLogic[2] / 2.0f)) + BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]) / 2.0f;
+								m_pThird[nCntButton] = CButton2D::Create(D3DXVECTOR3(992.0f, posY, 0.0f), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+								m_pThird[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+								m_pThird[nCntButton]->SetTex(nCntButton + 6, 1, 17);
 							}
 						}
 					}
 					else if (1 == m_aSelectLogic[0])
 					{// 待機ロジックツリー
 						m_aNumLogic[2] = 2;		// ３階層目のボタンの数
-						m_pThird = new CButton3D*[m_aNumLogic[2]];
+						m_pThird = new CButton2D*[m_aNumLogic[2]];
 						for (int nCntButton = 0; nCntButton < m_aNumLogic[2]; nCntButton++)
 						{// ボタンの生成
-							float posZ = (-110.0f - (nCntButton * (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]))) + ((BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]) * (m_aNumLogic[2] / 2.0f)) - (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[2]) / 2.0f;
-							m_pThird[nCntButton] = CButton3D::Create(D3DXVECTOR3(520.0f, 0.0f, posZ), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
-							m_pThird[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntButton)));
+							float posY = (480.0f + (nCntButton * BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]))) - (BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]) * (m_aNumLogic[2] / 2.0f)) + BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[2]) / 2.0f;
+							m_pThird[nCntButton] = CButton2D::Create(D3DXVECTOR3(1200.0f, posY, 0.0f), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+							m_pThird[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+							m_pThird[nCntButton]->SetTex(nCntButton + 13 + (m_aSelectLogic[1] * 2), 1, 17);
 						}
 					}
 
 					// 線の生成
-					if (NULL == m_pLine[2]) { m_pLine[2] = CButtonLine::Create(m_pSecond[m_aSelectLogic[1]]->GetPos() + D3DXVECTOR3(m_pSecond[m_aSelectLogic[1]]->GetWidth() - BUTTON_LINE_THICK, 0.0f, 0.0f)); }
+					if (NULL == m_pLine[2]) { m_pLine[2] = CButtonLine::Create(m_pSecond[m_aSelectLogic[1]]->GetPos() + D3DXVECTOR3(m_pSecond[m_aSelectLogic[1]]->GetWidth() * 0.5f, 0.0f, 0.0f)); }
 
 					if (NULL == m_apSelectIcon[1])
 					{// 選択した項目の生成
-						m_apSelectIcon[1] = CScene3D::Create();
+						m_apSelectIcon[1] = CScene2D::Create();
 						m_apSelectIcon[1]->SwapPriority(6);
-						m_apSelectIcon[1]->SetPos(D3DXVECTOR3(m_pSecond[0]->GetPos().x, 0.0f, 170.0f));
-						m_apSelectIcon[1]->SetSize(D3DXVECTOR3(BUTTON_LOGIC_WIDTH, 0.0f, BUTTON_LOGIC_HEIGHT));
-						m_apSelectIcon[1]->SetBoolLighting(false);
-						m_apSelectIcon[1]->SetBoolZtest(false);
-						m_apSelectIcon[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntSecond)));
+						m_apSelectIcon[1]->SetPos(D3DXVECTOR3(m_pSecond[0]->GetPos().x, 190.0f, 0.0f));
+						m_apSelectIcon[1]->SetSize(BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+						m_apSelectIcon[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+						m_apSelectIcon[1]->SetTex(m_aSelectLogic[1] + (m_aSelectLogic[0] * 10) + 1, 1, 17);
 					}
 					else
 					{
-						m_apSelectIcon[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntSecond)));
+						m_apSelectIcon[1]->SetTex(m_aSelectLogic[1] + (m_aSelectLogic[0] * 10) + 1, 1, 17);
 					}
 				}
 				else
@@ -977,36 +933,48 @@ void CButtonManagerStrategy::ThirdHierarchy(void)
 				if (m_pThird[nCntThird]->GetSwitch())
 				{// 起動時
 					m_aSelectLogic[2] = nCntThird;
-					m_pLine[2]->Link(m_pThird[nCntThird]->GetPos() + D3DXVECTOR3(-m_pThird[nCntThird]->GetWidth(), 0.0f, 0.0f));
+					m_pLine[2]->Link(m_pThird[nCntThird]->GetPos() + D3DXVECTOR3(-m_pThird[nCntThird]->GetWidth() * 0.5f, 0.0f, 0.0f));
+
+					if (NULL == m_apSelectIcon[2])
+					{// 選択した項目の生成
+						m_apSelectIcon[2] = CScene2D::Create();
+						m_apSelectIcon[2]->SwapPriority(6);
+						m_apSelectIcon[2]->SetPos(D3DXVECTOR3(m_pThird[0]->GetPos().x, 190.0f, 0.0f));
+						m_apSelectIcon[2]->SetSize(BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+						m_apSelectIcon[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+						if (0 == m_aSelectLogic[0])
+						{// 移動
+							m_apSelectIcon[2]->SetTex(m_aSelectLogic[2] + (3 * (m_aSelectLogic[1] + 1)), 1, 17);
+						}
+						else
+						{// 待機
+							m_apSelectIcon[2]->SetTex(m_aSelectLogic[2] + 13 + (m_aSelectLogic[1] * 2), 1, 17);
+						}
+					}
+					else
+					{
+						m_apSelectIcon[2]->SetTex(m_aSelectLogic[2] + (m_aSelectLogic[0] * 10) + (3 * (m_aSelectLogic[1] + 1)), 1, 17);
+					}
 
 					if (0 == m_aSelectLogic[0])
 					{// 移動ロジックツリー
 						m_aNumLogic[3] = 2;		// ４階層目のボタンの数
-						m_pFourth = new CButton3D*[m_aNumLogic[3]];
+						m_pFourth = new CButton2D*[m_aNumLogic[3]];
 						for (int nCntButton = 0; nCntButton < m_aNumLogic[3]; nCntButton++)
 						{// ボタンの生成
-							float posZ = (-110.0f - (nCntButton * (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[3]))) + ((BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[3]) * (m_aNumLogic[3] / 2.0f)) - (BUTTON_LOGIC_HEIGHT - 5.0f) * (8 - m_aNumLogic[3]) / 2.0f;
-							m_pFourth[nCntButton] = CButton3D::Create(D3DXVECTOR3(520.0f, 0.0f, posZ), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
-							m_pFourth[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntButton)));
+							float posY = (480.0f + (nCntButton * BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[3]))) - (BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[3]) * (m_aNumLogic[3] / 2.0f)) + BUTTON_LOGIC_HEIGHT * (5 - m_aNumLogic[3]) / 2.0f;
+							m_pFourth[nCntButton] = CButton2D::Create(D3DXVECTOR3(1200.0f, posY, 0.0f), BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+							m_pFourth[nCntButton]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+							m_pFourth[nCntButton]->SetTex(nCntButton + 8, 1, 17);
 						}
 
 						// 線の生成
-						if (NULL == m_pLine[3]) { m_pLine[3] = CButtonLine::Create(m_pThird[m_aSelectLogic[2]]->GetPos() + D3DXVECTOR3(m_pThird[m_aSelectLogic[2]]->GetWidth() - BUTTON_LINE_THICK, 0.0f, 0.0f)); }
-					}
-
-					if (NULL == m_apSelectIcon[2])
-					{// 選択した項目の生成
-						m_apSelectIcon[2] = CScene3D::Create();
-						m_apSelectIcon[2]->SwapPriority(6);
-						m_apSelectIcon[2]->SetPos(D3DXVECTOR3(m_pThird[0]->GetPos().x, 0.0f, 170.0f));
-						m_apSelectIcon[2]->SetSize(D3DXVECTOR3(BUTTON_LOGIC_WIDTH, 0.0f, BUTTON_LOGIC_HEIGHT));
-						m_apSelectIcon[2]->SetBoolLighting(false);
-						m_apSelectIcon[2]->SetBoolZtest(false);
-						m_apSelectIcon[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntThird)));
+						if (NULL == m_pLine[3]) { m_pLine[3] = CButtonLine::Create(m_pThird[m_aSelectLogic[2]]->GetPos() + D3DXVECTOR3(m_pThird[m_aSelectLogic[2]]->GetWidth() * 0.5f, 0.0f, 0.0f)); }
 					}
 					else
 					{
-						m_apSelectIcon[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntThird)));
+						m_bFinish = true;
+						ButtonUninit(4);	// ボタンの破棄
 					}
 				}
 				else
@@ -1040,21 +1008,22 @@ void CButtonManagerStrategy::FourthHierarchy(void)
 			if (m_pFourth[nCntFourth]->ClickRelease())
 			{// クリックされた
 				m_aSelectLogic[3] = nCntFourth;
-				m_pLine[3]->Link(m_pFourth[nCntFourth]->GetPos() + D3DXVECTOR3(-m_pFourth[nCntFourth]->GetWidth(), 0.0f, 0.0f));
+				m_pLine[3]->Link(m_pFourth[nCntFourth]->GetPos() + D3DXVECTOR3(-m_pFourth[nCntFourth]->GetWidth() * 0.5f, 0.0f, 0.0f));
 
 				if (NULL == m_apSelectIcon[3])
 				{// 選択した項目の生成
-					m_apSelectIcon[3] = CScene3D::Create();
+					m_apSelectIcon[3] = CScene2D::Create();
 					m_apSelectIcon[3]->SwapPriority(6);
-					m_apSelectIcon[3]->SetPos(D3DXVECTOR3(m_pFourth[0]->GetPos().x, 0.0f, 170.0f));
-					m_apSelectIcon[3]->SetSize(D3DXVECTOR3(BUTTON_LOGIC_WIDTH, 0.0f, BUTTON_LOGIC_HEIGHT));
-					m_apSelectIcon[3]->SetBoolLighting(false);
-					m_apSelectIcon[3]->SetBoolZtest(false);
-					m_apSelectIcon[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntFourth)));
+					m_apSelectIcon[3]->SetPos(D3DXVECTOR3(m_pFourth[0]->GetPos().x, 190.0f, 0.0f));
+					m_apSelectIcon[3]->SetSize(BUTTON_LOGIC_WIDTH, BUTTON_LOGIC_HEIGHT);
+					m_apSelectIcon[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
+					m_apSelectIcon[3]->SetTex(m_aSelectLogic[3] + 8, 1, 17);
+					m_bFinish = true;
+					ButtonUninit(4);	// ボタンの破棄
 				}
 				else
 				{
-					m_apSelectIcon[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_NUMBER + nCntFourth)));
+					m_apSelectIcon[3]->SetTex(m_aSelectLogic[3] + 8, 1, 17);
 				}
 			}
 		}
@@ -1143,16 +1112,24 @@ void CButtonManagerStrategy::ButtonUninit(int nLogic)
 		m_aNumLogic[nCntButton] = 0;
 		m_aSelectLogic[nCntButton] = -1;
 
+		if (1 <= nCntButton && m_pLine[nCntButton - 1] != NULL)
+		{// つながっている線を離す
+			m_pLine[nCntButton - 1]->SetBoolLink(false);
+		}
+
 		if (m_pLine[nCntButton] != NULL)
 		{// 線の破棄
 			m_pLine[nCntButton]->Uninit();
 			m_pLine[nCntButton] = NULL;
 		}
 
-		if (m_apSelectIcon[nCntButton] != NULL)
-		{// 選択した項目の破棄
-			m_apSelectIcon[nCntButton]->Uninit();
-			m_apSelectIcon[nCntButton] = NULL;
+		if (!m_bFinish)
+		{// 選択が終わってないとき
+			if (m_apSelectIcon[nCntButton] != NULL)
+			{// 選択した項目の破棄
+				m_apSelectIcon[nCntButton]->Uninit();
+				m_apSelectIcon[nCntButton] = NULL;
+			}
 		}
 	}
 }

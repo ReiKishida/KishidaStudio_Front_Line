@@ -65,6 +65,7 @@ public:
 		OBJTYPE_UI_TEXTURE,
 		OBJTYPE_UI_TEXTURE3D,
 		OBJTYPE_NODE,				// ノード
+		OBJTYPE_LINE,				// ライン
 		OBJTYPE_MAX					// オブジェクトの種類の最大数
 	}OBJTYPE;
 
@@ -79,6 +80,7 @@ public:
 	static void UpdateAll(void);
 	static void DrawAll(void);
 	static void ReleaseDeath(void);
+	static void DrawStrategy(void);
 
 	static void ModeUninit(void);
 	static void StageUninit(void);

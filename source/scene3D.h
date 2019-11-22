@@ -71,6 +71,9 @@ public:
 
 	const void CScene3D::SetMousePos(D3DXVECTOR3 pos);
 
+	bool GetDisp(void) { return m_bDisp; };
+	void SetDisp(bool bDisp) { m_bDisp = bDisp; };
+
 protected:
 
 private:
@@ -86,6 +89,7 @@ private:
 	D3DBLENDOP				m_blendOp;		// ブレンドオペレーション
 	bool					m_bLighting;	// ライティングを有効にするか
 	bool					m_bZtest;		// Zテストをするかどうか
+	bool					m_bDisp;		// 表示・非表示のきりかえ
 };
 
 #endif

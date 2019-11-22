@@ -85,6 +85,8 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/UI/reload.png" },									// リロードロゴ（アクションパートで使用）
 		{ "data/TEXTURE/mechaSelect/mecha_select.png" },		// 機体画像（機体選択画面で使用）
 		{ "data/TEXTURE/bullet.png" },						// 弾
+		{ "data/TEXTURE/strategy/strategy_icon.png" },		// ストラテジーのアイコン
+
 	};
 
 	for (int nCntTexture = 0; nCntTexture < TEXTURE_MAX; nCntTexture++)

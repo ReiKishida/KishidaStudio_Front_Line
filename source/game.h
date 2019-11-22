@@ -25,9 +25,11 @@ class CPause;
 class CTimer;
 class CPlayer;
 class CButtonManagerStrategy;
-class CMouseCursor;
+class CMouseCursor2D;
 class CGauge2D;
 class CModel;
+class CScene3D;
+class CMouseCursor;
 
 //*****************************************************************************
 // クラス定義
@@ -73,11 +75,20 @@ public:
 
 	PART GetPart(void) { return m_part; };
 
-	CMouseCursor *GetMouseCursor(void) { return m_pMouseCursor; }
+	CMouseCursor2D *GetMouseCursor(void) { return m_pMouseCursor; }
+
+	CModel *GetField(void) { return m_pField; };
+
+	CMouseCursor *GetMouse(void) { return m_pMouse; }
 
 private:
 	void PrintData(void);
 	void ReadMessage(void);
+	char *ReadConnectData(char *pStr);
+	char *ReadPlayerData(char *pStr);
+	void SetPlayerData(int nPlayerIdx, D3DXVECTOR3 pos, D3DXVECTOR3 rot, D3DXVECTOR3 modelRotUp, D3DXVECTOR3 modelRotDown, D3DXVECTOR3 cameraRot);
+	void CreatePlayerBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECTOR3 cameraRot, float *pAngle, float *pAngleV);
+	void SetChatData(int nPlayerIdx, int radioChat);
 
 	void CreateActionUI(void);
 	void CreateStrategyUI(void);
@@ -92,10 +103,12 @@ private:
 	static int m_nCurStage;						// 現在のステージ
 	static CPlayer *m_pPlayer[MAX_CONNECT];					// プレイヤークラスのポインタ変数
 	CButtonManagerStrategy *m_pButtonManager;	// ボタンの管理クラスのポインタ変数
-	CMouseCursor *m_pMouseCursor;				// マウスカーソル
+	CMouseCursor2D *m_pMouseCursor;				// マウスカーソル
 	PART m_part;								// 現在のパート
 	CModel *m_pField;							// 地面のモデル
 	CModel *m_pSky;								// スカイドーム
+
+	CMouseCursor *m_pMouse;
 };
 
 #endif

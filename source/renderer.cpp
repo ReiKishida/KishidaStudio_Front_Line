@@ -8,6 +8,9 @@
 #include "scene.h"
 #include "camera.h"
 #include "debugProc.h"
+#include "game.h"
+#include "model.h"
+#include "mouseCursor.h"
 
 //==================================
 // 静的メンバ変数宣言
@@ -119,7 +122,6 @@ HRESULT CRenderer::Init(HINSTANCE hInstance, HWND hWnd, bool bWindow)
 	m_pD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);	// 最初のアルファ引数
 	m_pD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_CURRENT);	// ２番目のアルファ引数
 
-
 #ifdef _DEBUG
 	// デバッグ情報表示用フォントの生成
 	D3DXCreateFont(m_pD3DDevice, 18, 0, 0, 0, FALSE, SHIFTJIS_CHARSET,
@@ -177,21 +179,59 @@ void CRenderer::Draw(void)
 		(D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL),
 		D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 1.0f, 0);
 
-	// Direct3Dによる描画の開始
 	if (SUCCEEDED(m_pD3DDevice->BeginScene()))
-	{
+	{// Direct3Dによる描画の開始
 		CCamera *pCamera = NULL;			// カメラの情報を格納
 		pCamera = CManager::GetCamera();	// カメラの情報を取得
 
-		if (NULL != pCamera)
-		{// ヌルチェック
-			pCamera->Set();	// カメラのセット
+		if (NULL != CManager::GetGame())
+		{
+			if (CGame::PART_ACTION == CManager::GetGame()->GetPart())
+			{
+				if (NULL != pCamera)
+				{// ヌルチェック
+					pCamera->Set(0);	// カメラのセット
+
+					// 全てのオブジェクトの描画
+					CScene::DrawAll();
+				}
+			}
+			else if (CGame::PART_STRATEGY == CManager::GetGame()->GetPart())
+			{// ストラテジー画面のみ
+				pCamera->Set(0);	// カメラのセット
+
+				CManager::GetGame()->GetMouse()->SetDisp(false);
+
+				// 全てのオブジェクトの描画
+				CScene::DrawAll();
+
+				CManager::GetGame()->GetMouse()->SetDisp(true);
+
+				pCamera->Set(1);
+
+				m_pD3DDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+				m_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+				m_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATEREQUAL);
+
+				CManager::GetGame()->GetField()->Draw();
+				CManager::GetGame()->GetMouse()->Draw();
+				pCamera->Set(0);	// カメラのセット
+
+				CScene::DrawStrategy();
+
+				m_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+				m_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+				m_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+			}
+		}
+		else
+		{
+			// 全てのオブジェクトの描画
+			CScene::DrawAll();
 		}
 
-		// 全てのオブジェクトの描画
-		CScene::DrawAll();
-
 #ifdef _DEBUG
+		pCamera->Set(0);	// カメラのセット
 		// デバッグ表示
 		CDebugProc::Draw();
 #endif

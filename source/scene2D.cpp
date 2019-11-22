@@ -53,6 +53,11 @@ CScene2D::CScene2D(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_fSizeY = 0.0f;
 	m_bDisp = true;
 	m_col = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+
+	for (int nCntVtx = 0; nCntVtx < 4; nCntVtx++)
+	{
+		m_aPosVtx[nCntVtx] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	}
 }
 
 //=========================================
@@ -174,9 +179,119 @@ void CScene2D::Draw(void)
 	pDevice->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
 }
 
-//=========================================================================================================================
+//=========================================
+// 回転の設定
+//=========================================
+void CScene2D::SetRot(float fRotate)
+{
+	D3DXMATRIX PosMatrix, RotateMatrix;
+
+	// 頂点情報を設定
+	VERTEX_2D *pVtx;		// 頂点情報のポインタ
+
+	//頂点バッファをロックし、頂点データへのポインタを取得
+	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	// ポリゴンの中心を原点へ移動させる
+	MoveMatrix(-m_pos.x, -m_pos.y);
+
+	// 行列の初期化（単位行列生成）
+	D3DXMatrixIdentity(&PosMatrix);
+	D3DXMatrixIdentity(&RotateMatrix);
+
+	// 回転行列に角度を設定
+	D3DXMatrixRotationZ(&RotateMatrix, fRotate);
+
+	// 回転処理
+	for (int nCntVertex = 0; nCntVertex < 4; nCntVertex++)
+	{
+		// 現在の頂点座標を格納
+		D3DXMatrixTranslation(&PosMatrix, m_aPosVtx[nCntVertex].x, m_aPosVtx[nCntVertex].y, m_aPosVtx[nCntVertex].z);
+
+		// 演算
+		PosMatrix *= RotateMatrix;
+
+		// 結果を戻す
+		pVtx[nCntVertex].pos.x = PosMatrix._41;
+		pVtx[nCntVertex].pos.y = PosMatrix._42;
+		pVtx[nCntVertex].pos.z = PosMatrix._43;
+	}
+
+	// ポリゴンを元の位置へ戻す
+	MoveMatrix(m_pos.x, m_pos.y);
+
+	//頂点バッファをアンロック
+	m_pVtxBuff->Unlock();
+}
+
+//=========================================
+// 行列を使った移動
+//=========================================
+void CScene2D::MoveMatrix(float fPosX, float fPosY)
+{
+	D3DXMATRIX PosMatrix, MoveMatrix;
+
+	// 行列の初期化（単位行列生成）
+	D3DXMatrixIdentity(&PosMatrix);
+	D3DXMatrixIdentity(&MoveMatrix);
+
+	// 移動量設定
+	D3DXMatrixTranslation(&MoveMatrix, fPosX, fPosY, 0.0f);
+
+	// 頂点情報を設定
+	VERTEX_2D *pVtx;		// 頂点情報のポインタ
+
+	//頂点バッファをロックし、頂点データへのポインタを取得
+	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	// 移動処理
+	for (int nCntVertex = 0; nCntVertex < 4; nCntVertex++)
+	{
+		// 現在の頂点座標を格納
+		D3DXMatrixTranslation(&PosMatrix, pVtx[nCntVertex].pos.x, pVtx[nCntVertex].pos.y, pVtx[nCntVertex].pos.z);
+
+		// 演算
+		PosMatrix *= MoveMatrix;
+
+		// 結果を戻す
+		pVtx[nCntVertex].pos.x = PosMatrix._41;
+		pVtx[nCntVertex].pos.y = PosMatrix._42;
+		pVtx[nCntVertex].pos.z = PosMatrix._43;
+	}
+
+	//頂点バッファをアンロック
+	m_pVtxBuff->Unlock();
+}
+
+//=========================================
+// 頂点座標の設定
+//=========================================
+void CScene2D::SetPosVtx(D3DXVECTOR3 *pPosVtx)
+{
+	// 頂点情報を設定
+	VERTEX_2D *pVtx;		// 頂点情報のポインタ
+
+	//頂点バッファをロックし、頂点データへのポインタを取得
+	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	// 頂点座標の設定
+	pVtx[0].pos = pPosVtx[0];
+	pVtx[1].pos = pPosVtx[1];
+	pVtx[2].pos = pPosVtx[2];
+	pVtx[3].pos = pPosVtx[3];
+
+	m_aPosVtx[0] = pPosVtx[0];
+	m_aPosVtx[1] = pPosVtx[1];
+	m_aPosVtx[2] = pPosVtx[2];
+	m_aPosVtx[3] = pPosVtx[3];
+
+	//頂点バッファをアンロック
+	m_pVtxBuff->Unlock();
+}
+
+//=========================================
 // 当たり判定
-//=========================================================================================================================
+//=========================================
 bool CScene2D::Collision(D3DXVECTOR3 pos, float fRange)
 {
 	bool bHit = false;
@@ -211,10 +326,15 @@ void CScene2D::SetPos(D3DXVECTOR3 pos)
 	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
 
 	// 頂点の座標
-	pVtx[0].pos = D3DXVECTOR3(-m_fSizeX, -m_fSizeY, 0.0f) + m_pos;
-	pVtx[1].pos = D3DXVECTOR3(m_fSizeX, -m_fSizeY, 0.0f) + m_pos;
-	pVtx[2].pos = D3DXVECTOR3(-m_fSizeX, m_fSizeY, 0.0f) + m_pos;
-	pVtx[3].pos = D3DXVECTOR3(m_fSizeX, m_fSizeY, 0.0f) + m_pos;
+	pVtx[0].pos = D3DXVECTOR3(-m_fSizeX, -m_fSizeY, 0.0f) * 0.5f + m_pos;
+	pVtx[1].pos = D3DXVECTOR3(m_fSizeX, -m_fSizeY, 0.0f) * 0.5f + m_pos;
+	pVtx[2].pos = D3DXVECTOR3(-m_fSizeX, m_fSizeY, 0.0f) * 0.5f + m_pos;
+	pVtx[3].pos = D3DXVECTOR3(m_fSizeX, m_fSizeY, 0.0f) * 0.5f + m_pos;
+
+	m_aPosVtx[0] = pVtx[0].pos;
+	m_aPosVtx[1] = pVtx[1].pos;
+	m_aPosVtx[2] = pVtx[2].pos;
+	m_aPosVtx[3] = pVtx[3].pos;
 
 	//頂点バッファをアンロック
 	m_pVtxBuff->Unlock();
@@ -241,6 +361,11 @@ void CScene2D::SetSize(float fSizeX, float fSizeY)
 	pVtx[2].pos = D3DXVECTOR3(-m_fSizeX, m_fSizeY, 0.0f) * 0.5f + m_pos;
 	pVtx[3].pos = D3DXVECTOR3(m_fSizeX, m_fSizeY, 0.0f) * 0.5f + m_pos;
 
+	m_aPosVtx[0] = pVtx[0].pos;
+	m_aPosVtx[1] = pVtx[1].pos;
+	m_aPosVtx[2] = pVtx[2].pos;
+	m_aPosVtx[3] = pVtx[3].pos;
+
 	//頂点バッファをアンロック
 	m_pVtxBuff->Unlock();
 }
@@ -265,6 +390,11 @@ void CScene2D::SetWidth(float fWidth)
 	pVtx[2].pos.x = m_pos.x - (m_fSizeX * 0.5f);
 	pVtx[3].pos.x = m_pos.x + (m_fSizeX * 0.5f);
 
+	m_aPosVtx[0] = pVtx[0].pos;
+	m_aPosVtx[1] = pVtx[1].pos;
+	m_aPosVtx[2] = pVtx[2].pos;
+	m_aPosVtx[3] = pVtx[3].pos;
+
 	//頂点バッファをアンロック
 	m_pVtxBuff->Unlock();
 }
@@ -288,6 +418,11 @@ void CScene2D::SetHeight(float fHeight)
 	pVtx[1].pos.y = m_pos.y - (m_fSizeY * 0.5f);
 	pVtx[2].pos.y = m_pos.y + (m_fSizeY * 0.5f);
 	pVtx[3].pos.y = m_pos.y + (m_fSizeY * 0.5f);
+
+	m_aPosVtx[0] = pVtx[0].pos;
+	m_aPosVtx[1] = pVtx[1].pos;
+	m_aPosVtx[2] = pVtx[2].pos;
+	m_aPosVtx[3] = pVtx[3].pos;
 
 	//頂点バッファをアンロック
 	m_pVtxBuff->Unlock();

@@ -56,6 +56,7 @@ CScene3D::CScene3D(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_blendOp = D3DBLENDOP_FORCE_DWORD;
 	m_bLighting = true;
 	m_bZtest = true;
+	m_bDisp = true;
 }
 
 //=========================================
@@ -148,6 +149,8 @@ void CScene3D::Update(void)
 //=========================================
 void CScene3D::Draw(void)
 {
+	if (!m_bDisp) { return; }
+
 	// デバイスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
 	LPDIRECT3DDEVICE9 pDevice;
