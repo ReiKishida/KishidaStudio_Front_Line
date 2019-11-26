@@ -96,10 +96,6 @@ public:
 
 	// =============================================================
 
-	void Reload(void);			// リロード処理
-	void Respawn(RESPAWN respawn);		// ライフが0になった時の処理
-	void SelectRespawn(void);
-
 	CPlayer(int nPriority = PLAYER_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_PLAYER);
 	~CPlayer();
 	HRESULT Init(void);
@@ -155,6 +151,10 @@ public:
 
 	int GetLifeMax(void) { return m_nLifeMax; }
 
+	void Reload(void);			// リロード処理
+	void Respawn(RESPAWN respawn);		// ライフが0になった時の処理
+	void SelectRespawn(void);
+
 	// =============================================================
 	// AI関係
 	// =============================================================
@@ -174,7 +174,7 @@ private:
 	void Movement(void);
 	void Shoot(void);
 	void Angle(void);
-	void FieldWalk(void);
+	void SetParticle(void);
 
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置

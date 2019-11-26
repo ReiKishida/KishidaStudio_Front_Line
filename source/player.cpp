@@ -34,6 +34,7 @@
 #include "button.h"
 #include "menu.h"
 #include "AI.h"
+#include "particle.h"
 
 //==================================
 // マクロ定義
@@ -123,6 +124,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_bDeath = false;
 	m_pGauge = NULL;
 	m_nCntReRoad = 0;
+	m_nDiff = 0;
 
 	for (int nCnt = 0; nCnt < PLAYER_UI_NUM; nCnt++)
 	{
@@ -360,7 +362,7 @@ HRESULT CPlayer::Init(void)
 				m_pReticle->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_RETICLE));
 				m_pReticle->SetSize(D3DXVECTOR3(50.0f, 50.0f, 0.0f));
 				m_pReticle->SetLighting(false);
-				m_pReticle->SetZBuffer(D3DCMP_ALWAYS);
+				m_pReticle->SetZBuffer(true, D3DCMP_ALWAYS);
 				m_pReticle->SwapPriority(6);
 			}
 		}
@@ -373,7 +375,7 @@ HRESULT CPlayer::Init(void)
 			m_pReticle->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_RETICLE));
 			m_pReticle->SetSize(D3DXVECTOR3(50.0f, 50.0f, 0.0f));
 			m_pReticle->SetLighting(false);
-			m_pReticle->SetZBuffer(D3DCMP_ALWAYS);
+			m_pReticle->SetZBuffer(true, D3DCMP_ALWAYS);
 			m_pReticle->SwapPriority(6);
 		}
 	}
@@ -729,6 +731,11 @@ void CPlayer::Update(void)
 					// 角度の更新
 					Angle();
 
+					if (pKeyboard->GetTrigger(DIK_1))
+					{
+						m_nLife -= 10;
+					}
+					SetParticle();
 					// ライフの設定
 					m_pUINum[1]->SetPlayerLife(m_nLife);
 				}
@@ -925,6 +932,7 @@ void CPlayer::Shoot(void)
 
 				// 弾の生成
 				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam);
+				CParticle::Create(posCanon, 2);
 
 				// レティクル（目的の位置）の取得
 				posReticle = m_pReticle->GetPos();
@@ -945,6 +953,7 @@ void CPlayer::Shoot(void)
 
 				// 弾の生成
 				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam);
+				CParticle::Create(posCanon, 2);
 
 				m_bShoot = true;
 			}
@@ -1018,21 +1027,37 @@ void CPlayer::Angle(void)
 }
 
 //=========================================
-// 地面の起伏に乗る処理
+// パーティクルを発生させる
 //=========================================
-void CPlayer::FieldWalk(void)
+void CPlayer::SetParticle(void)
 {
-	// 地面のオブジェクトを探す
-	CScene *pScene = CScene::GetSceneTop(MESHFIELD_PRIORITY);
-	CScene *pSceneNext = NULL;
-	while (NULL != pScene)
-	{// NULLまでまわす
-		pSceneNext = pScene->GetSceneNext();				// 次のオブジェクトを保管
-		CScene::OBJTYPE objType = pScene->GetObjType();		// オブジェクトの種類を取得
+	if (m_nLife < m_nLifeMax / 4)
+	{// 耐久力が４分の１になった
+		int nParts;
+		D3DXMATRIX mtx;
+		D3DXVECTOR3 pos;
 
-		if (objType == CScene::OBJTYPE_FIELD)
-		{// 地面だったとき
+		if (rand() % 20 == 0)
+		{
+			nParts = rand() % m_nNumParts;
+			mtx = m_pModel[nParts]->GetMtxWorld();
+			pos = D3DXVECTOR3(mtx._41, mtx._42, mtx._43);
+			CParticle::Create(pos, 3);
+		}
 
+		nParts = rand() % m_nNumParts;
+		mtx = m_pModel[nParts]->GetMtxWorld();
+		pos = D3DXVECTOR3(mtx._41, mtx._42, mtx._43);
+		CParticle::Create(pos, 0);
+	}
+	else if (m_nLife < m_nLifeMax / 2)
+	{// 耐久力が半分になった
+		if (rand() % 30 == 0)
+		{
+			int nParts = rand() % m_nNumParts;
+			D3DXMATRIX mtx = m_pModel[nParts]->GetMtxWorld();
+			D3DXVECTOR3 pos = D3DXVECTOR3(mtx._41, mtx._42, mtx._43);
+			CParticle::Create(pos, 3);
 		}
 	}
 }
