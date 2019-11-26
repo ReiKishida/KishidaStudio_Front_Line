@@ -16,13 +16,30 @@
 #define PLAYER_PRIORITY		(4)		// 処理の優先番号
 #define TEAM_BLUE			(100)
 #define TEAM_RED			(100)
-#define MAX_UITEX			(10)	// UIテクスチャ枚数
 #define PLAYER_UI_NUM		(2)		// 数字UIの枚数
-#define PLAYER_BOTTON		(4)		// リスポーン時ボタンの数
 #define COLLECTIONDATA_MAX	(12)	// 収集するデータの最大数
 #define RANDOM_MOVE_POINT	(10)	// ランダム移動の地点数
 #define ENEMY_PLAYER_MAX	(2)		// 敵プレイヤーの数
 #define NODE_MAX			(256)	// ノードの最大数
+
+// リロード
+#define RELOAD_TEX									(2)			// リロードで使用するテクスチャ数
+
+// リスポーン
+#define RESPAWN_TEX								(3)			// リスポーンで使用するテクスチャ数
+
+// リスポーン位置選択
+#define SELECTRESPAWN_BOTTON			(4)			// リスポーン位置選択ボタン
+#define SERECTRESPAWN_TEX					(4)			// リスポーン位置選択中のテクスチャ数
+
+// ラジオチャット処理
+#define RADIOCHAT_BOTTON					(8)			// ラジオチャットボタンの数
+#define RADIOCHAT_MESSAGE					(2)			// ラジオチャットボタンの数
+#define RADIOCHAT_BOTTON_PATTERN	(8)			// ラジオチャット画像のパターン数
+#define RADIOCHAT_BOTTON_WIDTH		(200.0f)	// ボタンの幅
+#define RADIOCHAT_BOTTON_HEIGHT	(200.0f)	// ボタンの高さ
+#define RADIOCHAT_MESS_WIDTH			(400.0f)	// メッセージの幅
+#define RADIOCHAT_MESS_HEIGHT			(80.0f)		// メッセージの高さ
 
 //*****************************************************************************
 // 前方宣言
@@ -70,6 +87,19 @@ public:
 		POINT_D,
 		POINT_MAX
 	} POINT;
+
+	typedef enum
+	{	// ラジオチャットの種類
+		RADIOCHAT_OK = 0,			// 了解
+		RADIOCHAT_OPPSITE,		// 反対
+		RADIOCHAT_THANKS,		// 感謝
+		RADIOCHAT_APOLOGY,		// 謝罪
+		RADIOCHAT_NICESHOOT,	// ナイスショット
+		RADIOCHAT_FOLLOW,		// ついてこい！
+		RADIOCHAT_RECESSION,	// 後退しろ！
+		RADIOCHAT_SUPPORT,		// 援護しろ！
+		RADIOCHAT_MAX
+	} RADIOCHAT;
 
 	// =============================================================
 	// ダイクストラ法によるルート探索
@@ -151,9 +181,13 @@ public:
 
 	int GetLifeMax(void) { return m_nLifeMax; }
 
-	void Reload(void);			// リロード処理
-	void Respawn(RESPAWN respawn);		// ライフが0になった時の処理
-	void SelectRespawn(void);
+	// ラジオチャット
+	RADIOCHAT GetRadioChat(void) { return m_radiochat; }									// ラジオチャット情報の取得
+	void SetRadioChat(RADIOCHAT radiochat) { m_radiochat = radiochat; }			// ラジオチャットの設定
+	bool GetChat(void) { return m_bChat; }																// チャット情報の取得
+	void SetAllyChat(bool bAllyChat) { m_bAllyChat = bAllyChat; }							// 味方のチャットが使用しているかどうかの設定
+	void SetAllyRadioChat(RADIOCHAT allyRadioChat) { m_allyRadiochat = allyRadioChat; }		// 味方のチャット情報の設定
+	bool GetChatBotton(void) { return m_bChatBotton; }
 
 	// =============================================================
 	// AI関係
@@ -175,6 +209,11 @@ private:
 	void Shoot(void);
 	void Angle(void);
 	void SetParticle(void);
+	void Reload(void);									// リロード処理
+	void Respawn(RESPAWN respawn);		// ライフが0になった時の処理
+	void SelectRespawn(void);						// リスポーン位置選択処理
+	void ChatBotton(void);							// ラジオチャットボタンの生成
+	void ChatMess(bool bChat);					// ボタンが押されて、メッセージ表示
 
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置
@@ -194,18 +233,7 @@ private:
 	float			m_fCameraAngle;		// カメラの向き
 	int				m_nDamageTime;		// ダメージを受けた時の硬直時間
 	CScene3DBill	*m_pReticle;		// レティクル
-	int				m_nRemBullet;
-	int				m_nCntReRoad;
-	CUI_TEXTURE *m_pUITex[MAX_UITEX];
-	CUI_NUMBER	*m_pUINum[PLAYER_UI_NUM];
-	CGauge2D *m_pGauge;
-	int m_nDiff;
-	int m_nCntAnim, m_nPatternAnim;		// アニメーション
-	RESPAWN m_Respawn;		// リスポーンタイプの取得
-	CButton2D *m_apButtonUI[PLAYER_BOTTON];	// ボタンクラスのポインタ変数
-	CMouseCursor2D *m_pCursor;								// カーソルクラスのポインタ変数
 	int m_nTimer;					// タイマー
-	float m_nDisTime;			// ロゴ表示時間
 
 	int				m_nPlayerIdx;		// プレイヤー番号
 	D3DXVECTOR3		m_posOld;			// 過去の位置
@@ -229,6 +257,44 @@ private:
 	bool			m_bShootButton;		// 弾の発射ボタン押下フラグ
 
 	bool			m_bConnect;			// 接続しているかどうか
+
+	// =============================================================
+	// UI関係
+	// =============================================================
+	CUI_NUMBER	*m_pUINum[PLAYER_UI_NUM];			// 数字UIのポインタ
+	CMouseCursor2D *m_pCursor;										// カーソルクラスのポインタ変数（ラジオチャット、リスポーン位置選択）
+	int m_nDiff;																		// 差分
+	int m_nRemBullet;															// 残弾
+
+	// リロード
+	CUI_TEXTURE		*m_pUITexReload[RELOAD_TEX];		// リロードで使用するテクスチャ
+	CGauge2D			*m_pGauge;											// ゲージ
+	int						m_nCntReRoad;
+
+	// リスポーン
+	CUI_TEXTURE		*m_pUITexRespawn[RESPAWN_TEX];		// リスポーンで使用するテクスチャ
+	CUI_NUMBER		*m_pUINumRespawn;									// 戦線復帰カウンター
+	RESPAWN			m_Respawn;												// リスポーンタイプの取得
+	int						m_nRespawnTimer;										// タイマー
+	float						m_nDisTime;												// ロゴ表示時間
+
+	// リスポーン位置選択
+	CButton2D			*m_pUISelectResBotton[SELECTRESPAWN_BOTTON];	// ラジオチャットボタンUI
+	CUI_TEXTURE		*m_pUITexSelectRes[SERECTRESPAWN_TEX];				// ラジオチャットメッセージUITex
+	POINT					m_point;																				// リスポーン位置の管理
+
+	// ラジオチャット
+	CButton2D			*m_pUIRadioBotton[RADIOCHAT_BOTTON];		// ラジオチャットボタンUI
+	CUI_TEXTURE		*m_pUITexRadio;														// ラジオチャットメッセージUITex
+	CUI_TEXTURE		*m_pUITexAllyRadio;												// 味方ラジオチャットメッセージUITex
+	RADIOCHAT		m_radiochat;															// ラジオチャット管理
+	RADIOCHAT		m_allyRadiochat;														// 味方のチャット情報
+	bool						m_bChat;																	// チャット開始かどうか
+	bool						m_bAllyChat;															// 味方のチャット
+	bool						m_bCol;																	// 色の管理
+	bool						m_bChatBotton;														// チャットボタン生成中かどうか
+	int						m_moveSpeed;														// テクスチャ動くスピード
+	int						m_nTexTimer;															// テクスチャ表示タイマー
 
 	// =============================================================
 	// AI関係

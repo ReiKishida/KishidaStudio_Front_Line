@@ -47,12 +47,21 @@
 #define PLAYER_DAMAGE_TIME		(60)		// ダメージを受けた時の無敵時間
 #define PLAYER_DAMAGE_MOVE		(40)		// ダメージを受けてから動けるようになるまでの時間
 #define PLAYER_RETICLE_LENGTH	(2500.0f)	// レティクルの距離
+
+// =============================================================
+// UI関係
+// =============================================================
 #define ANIM_SPEED				(10)		// タイルアニメーション
 #define ANIM_PATTERN			(8)			// タイルのパターン数
 #define PLAYER_BOTTON_WIDTH		(75.0f)		// リスポーンボタンの横幅
 #define PLAYER_BOTTON_HEIGHT	(75.0f)		// リスポーンボタンの縦幅
 #define PLAYER_BOTTON_INT		(40.0f)		// ボタンとボタンの間隔
 #define PLAYER_UI_HEIGHT		(630.0f)
+
+// ラジオチャット
+#define RADIOCHAT_MESS_SPEED		(10)			// ラジオチャットメッセージの速さ
+#define RADIOCHAT_DISPLAY_TIME	(60 * 2)	// メッセージ表示時間
+#define RADIOCHAT_COL						(0.05f)		// 透明度の減算
 
 // =============================================================
 // AI関係
@@ -125,25 +134,43 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_pGauge = NULL;
 	m_nCntReRoad = 0;
 	m_nDiff = 0;
+	m_nRemBullet = 0;
+	m_pUITexRadio = NULL;			// 自分
+	m_pUITexAllyRadio = NULL;		// 味方
+	m_radiochat = RADIOCHAT_OK;
+	m_allyRadiochat = RADIOCHAT_OK;
+	m_bChat = false;
+	m_bAllyChat = false;
+	m_moveSpeed = 0;
+	m_bCol = false;
+	m_bChatBotton = false;
 
 	for (int nCnt = 0; nCnt < PLAYER_UI_NUM; nCnt++)
 	{
 		m_pUINum[nCnt] = NULL;
 	}
 
-	for (int nCnt = 0; nCnt < PLAYER_BOTTON; nCnt++)
-	{
-		m_apButtonUI[nCnt] = NULL;
+	for (int nCnt = 0; nCnt < RELOAD_TEX; nCnt++)
+	{	// リロード
+		m_pUITexReload[nCnt] = NULL;
 	}
 
-	for (int nCnt = 0; nCnt < MAX_UITEX; nCnt++)
-	{// ポインタの3つ目から使用しているため、初期値は2
-		m_pUITex[nCnt] = NULL;
+	for (int nCnt = 0; nCnt < SELECTRESPAWN_BOTTON; nCnt++)
+	{	// リスポーンボタン
+		m_pUISelectResBotton[nCnt] = NULL;
+	}
+
+	for (int nCnt = 0; nCnt < RESPAWN_TEX; nCnt++)
+	{	// リスポーン
+		m_pUITexRespawn[nCnt] = NULL;
+	}
+
+	for (int nCnt = 0; nCnt < RADIOCHAT_BOTTON; nCnt++)
+	{	// ラジオチャットボタン
+		m_pUIRadioBotton[nCnt] = NULL;
 	}
 
 	// カウンターの初期化
-	m_nCntAnim = 0;
-	m_nPatternAnim = 0;
 	m_nCntShoot = 0;
 	m_bShootButton = false;
 }
@@ -440,6 +467,9 @@ HRESULT CPlayer::Init(void)
 	m_nLife = m_nLifeMax;	// ライフの初期値
 	m_pUINum[1]->SetPlayerLife(m_nLife);
 
+	// ラジオチャットメッセージで使用
+	m_moveSpeed = RADIOCHAT_MESS_SPEED;
+
 	// ゲーム開始時
 	m_Respawn = RESPAWN_START;
 	m_nDisTime = 1.8f;
@@ -704,6 +734,17 @@ void CPlayer::Update(void)
 						// 弾を撃つ
 						Shoot();
 
+						// チャット
+						if (m_bChat == false)
+						{
+							ChatBotton();
+						}
+
+						if (m_bChat == true)
+						{	// チャットメッセージ
+							ChatMess(m_bChat);
+						}
+
 						// 重力
 						//m_move.y -= GRAVITY;
 
@@ -900,7 +941,7 @@ void CPlayer::Shoot(void)
 	CXInput *pXInput = CManager::GetXInput();			// XInputの入力を取得
 	D3DXVECTOR3 dispertion;								// ブレ
 
-	if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_0) && m_nRemBullet > 0)
+	if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_0) && m_nRemBullet > 0 && m_bChatBotton == false)
 	{
 		// 弾の発射間隔
 		m_nCntShoot = (m_nCntShoot + 1) % 7;
@@ -966,6 +1007,12 @@ void CPlayer::Shoot(void)
 	{
 		// 発射ボタン押下フラグを負にする
 		m_bShootButton = false;
+	}
+
+	// リロード処理
+	if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_1))
+	{
+		m_nRemBullet = m_nCapacity;
 	}
 
 	// リロード処理
@@ -1113,55 +1160,34 @@ D3DXVECTOR3 CPlayer::CalcScreenToWorld(float fScreenX, float fScreenY)
 }
 
 //=========================================
-// リロード処理
+// リロード処理：弾が0ー＞リロードロゴ、ゲージ表示
 //=========================================
 void CPlayer::Reload(void)
 {
-	//****************************************
-	// 弾が0ー＞リロードロゴ、ゲージ表示
-	//****************************************
 	if (m_nRemBullet <= 0)
 	{
 		m_nCntReRoad++;		// カウンター加算
 
-							//****************************************
-							// NULLチェックからのリロードロゴ生成
-							//****************************************
-		if (m_pUITex[0] == NULL)
-		{	// 弾のところ
-			m_pUITex[0] = CUI_TEXTURE::Create(D3DXVECTOR3(1100.0f, 650.0f, 0.0f), 200.0f, 80.0f, CUI_TEXTURE::UIFLAME_RELOAD);
-			m_pUITex[0]->SetObjType(CScene::OBJTYPE_NONE);
-		}
-		if (m_pUITex[1] == NULL)
-		{	// 画面中央
-			m_pUITex[1] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 200.0f, 80.0f, CUI_TEXTURE::UIFLAME_RELOAD);
-			m_pUITex[1]->SetObjType(CScene::OBJTYPE_NONE);
-		}
-
-		// リロードロゴ点滅
-		m_pUITex[0]->Flashing(30);
-		m_pUITex[1]->Flashing(30);
-
-		//****************************************
-		//ゲージの生成
-		//****************************************
-		if (m_pGauge == NULL)
-		{
+		if (m_pUITexReload[0] == NULL || m_pUITexReload[1] == NULL || m_pGauge == NULL)
+		{	// NULLチェックからのリロードロゴ生成
+			m_pUITexReload[0] = CUI_TEXTURE::Create(D3DXVECTOR3(1100.0f, 650.0f, 0.0f), 200.0f, 80.0f, CUI_TEXTURE::UIFLAME_RELOAD);	// 弾のところ
+			m_pUITexReload[1] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 200.0f, 80.0f, CUI_TEXTURE::UIFLAME_RELOAD);	// 画面中央
 			m_pGauge = CGauge2D::Create(2, D3DXVECTOR3(SCREEN_WIDTH / 2, 400.0f, 0.0f), 0.0f, 100.0f, 300.0f, 30.0f);
 			m_pGauge->SetColor(D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 0);	// 元の長さ
 			m_pGauge->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f), 1);	// 現在の体力
 		}
+		if (m_pUITexReload[0] != NULL || m_pUITexReload[1] != NULL || m_pGauge != NULL)
+		{	// リロードロゴ点滅
+			m_pUITexReload[0]->Flashing(30);
+			m_pUITexReload[1]->Flashing(30);
 
-		// ゲージ増加
-		m_pGauge->AddSubtract(100.0f / m_nReload);		// 100％ / 秒数
+			// ゲージ増加
+			m_pGauge->AddSubtract(100.0f / m_nReload);		// 100％ / 秒数
+		}
 
-															//*******************************************
-															// 設定した秒数後→ロゴ＆ゲージ破棄＆弾生成
-															//*******************************************
 		if (m_nCntReRoad % m_nReload == 0)
-		{
-			// 弾生成
-			m_nRemBullet = m_nCapacity;
+		{	// 設定した秒数後→ロゴ＆ゲージ破棄＆弾生成
+			m_nRemBullet = m_nCapacity;			// 弾生成
 
 			if (m_pGauge != NULL)
 			{	// ゲージの破棄
@@ -1169,12 +1195,12 @@ void CPlayer::Reload(void)
 				m_pGauge = NULL;
 			}
 
-			for (int nCnt = 0; nCnt < 2; nCnt++)
+			for (int nCnt = 0; nCnt < RELOAD_TEX; nCnt++)
 			{	// リロードロゴの破棄
-				if (m_pUITex[nCnt] != NULL)
+				if (m_pUITexReload[nCnt] != NULL)
 				{
-					m_pUITex[nCnt]->Uninit();
-					m_pUITex[nCnt] = NULL;
+					m_pUITexReload[nCnt]->Uninit();
+					m_pUITexReload[nCnt] = NULL;
 				}
 			}
 		}
@@ -1192,95 +1218,62 @@ void CPlayer::Respawn(RESPAWN respawn)
 	switch (respawn)
 	{
 	case RESPAWN_START:
-		if (m_pUITex[2] == NULL || m_pUITex[3] == NULL)
-		{	// 生成する
-			m_pUITex[2] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 500.0f, 260.0f, CUI_TEXTURE::UIFLAME_TILE_PATTERN);	// タイル
-			m_pUITex[2]->SetTex(0, 1, 8);		// 初期タイルパターン
-			m_pUITex[3] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 350.0f, 150.0f, CUI_TEXTURE::UIFLAME_START);	// 戦闘開始ロゴ
+		if (m_pUITexRespawn[0] == NULL || m_pUITexRespawn[1] == NULL)
+		{
+			m_pUITexRespawn[0] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 500.0f, 260.0f, CUI_TEXTURE::UIFLAME_TILE_PATTERN);	// タイル
+			m_pUITexRespawn[1] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 350.0f, 150.0f, CUI_TEXTURE::UIFLAME_START);	// 戦闘開始ロゴ
 		}
-		if (m_pUITex[2] != NULL || m_pUITex[3] != NULL)
-		{	// 生成された
-			m_nCntAnim++;		// アニメーション
-			m_nTimer++;			// ロゴが消えるまでのタイマー
-			if ((m_nCntAnim % ANIM_SPEED) == 0)
-			{	// アニメーション処理
-				m_nPatternAnim++;		// アニメーションパターン数
-				m_pUITex[2]->SetTex(m_nPatternAnim, 1, ANIM_PATTERN);
-
-				if (m_nPatternAnim > (ANIM_PATTERN - 1))
-				{	// 8パターン目まできたら、強制的に8パターン目にする
-					m_pUITex[2]->SetTex((ANIM_PATTERN - 1), 1, ANIM_PATTERN);
-
-					if (m_nTimer % 60 == 0)
-					{	// ロゴが消えるまでの時間
-						m_nDisTime--;
+		if (m_pUITexRespawn[0] != NULL || m_pUITexRespawn[1] != NULL)
+		{
+			m_nRespawnTimer++;
+			if (m_nRespawnTimer % 60 == 0)
+			{
+				m_nDisTime--;
+			}
+			if (m_nDisTime <= 0)
+			{	//	表示時間0になった
+				for (int nCnt = 0; nCnt < RESPAWN_TEX; nCnt++)
+				{
+					if (m_pUITexRespawn[nCnt] != NULL)
+					{	// UIテクスチャの破棄
+						m_pUITexRespawn[nCnt]->Uninit();
+						m_pUITexRespawn[nCnt] = NULL;
 					}
-					if (m_nDisTime <= 0)
-					{	// 0になった
-						for (int nCnt = 2; nCnt < MAX_UITEX; nCnt++)
-						{	// ポインタの3つ目から使用しているため、初期値は2
-							if (m_pUITex[nCnt] != NULL)
-							{	// UIテクスチャの破棄
-								m_pUITex[nCnt]->Uninit();
-								m_pUITex[nCnt] = NULL;
-							}
-						}
-						respawn = RESPAWN_NONE;		// 通常状態
-						m_nCntAnim = 0;
-						m_nPatternAnim = 0;
-					}	// 0になった時
-				}	// パターン数最大まできた
-			}	// アニメーションの処理
-		}	// 生成された
+				}
+				respawn = RESPAWN_NONE;
+			}
+		}
 		break;
 
 	case RESPAWN_DEATH:
-		if (m_pUITex[2] == NULL || m_pUITex[3] == NULL || m_pUITex[4] == NULL || m_pUINum[2] == NULL)
-		{	// NULLの時、生成＆最初のテクスチャを設定
-			m_pUITex[2] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 500.0f, 260.0f, CUI_TEXTURE::UIFLAME_TILE_PATTERN);	// タイル
-			m_pUITex[2]->SetTex(0, 1, 8);		// 初期タイルパターン
-			m_pUITex[3] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 350.0f, 150.0f, CUI_TEXTURE::UIFLAME_DEATH);	// 行動不能ロゴ
-			m_pUITex[4] = CUI_TEXTURE::Create(D3DXVECTOR3(560.0f, 460.0f, 0.0f), 200.0f, 30.0f, CUI_TEXTURE::UIFLAME_RESPAWN);	// 戦線復帰
-			m_pUINum[2] = CUI_NUMBER::Create(D3DXVECTOR3(750.0f, 460.0f, 0.0f), 60.0f, 60.0f, 30.0f, CUI_NUMBER::UI_NUMTYPE_CNTRESPAWN, 0, NUMTEX_UV_X, NUMTEX_UV_Y);	// 戦線復帰カウンター
+		if (m_pUITexRespawn[0] == NULL || m_pUITexRespawn[1] == NULL || m_pUITexRespawn[2] == NULL || m_pUINumRespawn == NULL)
+		{
+			m_pUITexRespawn[0] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 500.0f, 260.0f, CUI_TEXTURE::UIFLAME_TILE_PATTERN);	// タイル
+			m_pUITexRespawn[1] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 350.0f, 150.0f, CUI_TEXTURE::UIFLAME_DEATH);	// 行動不能ロゴ
+			m_pUITexRespawn[2] = CUI_TEXTURE::Create(D3DXVECTOR3(560.0f, 460.0f, 0.0f), 200.0f, 30.0f, CUI_TEXTURE::UIFLAME_RESPAWN);	// 戦線復帰
+			m_pUINumRespawn = CUI_NUMBER::Create(D3DXVECTOR3(750.0f, 460.0f, 0.0f), 60.0f, 60.0f, 30.0f, CUI_NUMBER::UI_NUMTYPE_CNTRESPAWN, 0, NUMTEX_UV_X, NUMTEX_UV_Y);	// 戦線復帰カウンター
 		}
-		if (m_pUITex[2] != NULL || m_pUITex[3] != NULL || m_pUITex[4] != NULL || m_pUINum[2] != NULL)
+		if (m_pUITexRespawn[0] != NULL || m_pUITexRespawn[1] != NULL || m_pUITexRespawn[2] != NULL || m_pUINumRespawn != NULL)
 		{	// 生成している時
-			m_nCntAnim++;
-			if ((m_nCntAnim % ANIM_SPEED) == 0)
-			{	// アニメーション処理
-				m_nPatternAnim++;
-				m_pUITex[2]->SetTex(m_nPatternAnim, 1, ANIM_PATTERN);
-
-				if (m_nPatternAnim > (ANIM_PATTERN - 1))
-				{	// 8パターン目まできたら、強制的に8パターン目にする
-					m_pUITex[2]->SetTex((ANIM_PATTERN - 1), 1, ANIM_PATTERN);
-				}
-			}
-
-			// CUI_NUMBERから、戦線復帰カウンター取得
-			int nRespawn = m_pUINum[2]->GetRespawn();
+			int nRespawn = m_pUINumRespawn->GetRespawn();			// CUI_NUMBERから、戦線復帰カウンター取得
 			if (nRespawn <= 0)
 			{	// カウンター0以下になった時
 				respawn = RESPAWN_SELECT;		// リスポーン選択状態に設定
 
-				for (int nCnt = 2; nCnt < MAX_UITEX; nCnt++)
-				{	// ポインタの3つ目から使用しているため、初期値は2
-					if (m_pUITex[nCnt] != NULL)
+				for (int nCnt = 0; nCnt < RESPAWN_TEX; nCnt++)
+				{
+					if (m_pUITexRespawn[nCnt] != NULL)
 					{	// UIテクスチャの破棄
-						m_pUITex[nCnt]->Uninit();
-						m_pUITex[nCnt] = NULL;
+						m_pUITexRespawn[nCnt]->Uninit();
+						m_pUITexRespawn[nCnt] = NULL;
 					}
 				}
 
-				if (m_pUINum[2] != NULL)
+				if (m_pUINumRespawn != NULL)
 				{	// 戦線復帰カウンターの破棄
-					m_pUINum[2]->Uninit();
-					m_pUINum[2] = NULL;
+					m_pUINumRespawn->Uninit();
+					m_pUINumRespawn = NULL;
 				}
-
-				// カウンターの初期化
-				m_nCntAnim = 0;
-				m_nPatternAnim = 0;
 			}
 		}
 		break;
@@ -1289,10 +1282,8 @@ void CPlayer::Respawn(RESPAWN respawn)
 	m_Respawn = respawn;
 
 #ifdef _DEBUG
-	CDebugProc::Print("m_nCntAnim : %d\n", m_nCntAnim);
-	CDebugProc::Print("m_nPatternAnim : %d\n", m_nPatternAnim);
 	CDebugProc::Print("m_nDisTime : %d\n", m_nDisTime);
-	CDebugProc::Print("m_nTimer : %d\n", m_nTimer);
+	CDebugProc::Print("m_nRespawnTimer : %d\n", m_nRespawnTimer);
 #endif
 }
 
@@ -1301,41 +1292,41 @@ void CPlayer::Respawn(RESPAWN respawn)
 //=========================================
 void CPlayer::SelectRespawn(void)
 {
-	if (m_pUITex[5] == NULL || m_pUITex[6] == NULL || m_pUITex[7] == NULL || m_pUITex[5] == NULL || m_pCursor == NULL)
+	if (m_pUITexSelectRes[0] == NULL || m_pUITexSelectRes[1] == NULL || m_pUITexSelectRes[2] == NULL || m_pUITexSelectRes[3] == NULL || m_pCursor == NULL)
 	{	// UIの生成
-		m_pUITex[5] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH, SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_NONE);	// 下地
-		m_pUITex[6] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 360.0f, 0.0f), 500.0f, 370.0f, CUI_TEXTURE::UIFLAME_MAP);	// マップ
-		m_pUITex[7] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 120.0f, 0.0f), 400.0f, 80.0f, CUI_TEXTURE::UIFLAME_TITLE);	// リスポーンタイトル
-		m_pUITex[8] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, PLAYER_UI_HEIGHT, 0.0f), 500.0f, 100.0f, CUI_TEXTURE::UIFLAME_RESPAWN_FLAME);		// フレーム
+		m_pUITexSelectRes[0] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH, SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_NONE);	// 下地
+		m_pUITexSelectRes[1] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 360.0f, 0.0f), 500.0f, 370.0f, CUI_TEXTURE::UIFLAME_MAP);	// マップ
+		m_pUITexSelectRes[2] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 120.0f, 0.0f), 400.0f, 80.0f, CUI_TEXTURE::UIFLAME_TITLE);	// リスポーンタイトル
+		m_pUITexSelectRes[3] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, PLAYER_UI_HEIGHT, 0.0f), 500.0f, 100.0f, CUI_TEXTURE::UIFLAME_RESPAWN_FLAME);		// フレーム
 		m_pCursor = CMouseCursor2D::Create();		// カーソル
 	}
 
-	for (int nCnt = 0; nCnt < PLAYER_BOTTON; nCnt++)
+	for (int nCnt = 0; nCnt < SELECTRESPAWN_BOTTON; nCnt++)
 	{
-		if (m_apButtonUI[nCnt] == NULL)
+		if (m_pUISelectResBotton[nCnt] == NULL)
 		{	// ボタンの生成
-			m_apButtonUI[nCnt] = CButton2D::Create(D3DXVECTOR3(470.0f + (nCnt *(PLAYER_BOTTON_WIDTH + PLAYER_BOTTON_INT)), PLAYER_UI_HEIGHT, 0.0f),
+			m_pUISelectResBotton[nCnt] = CButton2D::Create(D3DXVECTOR3(470.0f + (nCnt *(PLAYER_BOTTON_WIDTH + PLAYER_BOTTON_INT)), PLAYER_UI_HEIGHT, 0.0f),
 				PLAYER_BOTTON_WIDTH, PLAYER_BOTTON_HEIGHT);  	// リスポーンボタンの横幅
-			m_apButtonUI[nCnt]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
-			m_apButtonUI[nCnt]->SetTex(nCnt, 1, 4);
+			m_pUISelectResBotton[nCnt]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUISelectResBotton[nCnt]->SetTex(nCnt, 1, 4);
 		}
 	}
 
-	if (m_apButtonUI[0] != NULL || m_apButtonUI[1] != NULL || m_apButtonUI[2] != NULL || m_apButtonUI[3] != NULL)
+	if (m_pUISelectResBotton[0] != NULL || m_pUISelectResBotton[1] != NULL || m_pUISelectResBotton[2] != NULL || m_pUISelectResBotton[3] != NULL)
 	{	// 生成されていた時
 		bool bBottonSwitch = false;
 		int nSelect = -1;
-		POINT point = POINT_A;
+		m_point = POINT_A;
 
 		// ボタンの判定
-		for (int nCntButton = 0; nCntButton < PLAYER_BOTTON; nCntButton++)
+		for (int nCntButton = 0; nCntButton < SELECTRESPAWN_BOTTON; nCntButton++)
 		{
-			if (m_apButtonUI[nCntButton]->InRange(m_pCursor->GetMousePosition()))
+			if (m_pUISelectResBotton[nCntButton]->InRange(m_pCursor->GetMousePosition()))
 			{// 範囲内かチェック
-				if (m_apButtonUI[nCntButton]->ClickRelease())
+				if (m_pUISelectResBotton[nCntButton]->ClickRelease())
 				{// クリックされた
 					bBottonSwitch = true;
-					point = (POINT)nCntButton;
+					m_point = (POINT)nCntButton;
 					break;
 				}
 				nSelect = nCntButton;
@@ -1345,7 +1336,7 @@ void CPlayer::SelectRespawn(void)
 		// ボタン押された時の処理
 		if (bBottonSwitch)
 		{	// trueの時
-			switch (point)
+			switch (m_point)
 			{
 			case POINT_A:
 				break;
@@ -1367,21 +1358,21 @@ void CPlayer::SelectRespawn(void)
 			m_nLife = m_nLifeMax;
 
 			// リスポーン地点が決定したら破棄する
-			for (int nCnt = 0; nCnt < PLAYER_BOTTON; nCnt++)
+			for (int nCnt = 0; nCnt < SELECTRESPAWN_BOTTON; nCnt++)
 			{
-				if (m_apButtonUI[nCnt] != NULL)
+				if (m_pUISelectResBotton[nCnt] != NULL)
 				{	// ボタンの破棄
-					m_apButtonUI[nCnt]->Uninit();
-					m_apButtonUI[nCnt] = NULL;
+					m_pUISelectResBotton[nCnt]->Uninit();
+					m_pUISelectResBotton[nCnt] = NULL;
 				}
 			}
 
-			for (int nCnt = 5; nCnt < MAX_UITEX; nCnt++)
+			for (int nCnt = 0; nCnt < SERECTRESPAWN_TEX; nCnt++)
 			{
-				if (m_pUITex[nCnt] != NULL)
-				{	// ポインタの6つ目から使用しているため、初期値は5
-					m_pUITex[nCnt]->Uninit();
-					m_pUITex[nCnt] = NULL;
+				if (m_pUITexSelectRes[nCnt] != NULL)
+				{	// テクスチャの破棄
+					m_pUITexSelectRes[nCnt]->Uninit();
+					m_pUITexSelectRes[nCnt] = NULL;
 				}
 			}
 
@@ -1396,6 +1387,153 @@ void CPlayer::SelectRespawn(void)
 #ifdef _DEBUG
 	CDebugProc::Print("リスポーン選択中");
 #endif
+}
+
+//=============================================================================
+//	ラジオチャットボタン生成処理
+//=============================================================================
+void CPlayer::ChatBotton(void)
+{
+	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+
+	if (pKeyboard->GetTrigger(DIK_M))
+	{
+		if (m_pUIRadioBotton[0] == NULL || m_pUIRadioBotton[1] == NULL || m_pUIRadioBotton[2] == NULL || m_pUIRadioBotton[3] == NULL
+			|| m_pUIRadioBotton[4] == NULL || m_pUIRadioBotton[5] == NULL || m_pUIRadioBotton[6] == NULL || m_pUIRadioBotton[7] == NULL || m_pCursor == NULL)
+		{	// ボタンとカーソルの生成
+			m_bChatBotton = true;		// ボタン表示中
+
+			m_pUIRadioBotton[0] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[0]->SetTex(0, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[1] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[1]->SetTex(1, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[2] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[2]->SetTex(2, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[3] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[3]->SetTex(3, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[4] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[4]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[4]->SetTex(7, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[5] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[5]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[5]->SetTex(6, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[6] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[6]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[6]->SetTex(5, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[7] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[7]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[7]->SetTex(4, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pCursor = CMouseCursor2D::Create();		// カーソル
+		}
+	}
+
+	if (m_pUIRadioBotton[0] != NULL || m_pUIRadioBotton[1] != NULL || m_pUIRadioBotton[2] != NULL || m_pUIRadioBotton[3] != NULL
+		|| m_pUIRadioBotton[4] != NULL || m_pUIRadioBotton[5] != NULL || m_pUIRadioBotton[6] != NULL || m_pUIRadioBotton[7] != NULL || m_pCursor != NULL)
+	{	// ボタンとカーソルが生成された
+		m_bChat = false;
+		int nSelect = -1;
+		m_radiochat = RADIOCHAT_OK;
+
+		// ボタンの判定
+		for (int nCntButton = 0; nCntButton < RADIOCHAT_BOTTON; nCntButton++)
+		{
+			if (m_pUIRadioBotton[nCntButton]->InRange(m_pCursor->GetMousePosition()))
+			{// 範囲内かチェック
+				if (m_pUIRadioBotton[nCntButton]->ClickRelease())
+				{// クリックされた
+					m_bChat = true;
+					m_radiochat = (RADIOCHAT)nCntButton;
+					break;
+				}
+				nSelect = nCntButton;
+			}
+		}
+	}
+}
+
+//=============================================================================
+//	ボタンが押されて、メッセージ表示
+//=============================================================================
+void CPlayer::ChatMess(bool bChat)
+{
+	if (m_pUITexRadio == NULL)
+	{
+		m_bChatBotton = false;		// ボタン非表示中
+
+		m_pUITexRadio = CUI_TEXTURE::Create(D3DXVECTOR3(1280.0f, 550.0f, 0.0f), RADIOCHAT_MESS_WIDTH, RADIOCHAT_MESS_HEIGHT, CUI_TEXTURE::UIFLAME_RADIOCHAT_MESS);
+		m_pUITexRadio->SetTex(m_radiochat, 1, RADIOCHAT_BOTTON_PATTERN);
+	}
+	if (m_pUITexRadio != NULL)
+	{
+		for (int nCnt = 0; nCnt < RADIOCHAT_BOTTON; nCnt++)
+		{
+			if (m_pUIRadioBotton[nCnt] != NULL)
+			{	// ラジオチャットボタンの破棄
+				m_pUIRadioBotton[nCnt]->Uninit();
+				m_pUIRadioBotton[nCnt] = NULL;
+			}
+		}
+
+		if (m_pCursor != NULL)
+		{	// カーソルの破棄
+			m_pCursor->Uninit();
+			m_pCursor = NULL;
+		}
+
+		bool bMove = false;		// 止まったかどうか
+		D3DXVECTOR3 texPos = m_pUITexRadio->GetPos();		// 現在の位置を取得
+		D3DXCOLOR texCol = m_pUITexRadio->GetColor();		// 現在の色を取得
+
+		if (texPos.x >= 1080.0f)
+		{	// 設定した位置以上だったら動く
+			texPos.x -= m_moveSpeed;					// テクスチャ動かす
+		}
+		else
+		{	// 設定した位置以下だったら、止まる
+			bMove = true;		// 止まった！
+		}
+
+		if (bMove == true && texCol.a >= 1.0f)
+		{	// 止まった && 透明度が1.0以上の時
+			m_nTexTimer++;		// カウンター加算
+			if (m_nTexTimer % RADIOCHAT_DISPLAY_TIME == 0)
+			{	// 5秒経ったら
+				m_nTexTimer = 0;
+				m_bCol = true;
+			}
+		}
+		if (m_bCol == true)
+		{
+			texCol.a -= RADIOCHAT_COL;
+		}
+
+		m_pUITexRadio->SetPos(texPos);			// 位置を更新
+		m_pUITexRadio->SetColor(texCol);		// 色を更新
+
+		if (texCol.a <= 0.0f)
+		{	// 完全に色消えた
+			if (m_pUITexRadio != NULL)
+			{	// メッセージテクスチャの破棄
+				m_pUITexRadio->Uninit();
+				m_pUITexRadio = NULL;
+			}
+			m_bChat = false;					// チャットしていない
+			bMove = false;
+			m_bCol = false;
+		}
+	}
 }
 
 //=============================================================================
