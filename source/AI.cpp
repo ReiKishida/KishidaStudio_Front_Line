@@ -512,31 +512,37 @@ void CAIMecha::AIUpdate()
 	//CDebugProc::Print("AIPos :%.1f, %.1f\n", m_pos.x, m_pos.z);
 	//CDebugProc::Print("\n");
 
-	CDebugProc::Print("クリック回数 : %d\n", m_nRallyCount);
+	//CDebugProc::Print("クリック回数 : %d\n", m_nRallyCount);
 
-	if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)
-	{// パトロール時
-		CDebugProc::Print("パトロール状態\n");
-		CDebugProc::Print("\n");
-	}
-	else if (m_AIAction[2] == AI_ACTION_RALLY)
-	{// ラリー時	
-		CDebugProc::Print("ラリー状態\n");
-		CDebugProc::Print("開始地点 : %d\n", m_nRallyEndNode[0]);
-		for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
-		{
-			CDebugProc::Print("中間地点[%d] : %d\n", nCntRally, m_nRallyEndNode[nCntRally]);
-		}
-		CDebugProc::Print("終了地点 : %d\n", m_nRallyEndNode[m_nRallyCount]);
-		CDebugProc::Print("\n");
-	}
-	else
-	{// 通常時
-		CDebugProc::Print("目標優先状態\n");
-		CDebugProc::Print("開始地点 : %d\n", m_nStartNode);
-		CDebugProc::Print("終了地点 : %d\n", m_nEndNode);
-		CDebugProc::Print("\n");
-	}
+	//if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)
+	//{// パトロール時
+	//	CDebugProc::Print("パトロール状態\n");
+	//	CDebugProc::Print("開始地点 : %d\n", m_nRallyEndNode[0]);
+	//	for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
+	//	{
+	//		CDebugProc::Print("中間地点[%d] : %d\n", nCntRally, m_nRallyEndNode[nCntRally]);
+	//	}
+	//	CDebugProc::Print("終了地点 : %d\n", m_nRallyEndNode[m_nRallyCount]);
+	//	CDebugProc::Print("\n");
+	//}
+	//else if (m_AIAction[2] == AI_ACTION_RALLY)
+	//{// ラリー時	
+	//	CDebugProc::Print("ラリー状態\n");
+	//	CDebugProc::Print("開始地点 : %d\n", m_nRallyEndNode[0]);
+	//	for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
+	//	{
+	//		CDebugProc::Print("中間地点[%d] : %d\n", nCntRally, m_nRallyEndNode[nCntRally]);
+	//	}
+	//	CDebugProc::Print("終了地点 : %d\n", m_nRallyEndNode[m_nRallyCount]);
+	//	CDebugProc::Print("\n");
+	//}
+	//else
+	//{// 通常時
+	//	CDebugProc::Print("目標優先状態\n");
+	//	CDebugProc::Print("開始地点 : %d\n", m_nStartNode);
+	//	CDebugProc::Print("終了地点 : %d\n", m_nEndNode);
+	//	CDebugProc::Print("\n");
+	//}
 
 	//CDebugProc::Print("現在の移動回数 : %d\n", m_nPoint);
 	//CDebugProc::Print("目標までの移動回数 : %d\n", m_nCountPoint);
@@ -644,7 +650,7 @@ void CAIMecha::AIUpdate()
 
 	if (m_LogicTree[0] != -1)
 	{// AIの行動が決定している場合
-		if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && pKeyboard->GetTrigger(DIK_LCONTROL) != true)
+		if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && pKeyboard->GetPress(DIK_LCONTROL) != true)
 		{// 左クリックのみ押下
 			// ポイント検索
 			CAIMecha::NodeSearch(m_bGoal);
@@ -664,14 +670,14 @@ void CAIMecha::AIUpdate()
 		{// ストラテジーパート時でボタンマネージャーがNULLじゃない場合
 			if (m_LogicTree[0] != -1)
 			{// AIの行動が決定している場合
-				if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && pKeyboard->GetTrigger(DIK_LCONTROL) != true)
+				if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && pKeyboard->GetPress(DIK_LCONTROL) != true)
 				{// 左クリックのみ押下
 					m_nPoint = 0;
 					m_nCountPoint = -1;
 
 					if (m_nRallyCount < RALLYPOINT_MAX)
 					{// カウントが最大数まで到達していない場合
-						if (m_AIAction[2] != AI_ACTION_FOCUS_GOAL)
+						if (m_AIAction[2] == AI_ACTION_ROUND_TRIP || m_AIAction[2] == AI_ACTION_RALLY)
 						{// ラリー時またはパトロール時
 							m_nRallyCount++;
 						}
@@ -695,24 +701,24 @@ void CAIMecha::AIUpdate()
 						CAIMecha::RootSearch();
 					}
 
-					// 地点可視化用
-					if (m_pScene3D == NULL)
-					{// 3Dポリゴンの生成
-						m_pScene3D = m_pScene3D->Create();
-						if (m_pScene3D != NULL)
-						{// 3Dポリゴンの設定
-							m_searchPos.y += 3.0f;
-							m_pScene3D->SetPos(m_searchPos);
-							m_pScene3D->SetWidth(18.0f);
-							m_pScene3D->SetDepth(17.0f);
-							m_pScene3D->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
-						}
-					}
-					else
-					{// 再配置の場合
-						m_searchPos.y += 3.0f;
-						m_pScene3D->SetPos(m_searchPos);
-					}
+					//// 地点可視化用
+					//if (m_pScene3D == NULL)
+					//{// 3Dポリゴンの生成
+					//	m_pScene3D = m_pScene3D->Create();
+					//	if (m_pScene3D != NULL)
+					//	{// 3Dポリゴンの設定
+					//		m_searchPos.y += 3.0f;
+					//		m_pScene3D->SetPos(m_searchPos);
+					//		m_pScene3D->SetWidth(18.0f);
+					//		m_pScene3D->SetDepth(17.0f);
+					//		m_pScene3D->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+					//	}
+					//}
+					//else
+					//{// 再配置の場合
+					//	m_searchPos.y += 3.0f;
+					//	m_pScene3D->SetPos(m_searchPos);
+					//}
 				}
 			}
 		}
@@ -742,20 +748,27 @@ void CAIMecha::AutoMove()
 		m_move = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 		m_nBreaktime = ENEMY_BREAKTIME;
 
-		if (m_nCountPoint != 0 && m_nCountPoint == m_nPoint && !m_bGoal)
-		{// 終了ノードに到着したとき
+		if (m_nCountPoint != 0 && m_nCountPoint == m_nPoint && !m_bGoal && m_AIAction[2] != AI_ACTION_ROUND_TRIP)
+		{// 終了ノードに到着したとき、パトロール状態じゃない場合
+			// ゴール到着フラグを立たせる
 			m_bGoal = true;
 
-			if (m_AIAction[2] != AI_ACTION_ROUND_TRIP)
-			{// パトロール時以外
-				for (int nCntAction = 0; nCntAction < 4; nCntAction++)
-				{// 行動数の分回る
-
-					// データの初期化
-					m_AIAction[nCntAction] = AI_ACTION_NONE;
-					m_LogicTree[nCntAction] = -1;
-				}
+			// 数値の初期化
+			for (int nCntNode = 0; nCntNode < NODE_MAX; nCntNode++)
+			{// ノードの最大値数回る
+				m_waypoint[nCntNode] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 			}
+
+			for (int nCntAction = 0; nCntAction < 4; nCntAction++)
+			{// 行動数の分回る
+				// データの初期化
+				m_AIAction[nCntAction] = AI_ACTION_NONE;
+				m_LogicTree[nCntAction] = -1;
+			}
+		}
+		else if(m_nCountPoint != 0 && m_nCountPoint == m_nPoint && !m_bGoal && m_AIAction[2] == AI_ACTION_ROUND_TRIP)
+		{
+			m_nPoint = 0;
 		}
 	}
 	else if (m_nBreaktime == 0 && m_nCountPoint > m_nPoint)
