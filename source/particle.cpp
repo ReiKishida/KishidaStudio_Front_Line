@@ -8,7 +8,7 @@
 #include "particle.h"
 #include "renderer.h"
 #include "manager.h"
-
+#include "effect.h"
 #include <stdio.h>
 
 //*****************************************************************************
@@ -22,7 +22,7 @@
 //*****************************************************************************
 LPDIRECT3DTEXTURE9 *CParData::m_pTexture = NULL;	// テクスチャの情報
 int CParData::m_nNumTexture = 0;					// テクスチャの数
-CParData::DATA **CParData::m_pParticleData = NULL;	// ファイルから読み取ったデータ
+CParData::PAR_DATA **CParData::m_pParticleData = NULL;	// ファイルから読み取ったデータ
 int CParData::m_nNumParticle = 0;					// パーティクル数
 
 //=========================================
@@ -200,9 +200,14 @@ CParticlePolygon *CParticlePolygon::Create(D3DXVECTOR3 pos, int nType, int nText
 	CParticlePolygon *pParticlePlygon;
 
 	pParticlePlygon = new CParticlePolygon;	// メモリを確保
-	pParticlePlygon->m_nType = nType;
-	pParticlePlygon->Init(pos);
-	pParticlePlygon->BindTexture(CParData::GetTexture(nTexture));
+
+	if (NULL != pParticlePlygon)
+	{
+		pParticlePlygon->m_nType = nType;
+		pParticlePlygon->Init(pos);
+		pParticlePlygon->BindTexture(CParData::GetTexture(nTexture));
+	}
+
 	return pParticlePlygon;
 }
 
@@ -225,6 +230,7 @@ CParticlePolygon::CParticlePolygon(int nPriority) : CScene3DBill(nPriority)
 	m_nCntAngle = 0;
 	m_nLife = 0;
 	m_nType = 0;
+	m_nLifeMax = 0;
 }
 
 //=========================================
@@ -270,10 +276,17 @@ HRESULT CParticlePolygon::Init(D3DXVECTOR3 pos)
 			(nHeight[1] + nHeight[0]) * fSpread,
 			cosf(D3DX_PI * (0.0f + (m_fAngle * m_nCntAngle))) * ((nDepth[0] + (rand() % (1 + nDepth[1]))) - ((rand() % 10) * 0.1f)) * fSpread);
 	}
-	m_col = col;
+
+	if(1 == m_nType)
+	{
+		m_col = D3DXCOLOR(col.r, (rand() % 3 + 4) * 0.1f, (rand() % 2 + 1) * 0.1f, 1.0f);
+	}
+	else { m_col = col; }
+
 	CScene3DBill::SetColor(m_col);
 	m_fRadius = nRadius[0] + (rand() % (1 + (nRadius[1] - nRadius[0])) - 1) + ((rand() % 10) * 0.1f);
 	m_nLife = nLife[0] + (rand() % (1 + (nLife[1] - nLife[0])) - 1);
+	m_nLifeMax = m_nLife;
 	m_fGravity = fGravity;
 	m_bDraw = bDraw;
 
@@ -381,6 +394,11 @@ void CParticlePolygon::Update(void)
 		CScene3DBill::SetColor(m_col);
 
 		CScene3DBill::SetPos(pos);
+
+		if (1 == m_nType)
+		{
+			CEffect::Create(pos, m_col, m_fLength + m_fRadius, m_nLifeMax / 3);
+		}
 	}
 }
 
@@ -471,11 +489,11 @@ HRESULT CParData::Load(void)
 			if (strcmp(aStr, "NUM_PARTICLE") == 0)
 			{// パーティクル数
 				fscanf(pFile, " = %d", &m_nNumParticle);
-				m_pParticleData = new CParData::DATA*[m_nNumParticle];
+				m_pParticleData = new CParData::PAR_DATA*[m_nNumParticle];
 			}
 			if (strcmp(aStr, "PARTICLESET") == 0)
 			{// エミッタの情報
-				m_pParticleData[nCntEffect] = new CParData::DATA;
+				m_pParticleData[nCntEffect] = new CParData::PAR_DATA;
 				while (strcmp(aStr, "END_PARTICLESET") != 0)
 				{// 終了メッセージまでループ
 					fscanf(pFile, "%s", &aStr);
@@ -631,6 +649,12 @@ void CParData::Unload(void)
 		{// メモリの開放
 			delete m_pParticleData[nCntParticle];
 			m_pParticleData[nCntParticle] = NULL;
+		}
+
+		if (NULL != m_pTexture[nCntParticle])
+		{// テクスチャの開放
+			m_pTexture[nCntParticle]->Release();
+			m_pTexture[nCntParticle] = NULL;
 		}
 	}
 

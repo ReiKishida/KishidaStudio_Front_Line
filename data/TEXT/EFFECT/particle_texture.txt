@@ -1,7 +1,6 @@
-5
+4
 
-data/TEXTURE/EFFECT/sweat.png
-data/TEXTURE/EFFECT/SandDust.jpg
-data/TEXTURE/EFFECT/weed.png
-data/TEXTURE/EFFECT/attack.png
-data/TEXTURE/EFFECT/wind.png
+data/TEXTURE/EFFECT/smoke.png
+data/TEXTURE/EFFECT/shadow000.jpg
+data/TEXTURE/EFFECT/flash.jpg
+data/TEXTURE/EFFECT/sparks.jpg

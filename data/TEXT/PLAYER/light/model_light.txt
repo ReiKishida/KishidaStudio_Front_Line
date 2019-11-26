@@ -42,7 +42,7 @@ CHARACTERSET
 	RELOAD = 180					# ƒŠƒ[ƒhŽžŠÔ
 
 	LIFE = 270						# ‘Ï‹v—Í
-	SPEED = 5.0						# ˆÚ“®—Ê
+	SPEED = 6.5						# ˆÚ“®—Ê
 	
 	FOOT = 4						# ‘«‚ÌŽn‚Ü‚è”Ô†
 

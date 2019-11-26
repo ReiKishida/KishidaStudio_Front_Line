@@ -1110,7 +1110,10 @@ void CButtonManagerStrategy::ButtonUninit(int nLogic)
 	for (int nCntButton = 4 - nLogic; nCntButton < 4; nCntButton++)
 	{// ƒ{ƒ^ƒ“‚Ì”‚ð‰Šú‰»
 		m_aNumLogic[nCntButton] = 0;
-		m_aSelectLogic[nCntButton] = -1;
+		if (!m_bFinish)
+		{
+			m_aSelectLogic[nCntButton] = -1;
+		}
 
 		if (1 <= nCntButton && m_pLine[nCntButton - 1] != NULL)
 		{// ‚Â‚È‚ª‚Á‚Ä‚¢‚éü‚ð—£‚·

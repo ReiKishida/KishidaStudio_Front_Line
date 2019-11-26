@@ -55,6 +55,7 @@ CScene3DBill::CScene3DBill(int nPriority, CScene::OBJTYPE objType) : CScene(nPri
 	m_bZBuffer = false;							// Zバッファの設定をするかどうか
 	m_bLighting = true;							// ライティングの有無
 	m_bDisp = true;
+	m_bAddDraw = false;
 }
 
 //=========================================
@@ -153,9 +154,16 @@ void CScene3DBill::Draw(void)
 
 	if (m_bZBuffer)
 	{// Zバッファの設定
-		pDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+		pDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 		pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-		pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
+		pDevice->SetRenderState(D3DRS_ZFUNC, m_cmpFunc);
+	}
+
+	if (m_bAddDraw)
+	{ // αブレンディングを加算合成に設定
+		pDevice->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+		pDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+		pDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
 	}
 
 	// αテストの設定
@@ -219,6 +227,14 @@ void CScene3DBill::Draw(void)
 		pDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
 		pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 		pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+	}
+
+	if (m_bAddDraw)
+	{
+		// αブレンディングを元に戻す
+		pDevice->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+		pDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+		pDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 	}
 
 	// αテストの設定を戻す
@@ -368,12 +384,10 @@ void CScene3DBill::SetHeight(float fHeight)
 //=========================================
 // Zバッファの設定
 //=========================================
-void CScene3DBill::SetZBuffer(D3DCMPFUNC cmpFunc)
+void CScene3DBill::SetZBuffer(bool bZBuff, D3DCMPFUNC cmpFunc)
 {
 	m_cmpFunc = cmpFunc;
 
-	if (!m_bZBuffer)
-	{// Zバッファの設定をする
-		m_bZBuffer = true;
-	}
+	// Zバッファの設定をする
+	m_bZBuffer = bZBuff;
 }

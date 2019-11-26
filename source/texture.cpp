@@ -86,7 +86,7 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/mechaSelect/mecha_select.png" },		// 機体画像（機体選択画面で使用）
 		{ "data/TEXTURE/bullet.png" },						// 弾
 		{ "data/TEXTURE/strategy/strategy_icon.png" },		// ストラテジーのアイコン
-
+		{ "data/TEXTURE/EFFECT/shadow000.jpg" },		// 影のエフェクト
 	};
 
 	for (int nCntTexture = 0; nCntTexture < TEXTURE_MAX; nCntTexture++)

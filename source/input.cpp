@@ -6,6 +6,7 @@
 //=============================================================================
 #include "input.h"
 #include "manager.h"
+#include "renderer.h"
 #include "game.h"
 
 //*****************************************************************************
@@ -374,13 +375,26 @@ void CInputMouse::Update(void)
 				{// ゲームモード
 					if (CGame::PART_ACTION == CManager::GetGame()->GetPart())
 					{// アクションパート
-						// X軸の制御
-						if (rect.left > m_Point.x) { m_Point.x = rect.right; }
-						else if (rect.right < m_Point.x) { m_Point.x = rect.left; }
+						if (CManager::GetRenderer()->GetWindowMode())
+						{// ウィンドウモード
+							CDebugProc::Print("rect:%.2f %.2f %.2f %.2f", rect.left, rect.right, rect.top, rect.bottom);
+							// X軸の制御
+							if (rect.left + 50 > m_Point.x) { m_Point.x = rect.right - 50; }
+							else if (rect.right - 50 < m_Point.x) { m_Point.x = rect.left + 50; }
 
-						// Y軸の制御
-						if (rect.top > m_Point.y) { m_Point.y = rect.bottom; }
-						else if (rect.bottom < m_Point.y) { m_Point.y = rect.top; }
+							// Y軸の制御
+							if (rect.top + 50 > m_Point.y) { m_Point.y = rect.bottom - 50; }
+							else if (rect.bottom - 50 < m_Point.y) { m_Point.y = rect.top + 50; }
+						}
+						else
+						{// フルスクリーン
+							if (1 > m_Point.x) { m_Point.x = 1278; }
+							else if (1278 < m_Point.x) { m_Point.x = 1; }
+
+							// Y軸の制御
+							if (1 > m_Point.y) { m_Point.y = 718; }
+							else if (718 < m_Point.y) { m_Point.y = 1; }
+						}
 					}
 				}
 				else if (CManager::MODE_MENU == CManager::GetMode())

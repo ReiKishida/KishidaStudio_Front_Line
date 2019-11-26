@@ -13,7 +13,7 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define PARTICLE_PRIORITY	(5)		// 処理の優先順位
+#define PARTICLE_PRIORITY	(6)		// 処理の優先順位
 
 //*****************************************************************************
 // クラス定義
@@ -97,6 +97,7 @@ private:
 	bool m_bDraw;			// 加算合成かどうか
 	int m_nCntAngle;		// 角度計算用に必要
 	bool m_bRotVec;			// 回転方向
+	int m_nLifeMax;			// ライフの最大値
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -126,7 +127,7 @@ public:
 		bool bLoop;				// ループさせるか 0:なし 1:あり
 		bool bBouncing;			// バウンドさせるか 0:なし 1:あり
 		bool bDraw;				// 加算合成かどうか
-	}DATA;
+	}PAR_DATA;
 
 	CParData();
 	~CParData();
@@ -164,7 +165,7 @@ private:
 	static int m_nNumTexture;			// テクスチャの数
 	static LPDIRECT3DTEXTURE9 *m_pTexture;		// 共有テクスチャへのポインタ
 
-	static DATA **m_pParticleData;		// パーティクルデータ
+	static PAR_DATA **m_pParticleData;		// パーティクルデータ
 };
 
 #endif

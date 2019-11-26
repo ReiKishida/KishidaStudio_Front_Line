@@ -81,6 +81,8 @@ public:
 
 	CMouseCursor *GetMouse(void) { return m_pMouse; }
 
+	CButtonManagerStrategy *GetButtonManager(void) { return m_pButtonManager; };
+
 private:
 	void PrintData(void);
 	void ReadMessage(void);

@@ -218,7 +218,7 @@ void CScene::DrawStrategy(void)
 		CScene *pSceneNext = pScene->m_pNext;		// 更新内で削除された時のために値を保持
 
 		if (OBJTYPE_BUTTON == pScene->m_objType || OBJTYPE_BUTTONLINE == pScene->m_objType)
-		{// マウスカーソル
+		{// ボタンとボタンをつなぐ線
 			if (!pScene->m_bDeath) { pScene->Draw(); }	// 描画処理
 		}
 

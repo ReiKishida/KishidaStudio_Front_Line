@@ -360,7 +360,7 @@ HRESULT CGauge3D::Init(void)
 {
 	for (int nCntGauge = 0; nCntGauge < m_nNumBar; nCntGauge++)
 	{// Zバッファの設定
-		m_pGauge[nCntGauge]->SetZBuffer(D3DCMP_ALWAYS);
+		m_pGauge[nCntGauge]->SetZBuffer(true, D3DCMP_ALWAYS);
 		m_pGauge[nCntGauge]->SetLighting(false);
 	}
 

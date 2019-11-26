@@ -66,6 +66,7 @@ public:
 		OBJTYPE_UI_TEXTURE3D,
 		OBJTYPE_NODE,				// ノード
 		OBJTYPE_LINE,				// ライン
+		OBJTYPE_EFFECT,				// エフェクト
 		OBJTYPE_MAX					// オブジェクトの種類の最大数
 	}OBJTYPE;
 

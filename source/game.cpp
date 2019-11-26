@@ -43,6 +43,8 @@
 #include "scene3D.h"
 #include "menu.h"
 
+#include "particle.h"
+
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -91,6 +93,7 @@ HRESULT CGame::Init(void)
 
 	m_pField = CModel::Create();
 	m_pField->SetModel(FIELD_MODEL_NAME);
+	m_pField->SetPos(D3DXVECTOR3(-2.0f, 0.0f, 17.0f));
 
 	m_pSky = CModel::Create();
 	m_pSky->SetModel(SKY_MODEL_NAME);
@@ -141,7 +144,7 @@ HRESULT CGame::Init(void)
 	CBulletCollision::Create();
 
 	// マップの当たり判定の読み込み
-	//CCollision::Load();
+	CCollision::Load();
 
 	//****************************************
 	// 2DUI生成（フレーム）

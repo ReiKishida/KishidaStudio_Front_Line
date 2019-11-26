@@ -17,12 +17,12 @@
 #include "nodePointer.h"
 #include "scene2D.h"
 #include "texture.h"
+#include "AI.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
 #define	LOAD_FILENAME			("data/TEXT/NODE_DATA/NodeData.txt")	// 読み込むファイルのパス
-#define CURSOR_TEXTURE			("data/TEXTURE/reticle.png")	// カーソルのテクスチャ
 #define MASSAGE_DISPLAY_TIME	(180)							// メッセージの表示時間
 #define MOUSE_WIDTH				(30.0f)
 #define MOUSE_HEIGHT			(30.0f)
@@ -122,57 +122,6 @@ void CMouseCursor::Update(void)
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
 
-	//if (m_bErrorMassage == true)
-	//{// エラーメッセージの表示
-	//	CDebugProc::Print("====================================\n");
-	//	CDebugProc::Print("= ファイルに書き込めませんでした =\n");
-	//	CDebugProc::Print("====================================\n\n");
-	//}
-	//else if (m_bSaveMassage == true)
-	//{// セーブ完了メッセージの表示
-	//	CDebugProc::Print("===================\n");
-	//	CDebugProc::Print("= セーブ正常完了 =\n");
-	//	CDebugProc::Print("===================\n\n");
-	//}
-
-	CDebugProc::Print("=====マウス用3Dポリゴン======\n");
-	CDebugProc::Print("カーソルの座標\n x : %.1f y : %.1f z : %.1f\n", m_pos.x, m_pos.y, m_pos.z);
-	CDebugProc::Print("============================\n");
-	//CDebugProc::Print("配置してるノードの数: %d\n", m_nNodeCounter);
-
-	//CDebugProc::Print("(LSHIFT)接続設定モード: %s\n", m_bConnectMode ? "ON" : "OFF");
-
-	//if (m_bConnectMode == true)
-	//{// 接続設定モードの場合
-	//	CDebugProc::Print("(SPACE)接続 [%s] 設定モード\n", m_bConnectSet ? "元" : "先");
-	//	if (m_bConnectNumSet == false)
-	//	{// 接続元設定モードの場合
-	//		CDebugProc::Print("(LCLICK)接続元を設定する\n");
-	//	}
-	//	else if (m_bConnectNumSet == true)
-	//	{// 接続先設定モードの場合
-	//		CDebugProc::Print("(LCLICK)接続先を設定する\n");
-	//		CDebugProc::Print("(RCLICK)接続先を1つ戻す\n");
-	//	}
-
-	//	CDebugProc::Print("ノードの位置 x : %.1f / y : %.1f / z : %.1f\n", m_SelectNodePos.x, m_SelectNodePos.y, m_SelectNodePos.z);
-	//	CDebugProc::Print("No. : %d\n", m_SelectNodeNumber);
-	//	CDebugProc::Print("接続ノード数 : %d\n", m_SelectNodeConnectMax);
-	//	for (int nCntConnect = 0; nCntConnect < m_SelectNodeConnectMax; nCntConnect++)
-	//	{
-	//		CDebugProc::Print("接続先番号[%d] : %d\n", nCntConnect, m_SelectNodeConnect[nCntConnect]);
-	//	}
-	//	CDebugProc::Print("\n");
-
-	//	CDebugProc::Print("接続元ノード番号 : %d\n", m_nSelectNode);
-	//	CDebugProc::Print("接続先ノード番号 : %d\n", m_nSelectConnectNode);
-	//}
-	//else if (m_bConnectMode == false)
-	//{// ノード配置モードの場合
-	//	CDebugProc::Print("(LCLICK)ノードを設定する\n");
-	//	CDebugProc::Print("(RCLICK)ノードを1つ戻す\n");
-	//}
-
 	if (m_bSaveMassage == true || m_bErrorMassage == true)
 	{// メッセージ表示時間の減少
 		m_nMassageCount--;
@@ -228,169 +177,10 @@ void CMouseCursor::Input(CInputKeyboard *pKeyboard, CInputMouse *pMouse)
 	bool bSet = false;
 	D3DXVECTOR3 SetPos = D3DXVECTOR3(((int)(m_pos.x / 38)) * 38.0f, 0.0f, ((int)(m_pos.z / 36)) * 36.0f);
 
-	//if (CGame::GetCreateMode() == true)
-	{// ノーマルモード時
-		if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && CEnemy::GetPartSwitch() == true && pKeyboard->GetPress(DIK_LCONTROL) == false)
-		{// ストラテジーパート時に左クリックでAIの目的地を設定
-			CEnemy::SetSearchPos(SetPos);
-		}
+	if (CManager::GetGame()->GetPart() == CGame::PART_STRATEGY && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true || pMouse->GetPress(DIK_LCONTROL) != true)
+	{// ストラテジーパート時に左クリックでAIの目的地を設定
+		CManager::GetGame()->GetPlayer(0)->GetMyAI()->GetSearchPos() = SetPos;
 	}
-	//	//else if (CGame::GetCreateMode() == false)
-	//	{// クリエイティブモード時
-
-	//if (pKeyboard->GetTrigger(DIK_LSHIFT) == true)
-	//{// NUMPAD1ボタンで接続編集モードの変更
-	//	m_bConnectMode = m_bConnectMode ? false : true;
-	//}
-
-	//if (m_bConnectMode == true)
-	//{// 接続編集モード時のみ
-	//	if (pKeyboard->GetTrigger(DIK_SPACE) == true)
-	//	{// Spaceキーで接続元,先モードの変更
-	//		m_bConnectSet = m_bConnectSet ? false : true;
-	//		m_bConnectNumSet = !m_bConnectSet;
-	//	}
-	//}
-
-	//		if (m_bConnectMode == false)
-	//		{// ノード配置設定モード時
-	//			if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && pKeyboard->GetPress(DIK_LCONTROL) == false)
-	//			{//	左クリックでノード配置
-	//			 // 目的地設定
-	//				for (int nCntNode = 0; nCntNode < m_nNodeCounter; nCntNode++)
-	//				{// 配置してるノードの数だけ回る
-	//					if (m_pNodePointer[nCntNode] != NULL)
-	//					{// 全ノードのNULLチェック
-	//						if (m_pNodePointer[nCntNode]->GetPos() == SetPos)
-	//						{// すでに置いている場所の場合
-	//							bSet = true;
-	//						}
-	//					}
-	//				}
-	//
-	//				if (m_pNodePointer[m_nNodeCounter] == NULL && bSet == false)
-	//				{// ノードポリゴンの追加 ※既に配置済みなら配置できない
-	//					m_pNodePointer[m_nNodeCounter] = m_pNodePointer[m_nNodeCounter]->Create(SetPos);
-	//					CNodePointer::GetNodeMax()++;
-	//					m_nNodeCounter++;
-	//				}
-	//			}
-	//			else if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_1) == true && m_nNodeCounter > 0)
-	//			{// 右クリックで1つ戻る
-	//			 // 接続先の接続数を減らす
-	//				CNodePointer::GetNodeMax()--;
-	//				m_nNodeCounter--;
-	//
-	//				if (m_pNodePointer[m_nNodeCounter] != NULL)
-	//				{// ノードポリゴンの削除
-	//					m_pNodePointer[m_nNodeCounter]->Uninit();
-	//					m_pNodePointer[m_nNodeCounter] = NULL;
-	//				}
-	//			}
-	//		}
-	//		else if (m_bConnectMode == true)
-	//		{// ノード接続設定モード時
-	//			if (m_bConnectSet == true)
-	//			{// 接続元設定モード時
-	//				if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && pKeyboard->GetPress(DIK_LCONTROL) == false)
-	//				{// 左クリックで接続元のノードを設定する
-	//					for (int nCntNode = 0; nCntNode < m_nNodeCounter; nCntNode++)
-	//					{// 配置してるノードの数だけ回る
-	//						if (m_pNodePointer[nCntNode] != NULL)
-	//						{// 全ノードのNULLチェック
-	//							if (m_pNodePointer[nCntNode]->GetPos() == SetPos)
-	//							{// 選択ノードの番号を検索
-	//
-	//								if (m_pNodePointer[m_nSelectNode]->GetPos() != SetPos)
-	//								{// 1個目じゃなければ前回の色を元に戻す
-	//									m_pNodePointer[m_nSelectNode]->GetColor() = D3DXCOLOR(1.0f, 0.5f, 0.8f, 0.5f);
-	//								}
-	//
-	//								// 選択ノードの番号を接続元として取得
-	//								m_nSelectNode = m_pNodePointer[nCntNode]->GetMyNumber();
-	//
-	//								// 接続元ノードを選択してるのが分かるように色を変える
-	//								m_pNodePointer[m_nSelectNode]->GetColor() = D3DXCOLOR(0.0f, 0.0f, 1.0f, 0.5f);
-	//
-	//								m_SelectNodePos = m_pNodePointer[m_nSelectNode]->GetPos();
-	//								m_SelectNodeNumber = m_pNodePointer[m_nSelectNode]->GetMyNumber();
-	//								m_SelectNodeConnectMax = m_pNodePointer[m_nSelectNode]->GetConnectMax();
-	//								for (int nCntConnect = 0; nCntConnect < m_pNodePointer[m_nSelectNode]->GetConnectMax(); nCntConnect++)
-	//								{
-	//									m_SelectNodeConnect[nCntConnect] = m_pNodePointer[m_nSelectNode]->GetConnect(nCntConnect);
-	//								}
-	//							}
-	//						}
-	//					}
-	//				}
-	//			}
-	//			else if (m_bConnectNumSet == true)
-	//			{// 接続先設定モード時
-	//				if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
-	//				{// 左クリックで接続先のノードを設定する
-	//					for (int nCntNode = 0; nCntNode < m_nNodeCounter; nCntNode++)
-	//					{// 配置してるノードの数だけ回る
-	//						if (m_pNodePointer[nCntNode] != NULL)
-	//						{// 全ノードのNULLチェック
-	//							if (m_pNodePointer[nCntNode]->GetConnectMax() < CONNECT_MAX && m_pNodePointer[m_nSelectNode]->GetConnectMax() < CONNECT_MAX)
-	//							{// 接続できる最大以下の場合のみ
-	//								if (m_pNodePointer[m_nSelectConnectNode]->GetPos() != SetPos && m_pNodePointer[m_nSelectNode]->GetPos() != SetPos)
-	//								{// 同じ場所や接続元の場合は選択できない
-	//									if (m_pNodePointer[nCntNode]->GetPos() == SetPos)
-	//									{// 選択ノードの番号を検索
-	//
-	//										if (m_pNodePointer[m_nSelectConnectNode]->GetPos() != SetPos && m_pNodePointer[m_nSelectNode]->GetPos() != SetPos)
-	//										{// 1個目や接続元じゃなければ前回の色を元に戻す
-	//											m_pNodePointer[m_nSelectConnectNode]->GetColor() = D3DXCOLOR(1.0f, 0.5f, 0.8f, 0.5f);
-	//										}
-	//
-	//										// 選択ノードの番号を接続先として取得
-	//										m_nSelectConnectNode = m_pNodePointer[nCntNode]->GetMyNumber();
-	//
-	//										// 接続元ノードに接続先ノードの番号を登録する
-	//										m_pNodePointer[m_nSelectNode]->GetConnect(m_pNodePointer[m_nSelectNode]->GetConnectMax()) = m_pNodePointer[m_nSelectConnectNode]->GetMyNumber();
-	//
-	//										// 接続元の接続数を増やす
-	//										m_pNodePointer[m_nSelectNode]->GetConnectMax()++;
-	//										m_nConnectNodeCounter++;
-	//
-	//										// 接続先ノードを選択してるのが分かるように色を変える
-	//										m_pNodePointer[m_nSelectConnectNode]->GetColor() = D3DXCOLOR(0.0f, 1.0f, 1.0f, 0.5f);
-	//									}
-	//								}
-	//							}
-	//						}
-	//					}
-	//				}
-	//
-	//				if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_1) == true && m_nConnectNodeCounter > 0 && m_nSelectConnectNode > 0)
-	//				{// 接続先を1つ以上設定してる時に、右クリックで1つ前の接続先設定に戻る
-	//					for (int nCntNode = 0; nCntNode < m_nNodeCounter; nCntNode++)
-	//					{// 配置してるノードの数だけ回る
-	//						if (m_pNodePointer[nCntNode] != NULL)
-	//						{// 全ノードのNULLチェック
-	//							if (m_pNodePointer[nCntNode]->GetConnectMax() > 0)
-	//							{// 接続できる0より多い場合のみ
-	//								if (m_pNodePointer[m_nSelectConnectNode]->GetPos() != SetPos)
-	//								{// 接続元の場合は削除できない
-	//
-	//								 // 接続を削除
-	//									m_pNodePointer[nCntNode]->GetConnect(m_pNodePointer[nCntNode]->GetConnectMax()) = NULL;
-	//
-	//									// 接続先の接続数を減らす
-	//									m_pNodePointer[nCntNode]->GetConnectMax()--;
-	//									m_nConnectNodeCounter--;
-	//
-	//									// 減らしたのが分かるように色を変える
-	//									m_pNodePointer[nCntNode]->GetColor() = D3DXCOLOR(1.0f, 0.5f, 0.8f, 0.5f);
-	//								}
-	//							}
-	//						}
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
 }
 
 //=============================================================================
@@ -412,26 +202,39 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 		CManager::GetCamera()->GetInfo(&viewport, &proj, &view);
 		D3DXVec3Unproject(&MousePos, &MousePos, &viewport, &m_pCamera->GetProjection(), &m_pCamera->GetView(), &matrix);
 
-		// カーソル位置の設定
-		m_pos.x = MousePos.x;
-		m_pos.y = 0.0f;
-		m_pos.z = MousePos.z;
-
 		CDebugProc::Print("スクリーン座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
 
-		//// ズーム倍率に応じたカーソルのサイズ変更
-		//switch ((int)m_pCamera->GetZoom())
-		//{
-		//case 3:
-		//	m_size = D3DXVECTOR3(3.5f, 0.0f, 3.5f);
-		//	break;
-		//case 2:
-		//	m_size = D3DXVECTOR3(5.0f, 0.0f, 5.0f);
-		//	break;
-		//case 1:
-		//	m_size = D3DXVECTOR3(10.0f, 0.0f, 10.0f);
-		//	break;
-		//}
+		// ズーム倍率に応じたカーソルのサイズ変更
+		switch ((int)m_pCamera->GetZoom())
+		{
+		case 3:
+			m_size = D3DXVECTOR3(12.0f, 0.0f, 12.0f);
+
+			// カーソル位置の設定
+			m_pos.x = MousePos.x * 0.6666f;
+			m_pos.y = 0.0f;
+			m_pos.z = MousePos.z * 0.6666f;
+
+			break;
+		case 2:
+			m_size = D3DXVECTOR3(18.0f, 0.0f, 18.0f);
+
+			// カーソル位置の設定
+			m_pos.x = MousePos.x;
+			m_pos.y = 0.0f;
+			m_pos.z = MousePos.z;
+
+			break;
+		case 1:
+			m_size = D3DXVECTOR3(30.0f, 0.0f, 30.0f);
+
+			// カーソル位置の設定
+			m_pos.x = MousePos.x * 2.0f;
+			m_pos.y = 0.0f;
+			m_pos.z = MousePos.z * 2.0f;
+
+			break;
+		}
 	}
 
 	// 位置・サイズの設定
@@ -738,8 +541,8 @@ void CMouseCursor2D::Move(CInputMouse *pMouse)
 	GetWindowRect(CManager::GetRenderer()->GetHWnd(), &rect);
 
 	// さらにサイズ変更を考慮して、現在のサイズで補正（枠サイズ等あるので厳密ではない）
-	m_pos.x = float(pMouse->GetPoint().x - rect.left) - 5.0f;
-	m_pos.y = float(pMouse->GetPoint().y - rect.top) - 30.0f;
+	m_pos.x = float(pMouse->GetPoint().x - rect.left) - 15.0f;
+	m_pos.y = float(pMouse->GetPoint().y - rect.top) - 16.0f;
 
 	// 位置の設定
 	CScene2D::SetPos(m_pos);

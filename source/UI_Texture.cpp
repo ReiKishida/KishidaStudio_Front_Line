@@ -278,6 +278,23 @@ HRESULT CUI_TEXTURE::Init(void)
 	case UIFLAME_STRATEGY_BG:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY_BG));
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.7f));
+
+		// 頂点情報を設定
+		VERTEX_2D *pVtx;	// 頂点情報のポインタ
+
+		//頂点バッファをロックし、頂点データへのポインタを取得
+		LPDIRECT3DVERTEXBUFFER9 pVtxBuff = CScene2D::GetVtxBuff();
+		pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+		// テクスチャ座標
+		pVtx[0].tex = D3DXVECTOR2(0.0f, 0.0f);
+		pVtx[1].tex = D3DXVECTOR2(10.0f, 0.0f);
+		pVtx[2].tex = D3DXVECTOR2(0.0f, 10.0f);
+		pVtx[3].tex = D3DXVECTOR2(10.0f, 10.0f);
+
+		// 頂点バッファをアンロック
+		pVtxBuff->Unlock();
+
 		break;
 	}
 

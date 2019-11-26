@@ -70,6 +70,7 @@ public:
 		TEXTURE_MECHA_SELECT,			// 機体画像（機体選択画面で使用）
 		TEXTURE_BULLET,				// 弾
 		TEXTURE_STRATEGY_ICON,		// ストラテジーのアイコン
+		TEXTURE_SHADOW,				// 影
 		TEXTURE_MAX
 	}TEXTURE;
 

@@ -14,6 +14,7 @@
 #include "camera.h"
 #include "server.h"
 #include "collisionSet.h"
+#include "particle.h"
 
 //==================================
 // マクロ定義
@@ -217,6 +218,7 @@ HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical,
 void CBulletPlayer::Uninit(void)
 {
 	m_pPlayer = NULL;
+	CParticle::Create(CBullet::GetPos(), 1);
 	CScene3DBill::Uninit();
 }
 
@@ -270,8 +272,10 @@ bool CBulletPlayer::BulletCollision(void)
 	}
 
 	// マップの当たり判定
-	D3DXVECTOR3 length = D3DXVECTOR3(CScene3DBill::GetWidth(), CScene3DBill::GetWidth(), CScene3DBill::GetWidth());
-	if (CCollision::Collision(&GetPos(), GetPosOld(), length, length))
+	D3DXVECTOR3 lengthMax = D3DXVECTOR3(CScene3DBill::GetWidth(), CScene3DBill::GetWidth(), CScene3DBill::GetWidth());
+	D3DXVECTOR3 lengthMin = D3DXVECTOR3(-CScene3DBill::GetWidth(), -CScene3DBill::GetWidth(), -CScene3DBill::GetWidth());
+
+	if (CCollision::Collision(&GetPos(), GetPosOld(), lengthMax, lengthMin))
 	{// 衝突している
 		Uninit();
 	}

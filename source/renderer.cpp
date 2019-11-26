@@ -24,6 +24,7 @@ CRenderer::CRenderer()
 	m_pD3D = NULL;			// Direct3Dオブジェクト
 	m_pD3DDevice = NULL;	// Deviceオブジェクト(描画に必要)
 	m_hWnd = NULL;
+	m_bWindowMode = true;
 
 #ifdef _DEBUG
 	m_pFont = NULL;			// フォントへのポインタ
@@ -46,6 +47,7 @@ HRESULT CRenderer::Init(HINSTANCE hInstance, HWND hWnd, bool bWindow)
 	D3DPRESENT_PARAMETERS d3dpp;
 	D3DDISPLAYMODE d3ddm;
 	m_hWnd = hWnd;
+	m_bWindowMode = bWindow;
 
 	// Direct3Dオブジェクトの作成
 	m_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
@@ -67,9 +69,9 @@ HRESULT CRenderer::Init(HINSTANCE hInstance, HWND hWnd, bool bWindow)
 	d3dpp.BackBufferHeight = SCREEN_HEIGHT;				// ゲーム画面サイズ(高さ)
 	d3dpp.BackBufferFormat = d3ddm.Format;				// カラーモードの指定
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;		// 映像信号に同期してフリップする
-	d3dpp.EnableAutoDepthStencil = TRUE;						// デプスバッファ（Ｚバッファ）とステンシルバッファを作成
-	d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;					// デプスバッファとして16bitを使う
-	d3dpp.Windowed = bWindow;						// ウィンドウモード
+	d3dpp.EnableAutoDepthStencil = TRUE;				// デプスバッファ（Ｚバッファ）とステンシルバッファを作成
+	d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;		// デプスバッファとして16bitを使う
+	d3dpp.Windowed = m_bWindowMode;						// ウィンドウモード
 	d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;		// リフレッシュレート
 	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_DEFAULT;	// インターバル
 
@@ -214,10 +216,13 @@ void CRenderer::Draw(void)
 				m_pD3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATEREQUAL);
 
 				CManager::GetGame()->GetField()->Draw();
-				CManager::GetGame()->GetMouse()->Draw();
-				pCamera->Set(0);	// カメラのセット
 
+				pCamera->Set(0);	// カメラのセット
 				CScene::DrawStrategy();
+				CManager::GetGame()->GetMouseCursor()->Draw();
+
+				pCamera->Set(1);
+				CManager::GetGame()->GetMouse()->Draw();
 
 				m_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
 				m_pD3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);

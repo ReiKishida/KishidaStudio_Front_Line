@@ -54,6 +54,7 @@ class CUI_NUMBER;
 class CMouseCursor2D;
 class CButton2D;
 class CInputMouse;
+class CAIMecha;
 
 //*****************************************************************************
 // クラス定義
@@ -204,6 +205,8 @@ public:
 	static void SetSearchPos(D3DXVECTOR3 pos) { m_searchPos = pos; };
 	// =============================================================
 
+	CAIMecha *GetMyAI(void) { return m_pAI; };
+
 private:
 	void Movement(void);
 	void Shoot(void);
@@ -257,6 +260,8 @@ private:
 	bool			m_bShootButton;		// 弾の発射ボタン押下フラグ
 
 	bool			m_bConnect;			// 接続しているかどうか
+
+	CAIMecha		*m_pAI;
 
 	// =============================================================
 	// UI関係

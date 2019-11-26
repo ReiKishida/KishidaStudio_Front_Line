@@ -422,6 +422,12 @@ void CManager::Update(void)
 	m_pDirectInput->Update();
 	m_pXInput->Update();
 
+	if (m_pInputKeyboard->GetTrigger(DIK_R))
+	{
+		CParData::Unload();
+		CParData::Load();
+	}
+
 	switch (SERVER_MODE)
 	{
 	case 0:

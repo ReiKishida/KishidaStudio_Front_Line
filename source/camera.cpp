@@ -241,7 +241,7 @@ void CCamera::Set(int nIdxCamera)
 		else if (pGame->GetPart() == CGame::PART_STRATEGY)
 		{// ストラテジーパート
 			D3DXMatrixOrthoLH(&m_mtxProjection,
-				(float)m_viewport.Width / m_fZoom * 2.0f, 
+				(float)m_viewport.Width / m_fZoom * 2.0f,
 				(float)m_viewport.Height / m_fZoom * 2.0f,
 				10.0f,
 				8000.0f);

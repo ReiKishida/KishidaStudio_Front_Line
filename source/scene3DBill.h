@@ -49,12 +49,15 @@ public:
 
 	void SetParent(D3DXMATRIX *pParent) { m_pMtxParent = pParent; };
 
-	void SetZBuffer(D3DCMPFUNC cmpFunc);
+	void SetZBuffer(bool bZBuff, D3DCMPFUNC cmpFunc = D3DCMP_LESSEQUAL);
 
 	void SetLighting(bool bLighting) { m_bLighting = bLighting; };
 
 	bool GetDisp(void) { return m_bDisp; }
 	void SetDisp(bool bDisp) { m_bDisp = bDisp; }
+
+	bool GetAddDraw(void) { return m_bAddDraw; }
+	void SetAddDraw(bool bAddDraw) { m_bAddDraw = bAddDraw; }
 
 	bool Collision(D3DXVECTOR3 pos, float fRadius);
 
@@ -75,6 +78,7 @@ private:
 	bool					m_bZBuffer;			// Zバッファの設定をするかどうか
 	bool					m_bLighting;		// ライトが有効か無効か
 	bool					m_bDisp;			// 描画するかどうか
+	bool					m_bAddDraw;			// 加算合成するかどうか
 };
 
 #endif

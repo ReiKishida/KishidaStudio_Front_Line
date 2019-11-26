@@ -135,7 +135,7 @@ public:
 	int GetSelectAIType(void) { return m_nSelectAIType; }
 	int GetSelectLogic(int nHierarchy) { return m_aSelectLogic[nHierarchy]; }
 
-	bool GetSelectFinish(void) { return m_bFinish; }
+	bool &GetSelectFinish(void) { return m_bFinish; }
 
 private:
 	void AITypeSelect(void);

@@ -47,14 +47,14 @@ CHARACTERSET
 	RELOAD = 180					# リロード時間
 
 	LIFE = 250						# 耐久力
-	SPEED = 3.0						# 移動量
+	SPEED = 5.0						# 移動量
 
 	FOOT = 4						# 足の始まり番号
 
 	PARTSSET						# [0]腰
 		INDEX = 0
 		PARENT = -1					# (親)NULL, もし-1なら親がいない。
-		POS = 0.0 25.0 0.0
+		POS = 0.0 22.0 0.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 	

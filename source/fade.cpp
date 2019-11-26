@@ -135,5 +135,20 @@ void CFade::Update(void)
 //=============================================================================
 void CFade::Draw(void)
 {
+	// デバイスの取得
+	CRenderer *pRenderer = CManager::GetRenderer();
+	LPDIRECT3DDEVICE9 pDevice;
+	pDevice = pRenderer->GetDevice();
+
+	// Zテストを無効にする
+	pDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+	pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
+
 	CScene2D::Draw();
+
+	// Zテストを有効にする
+	pDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+	pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
 }
