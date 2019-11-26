@@ -49,6 +49,7 @@ public:
 	D3DVIEWPORT9 GetViewport(int nIdxCamera);
 
 	void GetInfo(D3DVIEWPORT9 *pViewport, D3DXMATRIX *pMtxProjection, D3DXMATRIX *pMtxView);
+	float GetZoom(void) { return m_fZoom; };
 
 private:
 	D3DXVECTOR3		m_posV;				// 視点
@@ -63,6 +64,7 @@ private:
 	float			m_fLength;			// 注視点との距離
 	float			m_fAngle;			// 角度
 	float			m_fLookHeight;		// カメラの高さ
+	float			m_fZoom;			// ズームの倍率
 	D3DVIEWPORT9	m_viewport;			// ビューポート
 };
 
