@@ -14,7 +14,8 @@
 // マクロ定義
 //*****************************************************************************
 #define MAX_SERVER_DATA (2048)
-#define MAX_CONNECT (4)
+#define MAX_CONNECT (4)				//接続の最大数
+#define MAX_PLAYER_CONNECT (4)		//プレイヤーの接続の最大数
 
 //*****************************************************************************
 // クラス定義(サーバー)
@@ -22,7 +23,7 @@
 class CServer
 {
 public:	//誰からもアクセス可能
-	//メンバ関数
+		//メンバ関数
 	CServer();
 	~CServer();
 	HRESULT Init(void);
@@ -51,9 +52,9 @@ private: //自分だけがアクセス可能
 class CClient
 {
 public:	//誰からもアクセス可能
-	//============================
-	//		構造体の定義
-	//============================
+		//============================
+		//		構造体の定義
+		//============================
 	typedef enum
 	{
 		GAME_MODE_PLAYER = 0,
@@ -78,7 +79,7 @@ public:	//誰からもアクセス可能
 	GAME_MODE GetGameMode(void);
 	int GetPlayerIdx(void);
 
-	void SetMechaType(int nPlayerIdx,int nMechaType);
+	void SetMechaType(int nPlayerIdx, int nMechaType);
 	int GetMechaType(int nPlayerIdx);
 
 	bool GetConnect(void);
@@ -93,7 +94,7 @@ public:	//誰からもアクセス可能
 
 private: //自分だけがアクセス可能
 
-	//メンバ関数
+		 //メンバ関数
 	void SetClientIdx(void);
 	void SetIdx(void);
 	void LoadServerSystem(void);
@@ -119,7 +120,7 @@ private: //自分だけがアクセス可能
 	GAME_MODE m_gameMode;							//ゲームのモード情報
 	int m_team;										//チーム情報
 	int m_nPlayerIdx;								//プレイヤーの番号
-	int m_nMechaType[MAX_CONNECT];					//メカの種類
+	int m_nMechaType[MAX_PLAYER_CONNECT];					//メカの種類
 	int m_nMinIdx;									//最小の番号
 	int m_nMaxIdx;									//最大の番号
 };

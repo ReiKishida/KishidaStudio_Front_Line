@@ -9,6 +9,7 @@
 
 #include "scene.h"
 #include "server.h"
+#include "mechaSelect.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -35,7 +36,6 @@ public:
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
-
 private:
 	void CreateUITex(void);
 	void CreatePlayerUI(void);
@@ -50,10 +50,9 @@ private:
 	int	m_nCntBgMove;									// スクロール
 	bool m_bFade;										// フェードをするかどうか
 	int m_nCntFade;										// フェードまでのカウンター
-	bool m_bConnect[MAX_CONNECT];
+	bool m_bConnect[MAX_PLAYER_CONNECT];
 	int m_nNumBlue;
 	int m_nNumRed;
-
 };
 
 #endif

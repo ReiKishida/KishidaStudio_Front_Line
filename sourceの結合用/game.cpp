@@ -40,13 +40,15 @@
 #include "serverfunction.h"
 
 #include "collisionSet.h"
-
+#include "scene3D.h"
 #include "menu.h"
+
+#include "particle.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define FIELD_MODEL_NAME	"data/MODEL/map_11_18.x"
+#define FIELD_MODEL_NAME	"data/MODEL/map_UV_bill.x"
 #define SKY_MODEL_NAME		"data/MODEL/sky_dome.x"
 #define NUMTEX_UV_X		(1)
 #define NUMTEX_UV_Y		(3)
@@ -56,7 +58,7 @@
 //*****************************************************************************
 CGame::STATE CGame::m_state = CGame::STATE_NONE;
 int CGame::m_nCurStage = 0;
-CPlayer *CGame::m_pPlayer[MAX_CONNECT] = {};
+CPlayer *CGame::m_pPlayer[MAX_PLAYER_CONNECT] = {};
 
 //=============================================================================
 // コンストラクタ
@@ -71,6 +73,13 @@ CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType
 	m_pButtonManager = NULL;
 	m_part = PART_ACTION;
 	m_pSky = NULL;
+	m_pMouse = NULL;
+
+	for (int nCntConnect = 0; nCntConnect < MAX_PLAYER_CONNECT; nCntConnect++)
+	{
+		m_bConnect[nCntConnect] = false;
+	}
+
 }
 
 //=============================================================================
@@ -90,6 +99,7 @@ HRESULT CGame::Init(void)
 
 	m_pField = CModel::Create();
 	m_pField->SetModel(FIELD_MODEL_NAME);
+	m_pField->SetPos(D3DXVECTOR3(-2.0f, 0.0f, 17.0f));
 
 	m_pSky = CModel::Create();
 	m_pSky->SetModel(SKY_MODEL_NAME);
@@ -100,30 +110,39 @@ HRESULT CGame::Init(void)
 	aPos[2] = D3DXVECTOR3(-760.0f, 0.0f, 40.0f);
 	aPos[3] = D3DXVECTOR3(-760.0f, 0.0f, -60.0f);
 
-	aPos[0] = D3DXVECTOR3(1250.0f, 0.0f, 275.0f);
-	aPos[1] = D3DXVECTOR3(1250.0f, 0.0f, 900.0f);
-	aPos[2] = D3DXVECTOR3(-1250.0f, 0.0f, -520.0f);
-	aPos[3] = D3DXVECTOR3(-1250.0f, 0.0f, 220.0f);
-
 	// プレイヤーの生成
-	for (int nCntPlayer = 0; nCntPlayer < MAX_CONNECT; nCntPlayer++)
+	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
 		if (CMenu::GetMode() == CMenu::MODE_MULTI)
 		{
+			bool bConnect = false;
 			CClient *pClient = CManager::GetClient();
 			if (pClient != NULL)
 			{
 				CMechaSelect::MECHATYPE type = (CMechaSelect::MECHATYPE)pClient->GetMechaType(nCntPlayer);
-				if (type == CMechaSelect::MECHATYPE_EMPTY)
+				if (type == -1)
 				{
-					type = CMechaSelect::MECHATYPE_ASSULT;
+					type = (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX);
+					m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, type, aPos[nCntPlayer], m_bConnect[nCntPlayer]);
 				}
-				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, type, aPos[nCntPlayer]);
+				else
+				{
+					m_bConnect[nCntPlayer] = true;
+					m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, type, aPos[nCntPlayer], m_bConnect[nCntPlayer]);
+
+				}
 			}
 		}
 		else
 		{
-			m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(), aPos[nCntPlayer]);
+			if (nCntPlayer == 0)
+			{
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(), aPos[nCntPlayer], true);
+			}
+			else
+			{
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX), aPos[nCntPlayer], false);
+			}
 		}
 	}
 
@@ -177,12 +196,14 @@ HRESULT CGame::Init(void)
 //=============================================================================
 void CGame::Uninit(void)
 {
+	//CManager::ReleaseClient();
+
 	// データの破棄
 	CMotionManager::Unload();
 	CModelSetManager::Unload();
 	CEnemy::Unload();
 
-	for (int nCntPlayer = 0; nCntPlayer < MAX_CONNECT; nCntPlayer++)
+	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
 		if (NULL != m_pPlayer[nCntPlayer])
 		{// プレイヤークラスの破棄
@@ -231,13 +252,16 @@ void CGame::Update(void)
 	{
 		if (CManager::GetClient() != NULL)
 		{
-			if (CManager::GetClient()->GetGameMode() == CClient::GAME_MODE_PLAYER)
+			if (CFade::GetFade() == CFade::FADE_NONE)
 			{
-				//必要な情報を書き込む処理
-				PrintData();
+				if (CManager::GetClient()->GetGameMode() == CClient::GAME_MODE_PLAYER)
+				{
+					//必要な情報を書き込む処理
+					PrintData();
+				}
+				//情報を読み取る処理
+				ReadMessage();
 			}
-			//情報を読み取る処理
-			ReadMessage();
 
 			if (m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->GetRespawn() == CPlayer::RESPAWN_NONE)
 			{
@@ -262,7 +286,10 @@ void CGame::Update(void)
 	}
 #endif
 
-	for (int nCntPlayer = 0; nCntPlayer < MAX_CONNECT; nCntPlayer++)
+	if(NULL != m_pMouse)
+	CDebugProc::Print("マウスカーソル：%.2f %.2f", m_pMouse->GetPos().x, m_pMouse->GetPos().z);
+
+	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
 		if (m_pPlayer[nCntPlayer]->GetDeath() == true)
 		{
@@ -320,6 +347,9 @@ void CGame::Update(void)
 		}
 		break;
 	}
+	CClient *pClient = CManager::GetClient();
+
+	//CDebugProc::Print("種類：%d %d %d %d", pClient->GetMechaType(0), pClient->GetMechaType(1), pClient->GetMechaType(2), pClient->GetMechaType(3));
 
 	CDebugProc::Print("ゲーム");
 }
@@ -413,6 +443,12 @@ void CGame::CreateActionUI(void)
 		m_pMouseCursor = NULL;
 	}
 
+	if (NULL != m_pMouse)
+	{
+		m_pMouse->Uninit();
+		m_pMouse = NULL;
+	}
+
 	//****************************************
 	// 2DUI生成（フレーム）
 	//****************************************
@@ -482,9 +518,9 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(405.0f, 470.0f, 0.0f), 200.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// AI表示
 	CUI_TEXTURE::Create(D3DXVECTOR3(895.0f, 470.0f, 0.0f), 760.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// ロジック部分
 
-	//****************************************
-	// 1P小隊情報
-	//****************************************
+																												//****************************************
+																												// 1P小隊情報
+																												//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 325.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_1P_INFO);
 
 	// プレイヤー体力フレーム
@@ -519,7 +555,12 @@ void CGame::CreateStrategyUI(void)
 
 	if (NULL == m_pMouseCursor)
 	{// マウスカーソルの生成
-		m_pMouseCursor = CMouseCursor::Create();
+		m_pMouseCursor = CMouseCursor2D::Create();
+	}
+
+	if (NULL == m_pMouse)
+	{
+		m_pMouse = CMouseCursor::Create();
 	}
 }
 
@@ -535,7 +576,7 @@ void CGame::PrintData(void)
 	{//NULLではない場合
 		if (m_pPlayer[pClient->GetPlayerIdx()] != NULL)
 		{//NULLではない場合
-		 //クライアント番号を書き込む
+		 //プレイヤー番号を書き込む
 			pClient->Printf("%d", CManager::GetClient()->GetPlayerIdx());
 			pClient->Printf(" ");
 
@@ -606,31 +647,123 @@ void CGame::PrintData(void)
 				pClient->Printf(" ");
 			}
 
-			//チャットをしているかどうかを書き込む
-			if (m_pPlayer[pClient->GetPlayerIdx()]->GetChat() == true)
-			{//チャットをしている場合
+			////チャットをしているかどうかを書き込む
+			//if (m_pPlayer[pClient->GetPlayerIdx()]->GetChat() == true)
+			//{//チャットをしている場合
 
-				pClient->Printf("1");
-				pClient->Printf(" ");
+			//	pClient->Printf("1");
+			//	pClient->Printf(" ");
 
-				//チャットの番号を書き込む
-				pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetChat());
-				pClient->Printf(" ");
+			//	//チャットの番号を書き込む
+			//	pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetChat());
+			//	pClient->Printf(" ");
 
-				//チャットしていない状態に戻す
-				m_pPlayer[pClient->GetPlayerIdx()]->SetChat(false);
+			//	//チャットしていない状態に戻す
+			//	m_pPlayer[pClient->GetPlayerIdx()]->SetChat(false);
+			//}
+			//else
+			//{
+			//	pClient->Printf("0");
+			//	pClient->Printf(" ");
+			//}
+
+			if (pClient->GetPlayerIdx() == 0)
+			{//ホストの場合
+			 //if (m_state == STATE_END)
+			 //{
+			 //	pClient->Printf("1");
+			 //}
+			 //else
+			 //{
+			 //	pClient->Printf("0");
+			 //}
+
+			 //CPUのデータ情報を書き込む処理
+				PrintCPUData();
+
 			}
-			else
-			{
-				pClient->Printf("0");
-				pClient->Printf(" ");
-			}
-
 		}
 	}
 #endif
 }
 
+//=============================================================================
+// CPUのデータ情報を書き込む処理
+//=============================================================================
+void CGame::PrintCPUData(void)
+{
+	CClient *pClient = CManager::GetClient();
+	if (pClient != NULL)
+	{
+		for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
+		{
+			if (pClient->GetPlayerIdx() != nCntPlayer)
+			{
+				if (m_bConnect[nCntPlayer] == false)
+				{
+					//プレイヤー番号を書き込む
+					pClient->Printf("%d", nCntPlayer);
+					pClient->Printf(" ");
+
+					//チームの番号を書き込む
+					pClient->Printf("%d", m_pPlayer[nCntPlayer]->GetTeam());
+					pClient->Printf(" ");
+
+					//プレイヤーのx,y軸の位置を書き込む
+					pClient->Printf("%.1f %.1f", m_pPlayer[nCntPlayer]->GetPos().x, m_pPlayer[nCntPlayer]->GetPos().z);
+					pClient->Printf(" ");
+
+					//プレイヤーのy軸の向きを書き込む
+					pClient->Printf("%.1f", m_pPlayer[nCntPlayer]->GetRot().y);
+					pClient->Printf(" ");
+
+					//死亡しているかどうか
+					if (m_pPlayer[nCntPlayer]->GetDeath() == true)
+					{
+						pClient->Printf("1");
+						pClient->Printf(" ");
+					}
+					else
+					{
+						pClient->Printf("0");
+						pClient->Printf(" ");
+					}
+
+					//弾を発射しているかどうかを書き込む
+					if (m_pPlayer[nCntPlayer]->GetShoot() == true)
+					{//発射されている場合
+
+						pClient->Printf("1");
+						pClient->Printf(" ");
+
+						//弾の同時発射数を書き込む
+						pClient->Printf("%d", m_pPlayer[nCntPlayer]->GetNumShoot());
+						pClient->Printf(" ");
+
+						pClient->Printf("%d", m_pPlayer[nCntPlayer]->GetAttack());
+						pClient->Printf(" ");
+
+						//水平角度の情報を書き込む
+						for (int nCntShoot = 0; nCntShoot < m_pPlayer[nCntPlayer]->GetNumShoot() * 2; nCntShoot++)
+						{
+							pClient->Printf("%.2f %.2f", m_pPlayer[nCntPlayer]->GetAngle(nCntShoot), m_pPlayer[nCntPlayer]->GetAngleV(nCntShoot));
+							pClient->Printf(" ");
+
+						}
+
+						//発射していない状態に戻す
+						m_pPlayer[nCntPlayer]->SetShoot(false);
+					}
+					else
+					{
+						pClient->Printf("0");
+						pClient->Printf(" ");
+					}
+				}
+			}
+		}
+	}
+}
 //=============================================================================
 // 情報を読み取る処理
 //=============================================================================
@@ -648,7 +781,7 @@ void CGame::ReadMessage(void)
 		{//接続総数を示している場合
 			pStr += strlen(SERVER_CONNECT_DATA);								//頭出し
 
-			//接続情報の読み取り処理
+																				//接続情報の読み取り処理
 			pStr = ReadConnectData(pStr);
 		}
 		if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
@@ -676,17 +809,17 @@ char *CGame::ReadConnectData(char *pStr)
 		{
 			int nWord = 0;		//文字の頭出し用
 
-			//接続総数の設置処理
+								//接続総数の設置処理
 			pClient->SetNumConnect(CServerFunction::ReadInt(pStr, ""));
 			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 			pStr += nWord;													//頭出し
 
-			//最小の番号の設置処理
+																			//最小の番号の設置処理
 			pClient->SetMinIdx(CServerFunction::ReadInt(pStr, ""));
 			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 			pStr += nWord;													//頭出し
 
-			//最大の番号の設置処理
+																			//最大の番号の設置処理
 			pClient->SetMaxIdx(CServerFunction::ReadInt(pStr, ""));
 			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 			pStr += nWord;													//頭出し
@@ -716,7 +849,10 @@ char *CGame::ReadPlayerData(char *pStr)
 	int nNumShoot = 0;
 	int nAttack = 0;
 	bool bChat = false;
-	CPlayer::RADIOCHAT radioChat = CPlayer::RADIOCHAT_OK;
+	//CPlayer::RADIOCHAT radioChat = CPlayer::RADIOCHAT_OK;
+	int nBlueLinkEnergy = 0;
+	int nRedLinkEnergy = 0;
+	int nState = 0;
 
 	//クライアントの取得
 	CClient *pClient = CManager::GetClient();
@@ -724,7 +860,7 @@ char *CGame::ReadPlayerData(char *pStr)
 	{
 		if (pClient->GetConnect() == true)
 		{
-			//番号を代入
+			//プレイヤー番号を代入
 			nPlayerIdx = CServerFunction::ReadInt(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 			pStr += nWord;										//頭出し
@@ -747,12 +883,12 @@ char *CGame::ReadPlayerData(char *pStr)
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
 
-			//下半身のモデルの向きを代入
+			//モデル0版の向きを代入
 			modelRotDown.y = CServerFunction::ReadFloat(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
 
-			//上半身のモデルの向きを代入
+			//モデル1番の向きを代入
 			modelRotUp.x = CServerFunction::ReadFloat(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
@@ -775,7 +911,7 @@ char *CGame::ReadPlayerData(char *pStr)
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
 
-			//弾を発射しているかどうかを代入
+			//死亡しているかしているかどうかを代入
 			bool bDeath = CServerFunction::ReadBool(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
@@ -811,21 +947,31 @@ char *CGame::ReadPlayerData(char *pStr)
 				}
 			}
 
-			//チャットをしているかどうかを代入
-			bChat = CServerFunction::ReadBool(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
+			////チャットをしているかどうかを代入
+			//bChat = CServerFunction::ReadBool(pStr, "");
+			//nWord = CServerFunction::PopString(pStr, "");
+			//pStr += nWord;
 
 			if (bChat == true)
 			{
-				radioChat = (CPlayer::RADIOCHAT)CServerFunction::ReadInt(pStr, "");
-				nWord = CServerFunction::PopString(pStr, "");
-				pStr += nWord;
+				//radioChat = (CPlayer::RADIOCHAT)CServerFunction::ReadInt(pStr, "");
+				//nWord = CServerFunction::PopString(pStr, "");
+				//pStr += nWord;
 			}
 
+			if (nPlayerIdx == 0)
+			{//ホストの場合
+
+			 /*	nState = CServerFunction::ReadInt(pStr, "");
+			 nWord = CServerFunction::PopString(pStr, "");
+			 pStr += nWord;*/
+
+				pStr = ReadCPUData(pStr);
+
+			}
 			if (bDeath == true)
 			{
-				m_pPlayer[nPlayerIdx]->SetDeath(bDeath);
+				m_pPlayer[nPlayerIdx]->GetDeath() = true;
 			}
 
 			if (nPlayerIdx != pClient->GetPlayerIdx())
@@ -844,7 +990,11 @@ char *CGame::ReadPlayerData(char *pStr)
 
 					if (bChat == true)
 					{
-						SetChatData(nPlayerIdx, (int)radioChat);
+						//SetChatData(nPlayerIdx, (int)radioChat);
+					}
+					if (nState == 1)
+					{
+						//m_state = STATE_END;
 					}
 				}
 			}
@@ -865,9 +1015,103 @@ char *CGame::ReadPlayerData(char *pStr)
 
 	return pStr;
 }
+//=============================================================================
+// CPUプレイヤー情報を読み取る処理
+//=============================================================================
+char *CGame::ReadCPUData(char *pStr)
+{
+	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
+	{
+		if (m_bConnect[nCntPlayer] == false)
+		{
+			D3DXVECTOR3 pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);									//位置
+			D3DXVECTOR3 rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+			D3DXVECTOR3 modelRotDown = D3DXVECTOR3(0.0f, 0.0f, 0.0f), modelRotUp = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//モデルの上半身と下半身の向き
+			D3DXVECTOR3 cameraRot;								//カメラの向き
+			int nPlayerIdx = 0;									//プレイヤーの番号
+			int nNumConnect = 0;								//接続総数
+			int nWord = 0;										//文字の頭出し用
+			int nCntClient = 0;									//クライアントのカウンター
+			int nTeam = 0;
+			float *pAngle = NULL;
+			float *pAngleV = NULL;
+			bool bShoot = false;
+			int nNumShoot = 0;
+			int nAttack = 0;
+
+			//番号を代入
+			nPlayerIdx = CServerFunction::ReadInt(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
+			pStr += nWord;										//頭出し
+
+																//チーム情報の代入
+			nTeam = CServerFunction::ReadInt(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");
+			pStr += nWord;
+
+			//プレイヤーの位置を代入
+			pos.x = CServerFunction::ReadFloat(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");
+			pStr += nWord;
+			pos.z = CServerFunction::ReadFloat(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");
+			pStr += nWord;
+
+			//プレイヤーの向きを代入
+			rot.y = CServerFunction::ReadFloat(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");
+			pStr += nWord;
+
+			//死亡しているかどうかを代入
+			bool bDeath = CServerFunction::ReadBool(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");
+			pStr += nWord;
+
+			//弾を発射しているかどうかを代入
+			bShoot = CServerFunction::ReadBool(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");
+			pStr += nWord;
+
+			if (bShoot == true)
+			{
+				nNumShoot = CServerFunction::ReadInt(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				pAngle = new float[nNumShoot * 2];
+				pAngleV = new float[nNumShoot * 2];
+
+				nAttack = CServerFunction::ReadInt(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				for (int nCntShoot = 0; nCntShoot < nNumShoot * 2; nCntShoot++)
+				{
+					pAngle[nCntShoot] = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					pAngleV[nCntShoot] = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+				}
+			}
+
+			SetCPUData(nPlayerIdx, pos, rot);
+			if (bShoot == true)
+			{
+				CreateCPUBullet(nPlayerIdx, nNumShoot, nAttack, cameraRot, pAngle, pAngleV);
+			}
+
+
+		}
+	}
+	return pStr;
+}
 
 //=============================================================================
-// プレイヤーの情報を読み取る処理
+// プレイヤーの情報の設置処理
 //=============================================================================
 void CGame::SetPlayerData(int nPlayerIdx, D3DXVECTOR3 pos, D3DXVECTOR3 rot, D3DXVECTOR3 modelRotUp, D3DXVECTOR3 modelRotDown, D3DXVECTOR3 cameraRot)
 {
@@ -917,7 +1161,7 @@ void CGame::SetPlayerData(int nPlayerIdx, D3DXVECTOR3 pos, D3DXVECTOR3 rot, D3DX
 //=============================================================================
 // プレイヤーの弾の生成処理
 //=============================================================================
-void CGame::CreatePlayerBullet(int nPlayerIdx, int nNumShoot,int nAttack,D3DXVECTOR3 cameraRot, float *pAngle, float *pAngleV)
+void CGame::CreatePlayerBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECTOR3 cameraRot, float *pAngle, float *pAngleV)
 {
 	for (int nCntShoot = 0; nCntShoot < nNumShoot; nCntShoot++)
 	{
@@ -940,23 +1184,54 @@ void CGame::CreatePlayerBullet(int nPlayerIdx, int nNumShoot,int nAttack,D3DXVEC
 void CGame::SetChatData(int nPlayerIdx, int radioChat)
 {
 
-	switch (nPlayerIdx)
+	//switch (nPlayerIdx)
+	//{
+	//case 0:
+	//	m_pPlayer[1]->SetRadioChat((CPlayer::RADIOCHAT)radioChat);
+	//	m_pPlayer[1]->SetAllyChat(true);
+	//	break;
+	//case 1:
+	//	m_pPlayer[0]->SetRadioChat((CPlayer::RADIOCHAT)radioChat);
+	//	m_pPlayer[0]->SetAllyChat(true);
+	//	break;
+	//case 2:
+	//	m_pPlayer[3]->SetRadioChat((CPlayer::RADIOCHAT)radioChat);
+	//	m_pPlayer[3]->SetAllyChat(true);
+	//	break;
+	//case 3:
+	//	m_pPlayer[2]->SetRadioChat((CPlayer::RADIOCHAT)radioChat);
+	//	m_pPlayer[2]->SetAllyChat(true);
+	//	break;
+	//}
+}
+
+//=============================================================================
+// CPUプレイヤーの情報設置処理
+//=============================================================================
+void CGame::SetCPUData(int nPlayerIdx, D3DXVECTOR3 pos, D3DXVECTOR3 rot)
+{
+	//プレイヤーの位置の設置処理
+	m_pPlayer[nPlayerIdx]->SetPos(pos);
+	//プレイヤーの向きの設置処理
+	m_pPlayer[nPlayerIdx]->SetRot(rot);
+}
+
+//=============================================================================
+// CPUプレイヤーの弾の生成処理
+//=============================================================================
+void CGame::CreateCPUBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECTOR3 cameraRot, float *pAngle, float *pAngleV)
+{
+	for (int nCntShoot = 0; nCntShoot < nNumShoot; nCntShoot++)
 	{
-	case 0:
-		m_pPlayer[1]->SetRadioChat((CPlayer::RADIOCHAT)radioChat);
-		m_pPlayer[1]->SetAllyChat(true);
-		break;
-	case 1:
-		m_pPlayer[0]->SetRadioChat((CPlayer::RADIOCHAT)radioChat);
-		m_pPlayer[0]->SetAllyChat(true);
-		break;
-	case 2:
-		m_pPlayer[3]->SetRadioChat((CPlayer::RADIOCHAT)radioChat);
-		m_pPlayer[3]->SetAllyChat(true);
-		break;
-	case 3:
-		m_pPlayer[2]->SetRadioChat((CPlayer::RADIOCHAT)radioChat);
-		m_pPlayer[2]->SetAllyChat(true);
-		break;
+		// 弾の生成
+		D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
+		D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam());
+		mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
+		posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam());
+
+		//弾を発射しているかどうかの設置処理
+		m_pPlayer[nPlayerIdx]->SetShoot(false);
 	}
 }
