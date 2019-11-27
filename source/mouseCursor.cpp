@@ -18,11 +18,13 @@
 #include "scene2D.h"
 #include "texture.h"
 #include "AI.h"
+#include "menu.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
 #define	LOAD_FILENAME			("data/TEXT/NODE_DATA/NodeData.txt")	// 読み込むファイルのパス
+#define CURSOR_TEXTURE			("data/TEXTURE/reticle.png")	// カーソルのテクスチャ
 #define MASSAGE_DISPLAY_TIME	(180)							// メッセージの表示時間
 #define MOUSE_WIDTH				(30.0f)
 #define MOUSE_HEIGHT			(30.0f)
@@ -73,30 +75,12 @@ HRESULT CMouseCursor::Init()
 
 	// マップ情報の初期化
 	m_LoadNodeData = {};
-	m_SaveNodeData = {};
 
-	// 接続元ノードの情報の初期化
-	m_SelectNodePos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	m_SelectNodeNumber = 0;
-	m_SelectNodeConnectMax = 0;
-	for (int nNode = 0; nNode < CONNECT_MAX; nNode++)
-	{// 接続可能最大数分回る
-		m_SelectNodeConnect[nNode] = 0;
-	}
-
+	// 情報の初期化
 	m_pCamera = CManager::GetCamera();
 	m_pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_size = D3DXVECTOR3(15.0f, 0.0f, 15.0f);
-	m_bConnectMode = false;
-	m_bSaveMassage = false;
-	m_bErrorMassage = false;
-	m_bConnectSet = true;
-	m_bConnectNumSet = false;
-	m_nMassageCount = MASSAGE_DISPLAY_TIME;
 	m_nNodeCounter = 0;
-	m_nConnectNodeCounter = 0;
-	m_nSelectNode = 0;
-	m_nSelectConnectNode = 0;
 
 	// マウスカーソルの設定
 	CScene3D::SetSize(m_size);
@@ -122,26 +106,15 @@ void CMouseCursor::Update(void)
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
 
-	if (m_bSaveMassage == true || m_bErrorMassage == true)
-	{// メッセージ表示時間の減少
-		m_nMassageCount--;
-
-		if (m_nMassageCount <= 0)
-		{// メッセージの非表示
-			m_bSaveMassage = false;
-			m_bErrorMassage = false;
-			m_nMassageCount = MASSAGE_DISPLAY_TIME;
-		}
-	}
+	//CDebugProc::Print("=====マウス用3Dポリゴン======\n");
+	//CDebugProc::Print("カーソルの座標：%.2f %.2f", m_pos.x, m_pos.z);
+	//CDebugProc::Print("スクリーン座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
 
 	// 入力時処理
 	CMouseCursor::Input(pKeyboard, pMouse);
 
 	// 移動時処理
 	CMouseCursor::Move(pMouse);
-
-	// データのセーブロード呼び出し
-	//CMouseCursor::SaveLoad(pKeyboard);
 }
 
 //=============================================================================
@@ -155,15 +128,7 @@ void CMouseCursor::Draw(void)
 	// ライティングOFF
 	pDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-	// ZテストOFF
-	pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
-
 	CScene3D::Draw();
-
-	// ZテストON
-	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
-	pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
 
 	// ライティングON
 	pDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
@@ -179,7 +144,34 @@ void CMouseCursor::Input(CInputKeyboard *pKeyboard, CInputMouse *pMouse)
 
 	if (CManager::GetGame()->GetPart() == CGame::PART_STRATEGY && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true || pMouse->GetPress(DIK_LCONTROL) != true)
 	{// ストラテジーパート時に左クリックでAIの目的地を設定
-		CManager::GetGame()->GetPlayer(0)->GetMyAI()->GetSearchPos() = SetPos;
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{// マルチモード
+			CManager::GetGame()->GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetMyAI(0)->GetSearchPos() = SetPos;
+		}
+		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+		{//	シングルモード
+			CManager::GetGame()->GetPlayer(0)->GetMyAI(0)->GetSearchPos() = SetPos;
+		}
+	}
+
+	if (pKeyboard->GetTrigger(DIK_F11) == true)
+	{// F11キーでファイルをロード
+		CMouseCursor::FileLoad(LOAD_FILENAME);
+
+		// ロードしたデータをもとにノードを配置
+		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+		{// 全ノード数分回る
+			m_pNodePointer[nCntNode] = m_pNodePointer[nCntNode]->Create(m_LoadNodeData.pos[nCntNode]);
+			m_pNodePointer[nCntNode]->GetNodeMax()++;
+			m_LoadNodeData.index[nCntNode] = m_pNodePointer[nCntNode]->GetMyNumber();
+			for (int nCntConnectNode = 0; nCntConnectNode < m_LoadNodeData.connectNum[nCntNode]; nCntConnectNode++)
+			{// 接続ノード数分回る
+				m_pNodePointer[nCntNode]->GetConnectMax()++;
+				m_pNodePointer[nCntNode]->GetConnect(nCntConnectNode) = m_LoadNodeData.connectIndex[nCntNode][nCntConnectNode];
+			}
+
+			m_nNodeCounter = m_pNodePointer[nCntNode]->GetNodeMax();
+		}
 	}
 }
 
@@ -190,7 +182,7 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 {
 	LPDIRECT3DDEVICE9 pDevice = CManager::GetRenderer()->GetDevice();	// デバイスの取得
 	D3DVIEWPORT9 viewport;
-	D3DXMATRIX matrix;
+	D3DXMATRIX matrix, proj, view;
 
 	if (m_pCamera != NULL)
 	{// カメラがNullじゃない
@@ -198,11 +190,8 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 		D3DXVECTOR3 MousePos((float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y, 1);
 		viewport = CManager::GetCamera()->GetViewport(1);
 		D3DXMatrixIdentity(&matrix);
-		D3DXMATRIX proj, view;
 		CManager::GetCamera()->GetInfo(&viewport, &proj, &view);
-		D3DXVec3Unproject(&MousePos, &MousePos, &viewport, &m_pCamera->GetProjection(), &m_pCamera->GetView(), &matrix);
-
-		CDebugProc::Print("スクリーン座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
+		D3DXVec3Unproject(&MousePos, &MousePos, &viewport, &proj, &view, &matrix);
 
 		// ズーム倍率に応じたカーソルのサイズ変更
 		switch ((int)m_pCamera->GetZoom())
@@ -240,82 +229,6 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 	// 位置・サイズの設定
 	CScene3D::SetMousePos(m_pos);
 	CScene3D::SetSize(m_size);
-}
-
-//=============================================================================
-// ルート探索用ファイルの書き出し
-//=============================================================================
-HRESULT CMouseCursor::FileSave()
-{
-	FILE* pFile = NULL;		// ファイルポインタ
-	int nCntSaveState = 0;
-
-	//敵の基本情報を格納
-	std::vector<NODE_SAVE_STATE> SaveState;
-
-	//データの保存
-	CScene* pScene = NULL;
-	pScene = CScene::GetSceneTop(NODE_PRIORITY);
-
-	//ファイルオープン
-	pFile = fopen(LOAD_FILENAME, "w");
-
-	if (pFile != NULL)
-	{
-		fprintf(pFile, "//====================================================================================\n");
-		fprintf(pFile, "//																					  \n");
-		fprintf(pFile, "//	マップノード配置用テキスト														  \n");
-		fprintf(pFile, "//	Author : Komatsu Keisuke														  \n");
-		fprintf(pFile, "//																					  \n");
-		fprintf(pFile, "//====================================================================================\n");
-		fprintf(pFile, "START_LOAD  // ロード開始\n\n");
-		fprintf(pFile, "//========================================\n");
-		fprintf(pFile, "// ノードの情報\n");
-		fprintf(pFile, "//========================================\n");
-		fprintf(pFile, "START_DATA\n\n");
-
-		if (pScene != NULL)
-		{
-			do
-			{
-				CScene* pSceneNext = pScene->GetSceneNext();
-				if (pScene->GetObjType() == OBJTYPE_NODE)
-				{
-					//共通データの保存
-					CNodePointer* pNodePointer = (CNodePointer*)pScene;
-
-					fprintf(pFile, "	NODESET // ポイント[%d]\n", pNodePointer->GetMyNumber());
-					fprintf(pFile, "		NODE_POS = %.1f %.1f %.1f  // 位置\n", pNodePointer->GetPos().x, pNodePointer->GetPos().y, pNodePointer->GetPos().z);
-					fprintf(pFile, "		CONNECT_NUM = %d  // 接続ノード数\n", pNodePointer->GetConnectMax());
-
-					for (int nCntConnectNode = 0; nCntConnectNode < pNodePointer->GetConnectMax(); nCntConnectNode++)
-					{// 繋がってるノードの数だけ回る
-						fprintf(pFile, "		CONNECT_INDEX = %d  // 接続ノード番号 [%d個目]\n", pNodePointer->GetConnect(nCntConnectNode), nCntConnectNode + 1);
-					}
-					fprintf(pFile, "	END_NODESET\n\n");
-				}
-				pScene = pSceneNext;
-				nCntSaveState++;
-
-			} while (pScene != NULL);
-
-			fprintf(pFile, "END_DATA\n\n");
-			fprintf(pFile, "END_LOAD  // ロード終了\n");
-		}
-
-		//ファイルクローズ
-		if (pFile != NULL)
-		{
-			fclose(pFile);
-			pFile = NULL;
-		}
-	}
-	else
-	{//ここに入ったらエラー(そのファイルがないor開けない)
-		m_bErrorMassage = true;
-		return S_FALSE;
-	}
-	return S_OK;
 }
 
 //=============================================================================
@@ -427,37 +340,6 @@ void CMouseCursor::FileLoad(char* pFileName)
 	m_LoadNodeData = OneState;	// データの代入
 }
 
-//=============================================================================
-// ファイルのセーブロード呼び出し
-//=============================================================================
-void CMouseCursor::SaveLoad(CInputKeyboard *pKeyboard)
-{
-	if (pKeyboard->GetTrigger(DIK_F9) == true)
-	{// F9キーでファイルにセーブ
-		FileSave();
-		m_bSaveMassage = true;
-	}
-
-	if (pKeyboard->GetTrigger(DIK_F10) == true)
-	{// F10キーでファイルをロード
-		CMouseCursor::FileLoad(LOAD_FILENAME);
-
-		// ロードしたデータをもとにノードを配置
-		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
-		{// 全ノード数分回る
-			m_pNodePointer[nCntNode] = m_pNodePointer[nCntNode]->Create(m_LoadNodeData.pos[nCntNode]);
-			m_pNodePointer[nCntNode]->GetNodeMax()++;
-			m_LoadNodeData.index[nCntNode] = m_pNodePointer[nCntNode]->GetMyNumber();
-			for (int nCntConnectNode = 0; nCntConnectNode < m_LoadNodeData.connectNum[nCntNode]; nCntConnectNode++)
-			{// 接続ノード数分回る
-				m_pNodePointer[nCntNode]->GetConnectMax()++;
-				m_pNodePointer[nCntNode]->GetConnect(nCntConnectNode) = m_LoadNodeData.connectIndex[nCntNode][nCntConnectNode];
-			}
-
-			m_nNodeCounter = m_pNodePointer[nCntNode]->GetNodeMax();
-		}
-	}
-}
 /****************************************************************/
 /*					2Dマウスカーソルのクラス					*/
 /****************************************************************/
@@ -541,8 +423,8 @@ void CMouseCursor2D::Move(CInputMouse *pMouse)
 	GetWindowRect(CManager::GetRenderer()->GetHWnd(), &rect);
 
 	// さらにサイズ変更を考慮して、現在のサイズで補正（枠サイズ等あるので厳密ではない）
-	m_pos.x = float(pMouse->GetPoint().x - rect.left) - 15.0f;
-	m_pos.y = float(pMouse->GetPoint().y - rect.top) - 16.0f;
+	m_pos.x = float(pMouse->GetPoint().x - rect.left) - 5.0f;
+	m_pos.y = float(pMouse->GetPoint().y - rect.top) - 30.0f;
 
 	// 位置の設定
 	CScene2D::SetPos(m_pos);

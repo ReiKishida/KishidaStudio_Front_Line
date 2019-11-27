@@ -127,17 +127,17 @@ public:
 	// ダイクストラ法によるルート探索
 	// =============================================================
 	D3DXVECTOR3 &GetSearchPos(void) { return m_searchPos; };
-	CScene3D *&GetGoalPoint(void) { return m_pScene3D; };
 
-	void AIUpdate(void);	// AIの更新
-	void NodeSearch(bool node);	// マウス座標からノード検索
-	void AutoMove(void);	// 自動移動
-	void RootSearch(void);	// 最短経路検索
-	void RallyRootSearch(void);	// ラリーポイントでの最短経路探索
-	void Patrol(void);	// パトロール用の最短経路探索
-	void Cancel(void);	// 中断
+	void AIUpdate(void);			// AIの更新
+	void Follow(void);				// 追従処理
+	void NodeSearch(bool node);		// マウス座標からノード検索
+	void AutoMove(void);			// 自動移動
+	void RootSearch(void);			// 最短経路検索
+	void RallyRootSearch(void);		// ラリーポイントでの最短経路探索
+	void Patrol(void);				// パトロール用の最短経路探索
+	void Cancel(void);				// 中断
 	void AddEdge(int first, int second, float weight, Node *node);	// エッジの追加
-	void Dijkstra(int nodeMax, int start, int end, Node *node);	// 経路探索
+	void Dijkstra(int nodeMax, int start, int end, Node *node);		// 経路探索
 	void FileLoad(char* pFileName);	// マップデータファイルの読み込み
 	// =============================================================
 
@@ -195,9 +195,6 @@ private:
 	// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
-
-	static CScene3D *m_pScene3D;
-
 };
 
 #endif
