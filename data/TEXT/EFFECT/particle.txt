@@ -42,11 +42,11 @@ PARTICLESET		[ 1 ]
 	FLAMECOL = 0.00 0.00 0.00 0.00	＃フレーム毎のカラーの変化
 	INITSIZE = 1 1					＃初期サイズ
 	FLAMESIZE = -0.050016			＃フレーム毎のサイズの変化
-	EMITTERLIFE = 10					＃エミッタの寿命
+	EMITTERLIFE = 4					＃エミッタの寿命
 	PARLIFE = 20 35					＃ポリゴンの寿命
 	APPEAR = 1						＃出現間隔
 	SPREAD = 0.80					＃拡散
-	LAP = 10							＃1周に出す個数
+	LAP = 4							＃1周に出す個数
 	GRAVITY = 0.020000				＃重力
 	ROTPATTERN = 0					＃回転のパターン
 	ROTSPEED = 0.000000				＃回転の速度
