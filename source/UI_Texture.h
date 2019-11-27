@@ -27,42 +27,56 @@ class CUI_TEXTURE : public CScene2D
 public:
 	typedef enum
 	{	// フレームの種類
-		UIFLAME_NONE,						// フレームなし
-		UIFLAME_WEAPON,					// 武器
-		UIFLAME_PLAYER_HP,				// プレイヤーの体力
-		UIFLAME_DRONE,						// ドローン
-		UIFLAME_WORKER,					// AI01
-		UIFLAME_TEAM_BLUE,				// BLUEチーム
-		UIFLAME_TEAM_RED,				// REDチーム
-		UIFLAME_TIMER,						// タイマーフレーム
-		UIFLAME_ACTION_PART,			// アクションパート切り替え
-		UIFLAME_STRATEGY_PART,		// ストラテジーパート切り替え
+		// 下地
+		UIFLAME_NONE = 0,					// フレームなし
+
+		// タイトル
 		UIFLAME_BG_00,						// Bg00
 		UIFLAME_BG_01,						// Bg01
 		UIFLAME_FLONTLINE,				// タイトル（フロントライン）
 		UIFLAME_PRESSBOTTON,			// プレスボタン
+
+		// マッチング
+		UIFLAME_MATCHING_BG,			// マッチング背景
+		UIFLAME_MATCHING_BG_00,	// マッチングBG_00
+		UIFLAME_MATCHING_BG_01,	// マッチングBG_01
+		UIFLAME_VS,								// VSロゴ
+		UIFLAME_PLAYER_NUM,			// プレイヤーナンバー
+		UIFLAME_BLUE_MECHA_LIST,	// BLUEチームの機体リスト
+		UIFLAME_RED_MECHA_LIST,	// REDチームの機体リスト
+
+		// アクション・ストラテジー共通
+		UIFLAME_TEAM_BLUE,				// BLUEチーム
+		UIFLAME_TEAM_RED,				// REDチーム
+		UIFLAME_PLAYER_HP,				// プレイヤーの体力
+		UIFLAME_DRONE,						// ドローン
+		UIFLAME_WORKER,					// AI01
+		UIFLAME_WEAPON,					// 武器
+		UIFLAME_TIMER,						// タイマーフレーム
 		UIFLAME_CHANGE,					// パート切り替え
-		UIFLAME_1P_INFO,					// 1Pの小隊情報（ストラテジーパートで使用）
-		UIFLAME_2P_INFO,					// 2Pの小隊情報（ストラテジーパートで使用）
-		UIFLAME_FLAME_WHITE,			// ただの白フレーム（ストラテジーパートで使用）
-		UIFLAME_FLAME_BLUE,			// ただの青フレーム（ストラテジーパートで使用）
-		UIFLAME_STRATEGY_BG,			// ストラテジーパートの背景（ストラテジーパートで使用）
-		UIFLAME_RELOAD,					// リロードロゴ（アクションパートで使用）
-		UIFLAME_MATCHING_BG,			// マッチング背景（マッチング画面で使用）
-		UIFLAME_MATCHING_BG_00,	// マッチングBG_00（マッチング画面で使用）
-		UIFLAME_MATCHING_BG_01,	// マッチングBG_01（マッチング画面で使用）
-		UIFLAME_VS,								// VSロゴ（マッチング画面で使用）
-		UIFLAME_PLAYER_NUM,			// プレイヤーナンバー（マッチング画面で使用）
-		UIFLAME_BLUE_MECHA_LIST,	// BLUEチームの機体リスト（マッチング画面で使用）
-		UIFLAME_RED_MECHA_LIST,	// REDチームの機体リスト（マッチング画面で使用）
-		UIFLAME_START,						// 戦闘開始ロゴ（アクションパートで使用）
-		UIFLAME_DEATH,						// 行動不能ロゴ（アクションパートで使用）
-		UIFLAME_TILE_PATTERN,			// タイルアニメーション（アクションパートで使用）
-		UIFLAME_RESPAWN,					// 復帰ロゴ（アクションパートで使用）
-		UIFLAME_MAP,							// リスポーンマップ（アクションパートで使用）
-		UIFLAME_RESPAWN_FLAME,	// リスポーンフレーム（アクションパートで使用）
-		UIFLAME_TITLE,							// リスポーンタイトル（アクションパートで使用）
-		UIFLAME_SELECT_RESPAWN,	// リスポーン選択（アクションパートで使用）
+		UIFLAME_ACTION_PART,			// アクションパート切り替え
+		UIFLAME_STRATEGY_PART,		// ストラテジーパート切り替え
+		UIFLAME_RADIOCHAT,				// ラジオチャット
+		UIFLAME_RADIOCHAT_MESS,	// ラジオチャットメッセージ
+
+		// アクションパート
+		UIFLAME_RELOAD,					// リロードロゴ
+		UIFLAME_START,						// 戦闘開始ロゴ
+		UIFLAME_DEATH,						// 行動不能ロゴ
+		UIFLAME_TILE_PATTERN,			// タイルアニメーション
+		UIFLAME_RESPAWN,					// 復帰ロゴ
+		UIFLAME_MAP,							// リスポーンマップ
+		UIFLAME_RESPAWN_FLAME,	// リスポーンフレーム
+		UIFLAME_TITLE,							// リスポーンタイトル
+		UIFLAME_SELECT_RESPAWN,	// リスポーン選択
+
+		// ストラテジーパート
+		UIFLAME_1P_INFO,					// 1Pの小隊情報
+		UIFLAME_2P_INFO,					// 2Pの小隊情報
+		UIFLAME_FLAME_WHITE,			// ただの白フレーム
+		UIFLAME_FLAME_BLUE,			// ただの青フレーム
+		UIFLAME_STRATEGY_BG,			// ストラテジーパートの背景
+
 		UIFLAME_MAX							// タイプの最大数
 	} UI_TEXTYPE;
 
@@ -75,12 +89,14 @@ public:
 	static CUI_TEXTURE *Create(D3DXVECTOR3 pos, float fWidth, float fHeight, UI_TEXTYPE UITexType);		// 生成
 
 private:
-	D3DXVECTOR3	m_pos;						// 位置
-	D3DXCOLOR		m_col;						// カラー
-	UI_TEXTYPE		m_UITexType;			// UIの種類を管理
-	int						m_nCntBgMove;		// 背景スクロール
-	int						m_nFlash;				// 点滅フレーム数
+	D3DXVECTOR3	m_pos;													// 位置
+	D3DXVECTOR3	m_texPos;											// テクスチャの位置
+	D3DXCOLOR		m_colRadioMess;								// ラジオチャットメッセージで使用カラー
+	UI_TEXTYPE		m_UITexType;										// UIの種類を管理
+	int						m_nCntBgMove;									// 背景スクロール
+	int						m_nFlash;											// 点滅フレーム数
 	int						m_nCntAnim, m_nPatternAnim;			// アニメーションのカウンター
+	int						m_nCntReload;									// リロード時間
 };
 
 //*****************************************************************************

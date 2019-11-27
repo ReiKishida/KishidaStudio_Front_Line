@@ -115,11 +115,11 @@ void CMouseCursor::Update(void)
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
 
-	//CDebugProc::Print("=====マウス用3Dポリゴン======\n");
-	//CDebugProc::Print("カーソルの座標：%.2f %.2f", m_pos.x, m_pos.z);
-	//CDebugProc::Print("スクリーン座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
+														//CDebugProc::Print("=====マウス用3Dポリゴン======\n");
+														//CDebugProc::Print("カーソルの座標：%.2f %.2f", m_pos.x, m_pos.z);
+														//CDebugProc::Print("スクリーン座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
 
-	// 入力時処理
+														// 入力時処理
 	CMouseCursor::Input(pKeyboard, pMouse);
 
 	// 移動時処理

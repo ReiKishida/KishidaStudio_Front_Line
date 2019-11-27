@@ -296,9 +296,9 @@ bool CCollision::CollisionBox(D3DXVECTOR3 *pPos, D3DXVECTOR3 posOld, D3DXVECTOR3
 		{// ‰E‘¤‚©‚çÕ“Ë
 			pPos->x = vtxMax.x + m_fWidth + m_pos.x;
 		}
-		else if (pPos->x + vtxMax.z > m_pos.x && posOld.x + (vtxMax.z - 1.0f) <= m_pos.x)
+		else if (pPos->x + vtxMax.x >= m_pos.x && posOld.x + (vtxMax.x - 1.0f) <= m_pos.x)
 		{// ¶‘¤‚©‚çÕ“Ë
-			pPos->x = m_pos.x - vtxMax.z;
+			pPos->x = m_pos.x - vtxMax.x;
 		}
 
 		if (pPos->z - vtxMax.x <= m_fDepth + m_pos.z && posOld.z - (vtxMax.x - 1.0f) >= m_fDepth + m_pos.z)

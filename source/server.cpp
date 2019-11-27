@@ -189,9 +189,9 @@ CClient *CClient::Create()
 //=============================================================================
 HRESULT CClient::Init(void)
 {
-	for (int nCntConnect = 0; nCntConnect < MAX_CONNECT; nCntConnect++)
+	for (int nCntConnect = 0; nCntConnect < MAX_PLAYER_CONNECT; nCntConnect++)
 	{
-		m_nMechaType[nCntConnect] =  -1;
+		m_nMechaType[nCntConnect] = -1;
 	}
 
 	m_nPlayerIdx = 0;
@@ -266,7 +266,7 @@ void CClient::Update(void)
 		}
 		else if (CManager::GetMode() == CManager::MODE_RESULT)
 		{
-			strcpy(m_aSendMessage,SERVER_MODE_RESULT);
+			strcpy(m_aSendMessage, SERVER_MODE_RESULT);
 			strcat(m_aSendMessage, " ");
 		}
 		strcat(m_aSendMessage, m_aData);

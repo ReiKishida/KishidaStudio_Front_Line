@@ -105,8 +105,9 @@ void CCamera::Update(void)
 
 			D3DXVECTOR3 pos = pPlayer->GetPos();
 			float fModelHeight = pPlayer->GetVtxMax().y;
+			bool bChat = pPlayer->GetChatBotton();
 
-			if (pPlayer->GetRespawn() == CPlayer::RESPAWN_NONE)
+			if (pPlayer->GetRespawn() == CPlayer::RESPAWN_NONE && bChat == false)
 			{
 				// マウス座標の前回との差分を求める
 				float fDiffX = (float)pInputMouse->GetDiffPointX();

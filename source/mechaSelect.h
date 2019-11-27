@@ -13,7 +13,7 @@
 // マクロ定義
 //*****************************************************************************
 #define MECHASEL_PRIORITY				(7)		// 優先番号
-#define MECHASEL_NUM_BUTTON		(4)		// ボタンの数
+#define MECHASEL_NUM_BUTTON				(4)		// ボタンの数
 #define MECHASEL_NUM_UI					(4)		// UIの数
 
 //*****************************************************************************
@@ -32,7 +32,8 @@ class CMechaSelect : public CScene
 public:
 	typedef enum
 	{
-		MECHATYPE_ASSULT = 0,			// 強襲型
+		MECHATYPE_EMPTY = -1,			// 未選択
+		MECHATYPE_ASSULT,				// 強襲型
 		MECHATYPE_LIGHT,				// 軽量型
 		MECHATYPE_HEAVY,				// 重量型
 		MECHATYPE_SHOOTER,				// 支援型

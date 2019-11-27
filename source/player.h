@@ -41,6 +41,8 @@
 #define RADIOCHAT_MESS_WIDTH			(400.0f)	// メッセージの幅
 #define RADIOCHAT_MESS_HEIGHT			(80.0f)		// メッセージの高さ
 
+#define AI_MAX					(2)		// 一人当たりのAIの数
+
 //*****************************************************************************
 // 前方宣言
 //*****************************************************************************
@@ -205,14 +207,14 @@ public:
 	static void SetSearchPos(D3DXVECTOR3 pos) { m_searchPos = pos; };
 	// =============================================================
 
-	CAIMecha *GetMyAI(void) { return m_pAI; };
+	CAIMecha *GetMyAI(int nIdx) { return m_pAI[nIdx]; };
 
 private:
 	void Movement(void);
 	void Shoot(void);
 	void Angle(void);
 	void SetParticle(void);
-	void Reload(void);									// リロード処理
+	void Reload(bool bReload);						// リロード処理
 	void Respawn(RESPAWN respawn);		// ライフが0になった時の処理
 	void SelectRespawn(void);						// リスポーン位置選択処理
 	void ChatBotton(void);							// ラジオチャットボタンの生成
@@ -261,8 +263,6 @@ private:
 
 	bool			m_bConnect;			// 接続しているかどうか
 
-	CAIMecha		*m_pAI;
-
 	// =============================================================
 	// UI関係
 	// =============================================================
@@ -275,6 +275,7 @@ private:
 	CUI_TEXTURE		*m_pUITexReload[RELOAD_TEX];		// リロードで使用するテクスチャ
 	CGauge2D			*m_pGauge;											// ゲージ
 	int						m_nCntReRoad;
+	bool						m_bReload;											// リロード状態かどうか
 
 	// リスポーン
 	CUI_TEXTURE		*m_pUITexRespawn[RESPAWN_TEX];		// リスポーンで使用するテクスチャ
@@ -329,6 +330,7 @@ private:
 
 	NodeState m_NodeData;						// マップ情報へのポインタ
 	static CPlayer *m_pPlayer;					// プレイヤークラスへのポインタ
+	CAIMecha *m_pAI[AI_MAX];			// 自分のAIクラスへのポインタ
 };
 
 #endif
