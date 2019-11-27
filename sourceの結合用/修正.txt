@@ -1,0 +1,38 @@
+
+
+	void Reload(bool bReload);						// リロード処理
+
+
+	bool						m_bReload;											// リロード状態かどうか
+
+
+	m_bReload == false
+	
+	
+	
+	
+	if (m_nRemBullet <= 0)
+	{	// 弾がなくなった
+		m_bReload = true;
+	}
+
+	if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_1))
+	{
+		m_bReload = true;
+	}
+
+	// リロード処理
+	Reload(m_bReload);
+
+	// 残弾の設定
+	m_pUINum[0]->SetRemainBullet(m_nRemBullet);
+
+
+
+
+ラジオチャットボタン
+	CDirectInput *pDirectInput = CManager::GetDirectInput();	//DirectInputの取得
+	CDirectInput::GamePad *DirectInputStick = pDirectInput->GetgamePadStick();
+
+
+pKeyboard->GetTrigger(DIK_M) || pDirectInput->GetGamePadTrigger(1)
