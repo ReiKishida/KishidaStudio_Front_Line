@@ -79,7 +79,7 @@ HRESULT CMouseCursor::Init()
 	// 情報の初期化
 	m_pCamera = CManager::GetCamera();
 	m_pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	m_size = D3DXVECTOR3(15.0f, 0.0f, 15.0f);
+	m_size = D3DXVECTOR3(MOUSE_WIDTH, 0.0f, MOUSE_WIDTH);
 	m_nNodeCounter = 0;
 
 	// マウスカーソルの設定
@@ -95,6 +95,15 @@ HRESULT CMouseCursor::Init()
 //=============================================================================
 void CMouseCursor::Uninit(void)
 {
+	for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+	{// 全ノード数分回る
+		if (m_pNodePointer[nCntNode] != NULL)
+		{// 可視化用ポリゴンがNULLじゃない
+			m_pNodePointer[nCntNode]->Uninit();
+			m_pNodePointer[nCntNode] = NULL;
+		}
+	}
+
 	CScene3D::Uninit();
 }
 
@@ -154,25 +163,25 @@ void CMouseCursor::Input(CInputKeyboard *pKeyboard, CInputMouse *pMouse)
 		}
 	}
 
-	if (pKeyboard->GetTrigger(DIK_F11) == true)
-	{// F11キーでファイルをロード
-		CMouseCursor::FileLoad(LOAD_FILENAME);
+	//if (pKeyboard->GetTrigger(DIK_F11) == true)
+	//{// F11キーでファイルをロード
+	//	CMouseCursor::FileLoad(LOAD_FILENAME);
 
-		// ロードしたデータをもとにノードを配置
-		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
-		{// 全ノード数分回る
-			m_pNodePointer[nCntNode] = m_pNodePointer[nCntNode]->Create(m_LoadNodeData.pos[nCntNode]);
-			m_pNodePointer[nCntNode]->GetNodeMax()++;
-			m_LoadNodeData.index[nCntNode] = m_pNodePointer[nCntNode]->GetMyNumber();
-			for (int nCntConnectNode = 0; nCntConnectNode < m_LoadNodeData.connectNum[nCntNode]; nCntConnectNode++)
-			{// 接続ノード数分回る
-				m_pNodePointer[nCntNode]->GetConnectMax()++;
-				m_pNodePointer[nCntNode]->GetConnect(nCntConnectNode) = m_LoadNodeData.connectIndex[nCntNode][nCntConnectNode];
-			}
+	//	// ロードしたデータをもとにノードを配置
+	//	for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+	//	{// 全ノード数分回る
+	//		m_pNodePointer[nCntNode] = m_pNodePointer[nCntNode]->Create(m_LoadNodeData.pos[nCntNode]);
+	//		m_pNodePointer[nCntNode]->GetNodeMax()++;
+	//		m_LoadNodeData.index[nCntNode] = m_pNodePointer[nCntNode]->GetMyNumber();
+	//		for (int nCntConnectNode = 0; nCntConnectNode < m_LoadNodeData.connectNum[nCntNode]; nCntConnectNode++)
+	//		{// 接続ノード数分回る
+	//			m_pNodePointer[nCntNode]->GetConnectMax()++;
+	//			m_pNodePointer[nCntNode]->GetConnect(nCntConnectNode) = m_LoadNodeData.connectIndex[nCntNode][nCntConnectNode];
+	//		}
 
-			m_nNodeCounter = m_pNodePointer[nCntNode]->GetNodeMax();
-		}
-	}
+	//		m_nNodeCounter = m_pNodePointer[nCntNode]->GetNodeMax();
+	//	}
+	//}
 }
 
 //=============================================================================
@@ -197,8 +206,6 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 		switch ((int)m_pCamera->GetZoom())
 		{
 		case 3:
-			m_size = D3DXVECTOR3(12.0f, 0.0f, 12.0f);
-
 			// カーソル位置の設定
 			m_pos.x = MousePos.x * 0.6666f;
 			m_pos.y = 0.0f;
@@ -206,8 +213,6 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 
 			break;
 		case 2:
-			m_size = D3DXVECTOR3(18.0f, 0.0f, 18.0f);
-
 			// カーソル位置の設定
 			m_pos.x = MousePos.x;
 			m_pos.y = 0.0f;
@@ -215,8 +220,6 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 
 			break;
 		case 1:
-			m_size = D3DXVECTOR3(30.0f, 0.0f, 30.0f);
-
 			// カーソル位置の設定
 			m_pos.x = MousePos.x * 2.0f;
 			m_pos.y = 0.0f;
@@ -228,7 +231,7 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 
 	// 位置・サイズの設定
 	CScene3D::SetMousePos(m_pos);
-	CScene3D::SetSize(m_size);
+	CScene3D::SetSize(m_size / m_pCamera->GetZoom());
 }
 
 //=============================================================================
