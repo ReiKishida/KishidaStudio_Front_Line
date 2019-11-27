@@ -85,12 +85,17 @@ public:
 
 private:
 	void PrintData(void);
+	void PrintCPUData(void);
 	void ReadMessage(void);
 	char *ReadConnectData(char *pStr);
 	char *ReadPlayerData(char *pStr);
+	char *ReadCPUData(char *pStr);
+
 	void SetPlayerData(int nPlayerIdx, D3DXVECTOR3 pos, D3DXVECTOR3 rot, D3DXVECTOR3 modelRotUp, D3DXVECTOR3 modelRotDown, D3DXVECTOR3 cameraRot);
 	void CreatePlayerBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECTOR3 cameraRot, float *pAngle, float *pAngleV);
 	void SetChatData(int nPlayerIdx, int radioChat);
+	void SetCPUData(int nPlayerIdx, D3DXVECTOR3 pos, D3DXVECTOR3 rot);
+	void CreateCPUBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECTOR3 cameraRot, float *pAngle, float *pAngleV);
 
 	void CreateActionUI(void);
 	void CreateStrategyUI(void);
@@ -103,12 +108,13 @@ private:
 	int	m_nCntEnemyAppear;						// 敵を出現させるカウンタ
 	CTimer *m_pTimer;							// タイマークラスのポインタ変数
 	static int m_nCurStage;						// 現在のステージ
-	static CPlayer *m_pPlayer[MAX_CONNECT];					// プレイヤークラスのポインタ変数
+	static CPlayer *m_pPlayer[MAX_PLAYER_CONNECT];					// プレイヤークラスのポインタ変数
 	CButtonManagerStrategy *m_pButtonManager;	// ボタンの管理クラスのポインタ変数
 	CMouseCursor2D *m_pMouseCursor;				// マウスカーソル
 	PART m_part;								// 現在のパート
 	CModel *m_pField;							// 地面のモデル
 	CModel *m_pSky;								// スカイドーム
+	bool m_bConnect[MAX_PLAYER_CONNECT];
 
 	CMouseCursor *m_pMouse;
 };

@@ -78,7 +78,7 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	static CParticlePolygon *Create(D3DXVECTOR3 pos, int nType, int nTexture);
+	static CParticlePolygon *Create(D3DXVECTOR3 pos, int nType, int nTexture, int nAngle);
 
 private:
 	LPDIRECT3DVERTEXBUFFER9 m_pVtxBuffParticle;	// 頂点バッファへのポインタ

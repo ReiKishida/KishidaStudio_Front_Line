@@ -220,19 +220,19 @@ void CMechaSelect::Update(void)
 	switch (nSelect)
 	{
 	case 0:		// Œy—ÊŒ^
-		m_apUI[2]->SetTex(0, 1, 4);
+		m_apUI[2]->SetTex(nSelect + 1, 1, 5);
 		break;
 
 	case 1:		// Žx‰‡Œ^
-		m_apUI[2]->SetTex(1, 1, 4);
+		m_apUI[2]->SetTex(nSelect + 1, 1, 5);
 		break;
 
 	case 2:		// d—ÊŒ^
-		m_apUI[2]->SetTex(2, 1, 4);
+		m_apUI[2]->SetTex(nSelect + 1, 1, 5);
 		break;
 
 	case 3:		// ‹­PŒ^
-		m_apUI[2]->SetTex(3, 1, 4);
+		m_apUI[2]->SetTex(nSelect + 1, 1, 5);
 		break;
 	}
 

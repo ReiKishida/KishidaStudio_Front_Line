@@ -139,7 +139,7 @@ void CParEmitter::Update(void)
 
 	if (m_nCntParticle == 0)
 	{// oŒ»‚³‚¹‚é
-		CParticlePolygon::Create(m_pos, m_nType, m_nTexture);
+		CParticlePolygon::Create(m_pos, m_nType, m_nTexture, m_nCntAngle);
 
 		m_nCntAngle = (m_nCntAngle + 1) % m_nLap;
 	}
@@ -195,7 +195,7 @@ void CParEmitter::DestroyParticle(int nIdx)
 //==================================
 // ¶¬ˆ—
 //==================================
-CParticlePolygon *CParticlePolygon::Create(D3DXVECTOR3 pos, int nType, int nTexture)
+CParticlePolygon *CParticlePolygon::Create(D3DXVECTOR3 pos, int nType, int nTexture, int nAngle)
 {
 	CParticlePolygon *pParticlePlygon;
 
@@ -204,6 +204,7 @@ CParticlePolygon *CParticlePolygon::Create(D3DXVECTOR3 pos, int nType, int nText
 	if (NULL != pParticlePlygon)
 	{
 		pParticlePlygon->m_nType = nType;
+		pParticlePlygon->m_nCntAngle = nAngle;
 		pParticlePlygon->Init(pos);
 		pParticlePlygon->BindTexture(CParData::GetTexture(nTexture));
 	}
@@ -271,7 +272,7 @@ HRESULT CParticlePolygon::Init(D3DXVECTOR3 pos)
 			cosf(D3DX_PI * (0.0f + (m_fAngle * m_nCntAngle))) * ((nDepth[0] + (rand() % (1 + nDepth[1]))) - ((rand() % 10) * 0.1f)) * fSpread);
 	}
 	else
-	{// Y²‚ÌˆÚ“®—Ê‚ª‚O‚ª‚ ‚éê‡
+	{// Y²‚ÌˆÚ“®—Ê‚ª‚O‚Ìê‡
 		m_move = D3DXVECTOR3(sinf(D3DX_PI * (0.0f + (m_fAngle * m_nCntAngle))) * ((nWidth[0] + (rand() % (1 + nWidth[1]))) - ((rand() % 10) * 0.1f)) * fSpread,
 			(nHeight[1] + nHeight[0]) * fSpread,
 			cosf(D3DX_PI * (0.0f + (m_fAngle * m_nCntAngle))) * ((nDepth[0] + (rand() % (1 + nDepth[1]))) - ((rand() % 10) * 0.1f)) * fSpread);

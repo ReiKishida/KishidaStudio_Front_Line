@@ -119,6 +119,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_pUpperMotion = NULL;
 	m_pLowerMotion = NULL;
 	m_pReticle = NULL;
+	m_pShadow = NULL;
 	m_nPlayerIdx = 0;
 	m_posOld = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_bShoot = false;
@@ -144,6 +145,12 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_moveSpeed = 0;
 	m_bCol = false;
 	m_bChatBotton = false;
+	m_bReload = false;
+
+	for (int nCnt = 0; nCnt < AI_MAX; nCnt++)
+	{
+		m_pAI[nCnt] = NULL;
+	}
 
 	for (int nCnt = 0; nCnt < PLAYER_UI_NUM; nCnt++)
 	{
@@ -374,7 +381,7 @@ HRESULT CPlayer::Init(void)
 
 	if (NULL == m_pShadow)
 	{// 影の生成
-		m_pShadow = CShadow::Create(&m_pos);
+		//m_pShadow = CShadow::Create(&m_pos);
 	}
 
 	if (CMenu::GetMode() == CMenu::MODE_MULTI)
@@ -499,7 +506,12 @@ HRESULT CPlayer::Init(void)
 	}
 
 	// AIの生成
-	m_pAI = m_pAI->Create(this, CAIMecha::MECHATYPE_DRONE, m_pos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+	//m_pAI = m_pAI->Create(this, CAIMecha::MECHATYPE_DRONE, m_pos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+
+	if (m_pAI[0] == NULL)
+	{// ドローンタイプのAIの生成
+		m_pAI[0] = m_pAI[0]->Create(this, CAIMecha::MECHATYPE_DRONE, m_pos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+	}
 
 	// 数値の初期化==============================================================================
 	m_posDest = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
@@ -563,6 +575,27 @@ HRESULT CPlayer::Init(void)
 //=========================================
 void CPlayer::Uninit(void)
 {
+	for (int nCntType = 0; nCntType < AI_MAX; nCntType++)
+	{// AIの数だけ回る
+		if (m_pAI[nCntType] != NULL)
+		{// AIがNULLじゃない
+			m_pAI[nCntType]->Uninit();
+			m_pAI[nCntType] = NULL;
+		}
+	}
+
+	if (m_pReticle != NULL)
+	{// レティクルがNULLじゃない
+		m_pReticle->Uninit();
+		m_pReticle = NULL;
+	}
+
+	if (m_pShadow != NULL)
+	{// 影がNULLじゃない
+		m_pShadow->Uninit();
+		m_pShadow = NULL;
+	}
+
 	if (NULL != m_pUpperMotion)
 	{// モーションクラスの破棄
 		m_pUpperMotion->Uninit();
@@ -746,9 +779,6 @@ void CPlayer::Update(void)
 							ChatMess(m_bChat);
 						}
 
-						// 重力
-						//m_move.y -= GRAVITY;
-
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -917,7 +947,7 @@ void CPlayer::Movement(void)
 			m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
 			m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
 		}
-		else if (fDiffX < 10.0f || fDiffX > -10.0f)
+		else if ((fDiffX < 10.0f || fDiffX > -10.0f) && !m_bChatBotton)
 		{// 移動モーション
 			m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
 		}
@@ -942,7 +972,7 @@ void CPlayer::Shoot(void)
 	CXInput *pXInput = CManager::GetXInput();			// XInputの入力を取得
 	D3DXVECTOR3 dispertion;								// ブレ
 
-	if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_0) && m_nRemBullet > 0 && m_bChatBotton == false)
+	if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_0) && m_nRemBullet > 0 && m_bChatBotton == false && m_bReload == false)
 	{
 		// 弾の発射間隔
 		m_nCntShoot = (m_nCntShoot + 1) % 7;
@@ -1010,14 +1040,18 @@ void CPlayer::Shoot(void)
 		m_bShootButton = false;
 	}
 
-	// リロード処理
-	if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_1))
+	if (m_nRemBullet <= 0)
+	{	// 弾がなくなった
+		m_bReload = true;
+	}
+
+	if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_1))
 	{
-		m_nRemBullet = m_nCapacity;
+		m_bReload = true;
 	}
 
 	// リロード処理
-	Reload();
+	Reload(m_bReload);
 
 	// 残弾の設定
 	m_pUINum[0]->SetRemainBullet(m_nRemBullet);
@@ -1163,9 +1197,9 @@ D3DXVECTOR3 CPlayer::CalcScreenToWorld(float fScreenX, float fScreenY)
 //=========================================
 // リロード処理：弾が0ー＞リロードロゴ、ゲージ表示
 //=========================================
-void CPlayer::Reload(void)
+void CPlayer::Reload(bool bReload)
 {
-	if (m_nRemBullet <= 0)
+	if(bReload == true)
 	{
 		m_nCntReRoad++;		// カウンター加算
 
@@ -1204,6 +1238,8 @@ void CPlayer::Reload(void)
 					m_pUITexReload[nCnt] = NULL;
 				}
 			}
+
+			m_bReload = false;
 		}
 	}
 }
@@ -1395,73 +1431,75 @@ void CPlayer::SelectRespawn(void)
 //=============================================================================
 void CPlayer::ChatBotton(void)
 {
-	//CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+	CDirectInput *pDirectInput = CManager::GetDirectInput();	//DirectInputの取得
+	CDirectInput::GamePad *DirectInputStick = pDirectInput->GetgamePadStick();
 
-	//if (pKeyboard->GetTrigger(DIK_M))
-	//{
-	//	if (m_pUIRadioBotton[0] == NULL || m_pUIRadioBotton[1] == NULL || m_pUIRadioBotton[2] == NULL || m_pUIRadioBotton[3] == NULL
-	//		|| m_pUIRadioBotton[4] == NULL || m_pUIRadioBotton[5] == NULL || m_pUIRadioBotton[6] == NULL || m_pUIRadioBotton[7] == NULL || m_pCursor == NULL)
-	//	{	// ボタンとカーソルの生成
-	//		m_bChatBotton = true;		// ボタン表示中
+	if (pKeyboard->GetTrigger(DIK_M) || pDirectInput->GetGamePadTrigger(1))
+	{
+		if (m_pUIRadioBotton[0] == NULL || m_pUIRadioBotton[1] == NULL || m_pUIRadioBotton[2] == NULL || m_pUIRadioBotton[3] == NULL
+			|| m_pUIRadioBotton[4] == NULL || m_pUIRadioBotton[5] == NULL || m_pUIRadioBotton[6] == NULL || m_pUIRadioBotton[7] == NULL || m_pCursor == NULL)
+		{	// ボタンとカーソルの生成
+			m_bChatBotton = true;		// ボタン表示中
 
-	//		m_pUIRadioBotton[0] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-	//		m_pUIRadioBotton[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-	//		m_pUIRadioBotton[0]->SetTex(0, 1, RADIOCHAT_BOTTON_PATTERN);
+			m_pUIRadioBotton[0] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[0]->SetTex(0, 1, RADIOCHAT_BOTTON_PATTERN);
 
-	//		m_pUIRadioBotton[1] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-	//		m_pUIRadioBotton[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-	//		m_pUIRadioBotton[1]->SetTex(1, 1, RADIOCHAT_BOTTON_PATTERN);
+			m_pUIRadioBotton[1] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[1]->SetTex(1, 1, RADIOCHAT_BOTTON_PATTERN);
 
-	//		m_pUIRadioBotton[2] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-	//		m_pUIRadioBotton[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-	//		m_pUIRadioBotton[2]->SetTex(2, 1, RADIOCHAT_BOTTON_PATTERN);
+			m_pUIRadioBotton[2] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[2]->SetTex(2, 1, RADIOCHAT_BOTTON_PATTERN);
 
-	//		m_pUIRadioBotton[3] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-	//		m_pUIRadioBotton[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-	//		m_pUIRadioBotton[3]->SetTex(3, 1, RADIOCHAT_BOTTON_PATTERN);
+			m_pUIRadioBotton[3] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[3]->SetTex(3, 1, RADIOCHAT_BOTTON_PATTERN);
 
-	//		m_pUIRadioBotton[4] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-	//		m_pUIRadioBotton[4]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-	//		m_pUIRadioBotton[4]->SetTex(7, 1, RADIOCHAT_BOTTON_PATTERN);
+			m_pUIRadioBotton[4] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[4]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[4]->SetTex(7, 1, RADIOCHAT_BOTTON_PATTERN);
 
-	//		m_pUIRadioBotton[5] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-	//		m_pUIRadioBotton[5]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-	//		m_pUIRadioBotton[5]->SetTex(6, 1, RADIOCHAT_BOTTON_PATTERN);
+			m_pUIRadioBotton[5] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[5]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[5]->SetTex(6, 1, RADIOCHAT_BOTTON_PATTERN);
 
-	//		m_pUIRadioBotton[6] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-	//		m_pUIRadioBotton[6]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-	//		m_pUIRadioBotton[6]->SetTex(5, 1, RADIOCHAT_BOTTON_PATTERN);
+			m_pUIRadioBotton[6] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[6]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[6]->SetTex(5, 1, RADIOCHAT_BOTTON_PATTERN);
 
-	//		m_pUIRadioBotton[7] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-	//		m_pUIRadioBotton[7]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-	//		m_pUIRadioBotton[7]->SetTex(4, 1, RADIOCHAT_BOTTON_PATTERN);
+			m_pUIRadioBotton[7] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[7]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[7]->SetTex(4, 1, RADIOCHAT_BOTTON_PATTERN);
 
-	//		m_pCursor = CMouseCursor2D::Create();		// カーソル
-	//	}
-	//}
+			m_pCursor = CMouseCursor2D::Create();		// カーソル
+		}
+	}
 
-	//if (m_pUIRadioBotton[0] != NULL || m_pUIRadioBotton[1] != NULL || m_pUIRadioBotton[2] != NULL || m_pUIRadioBotton[3] != NULL
-	//	|| m_pUIRadioBotton[4] != NULL || m_pUIRadioBotton[5] != NULL || m_pUIRadioBotton[6] != NULL || m_pUIRadioBotton[7] != NULL || m_pCursor != NULL)
-	//{	// ボタンとカーソルが生成された
-	//	m_bChat = false;
-	//	int nSelect = -1;
-	//	m_radiochat = RADIOCHAT_OK;
+	if (m_pUIRadioBotton[0] != NULL || m_pUIRadioBotton[1] != NULL || m_pUIRadioBotton[2] != NULL || m_pUIRadioBotton[3] != NULL
+		|| m_pUIRadioBotton[4] != NULL || m_pUIRadioBotton[5] != NULL || m_pUIRadioBotton[6] != NULL || m_pUIRadioBotton[7] != NULL || m_pCursor != NULL)
+	{	// ボタンとカーソルが生成された
+		m_bChat = false;
+		int nSelect = -1;
+		m_radiochat = RADIOCHAT_OK;
 
-	//	// ボタンの判定
-	//	for (int nCntButton = 0; nCntButton < RADIOCHAT_BOTTON; nCntButton++)
-	//	{
-	//		if (m_pUIRadioBotton[nCntButton]->InRange(m_pCursor->GetMousePosition()))
-	//		{// 範囲内かチェック
-	//			if (m_pUIRadioBotton[nCntButton]->ClickRelease())
-	//			{// クリックされた
-	//				m_bChat = true;
-	//				m_radiochat = (RADIOCHAT)nCntButton;
-	//				break;
-	//			}
-	//			nSelect = nCntButton;
-	//		}
-	//	}
-	//}
+		// ボタンの判定
+		for (int nCntButton = 0; nCntButton < RADIOCHAT_BOTTON; nCntButton++)
+		{
+			if (m_pUIRadioBotton[nCntButton]->InRange(m_pCursor->GetMousePosition()))
+			{// 範囲内かチェック
+				if (m_pUIRadioBotton[nCntButton]->ClickRelease())
+				{// クリックされた
+					m_bChat = true;
+					m_radiochat = (RADIOCHAT)nCntButton;
+					break;
+				}
+				nSelect = nCntButton;
+			}
+		}
+	}
 }
 
 //=============================================================================
@@ -1473,8 +1511,8 @@ void CPlayer::ChatMess(bool bChat)
 	{
 		m_bChatBotton = false;		// ボタン非表示中
 
-		//m_pUITexRadio = CUI_TEXTURE::Create(D3DXVECTOR3(1280.0f, 550.0f, 0.0f), RADIOCHAT_MESS_WIDTH, RADIOCHAT_MESS_HEIGHT, CUI_TEXTURE::UIFLAME_RADIOCHAT_MESS);
-		//m_pUITexRadio->SetTex(m_radiochat, 1, RADIOCHAT_BOTTON_PATTERN);
+		m_pUITexRadio = CUI_TEXTURE::Create(D3DXVECTOR3(1280.0f, 550.0f, 0.0f), RADIOCHAT_MESS_WIDTH, RADIOCHAT_MESS_HEIGHT, CUI_TEXTURE::UIFLAME_RADIOCHAT_MESS);
+		m_pUITexRadio->SetTex(m_radiochat, 1, RADIOCHAT_BOTTON_PATTERN);
 	}
 	if (m_pUITexRadio != NULL)
 	{

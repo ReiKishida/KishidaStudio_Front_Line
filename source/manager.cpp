@@ -18,7 +18,6 @@
 #include "game.h"
 #include "result.h"
 #include "pause.h"
-#include "particle.h"
 #include "meshField.h"
 #include "sound.h"
 #include "texture.h"
@@ -311,9 +310,6 @@ HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, bool bWindow)
 	// 現在のモードを設定
 	SetMode(m_mode);
 
-	// ファイルからデータを読み取る
-	CParData::Load();
-
 	// デバッグ文字の表示
 	m_bDebugProc = true;
 
@@ -326,8 +322,6 @@ HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, bool bWindow)
 void CManager::Uninit(void)
 {
 	// データの破棄
-	CParData::Unload();
-
 	CScene::ReleaseAll();	// 全てのオブジェクトの破棄
 
 	CTexture::Unload();
@@ -421,12 +415,6 @@ void CManager::Update(void)
 	m_pInputMouse->Update();
 	m_pDirectInput->Update();
 	m_pXInput->Update();
-
-	if (m_pInputKeyboard->GetTrigger(DIK_R))
-	{
-		CParData::Unload();
-		CParData::Load();
-	}
 
 	switch (SERVER_MODE)
 	{
