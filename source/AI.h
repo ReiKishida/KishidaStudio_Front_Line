@@ -39,7 +39,7 @@ public:
 		std::vector<int> to;		// どのノードとつながっているか
 		std::vector<float> cost;	// エッジのコスト
 
-									// ダイクストラ法のために必要な情報
+		// ダイクストラ法のために必要な情報
 		bool done;		// 確定ノードかどうか
 		float minCost;	// スタートノードからの最小コスト
 		int from;		// どのノードから来たか
@@ -102,16 +102,16 @@ public:
 
 	static CAIMecha* Create(CPlayer *pPlayer, MECHATYPE mecha, D3DXVECTOR3 pos);
 
-	D3DXVECTOR3 GetPos(void) { return m_pos; };					// 位置の取得
+	D3DXVECTOR3 GetPos(void) { return m_pos; };			// 位置の取得
 	void SetPos(D3DXVECTOR3 pos) { m_pos = pos; };		// 位置の設定
 
-	D3DXVECTOR3 GetRot(void) { return m_rot; };					// 角度の取得
+	D3DXVECTOR3 GetRot(void) { return m_rot; };			// 角度の取得
 	void SetRot(D3DXVECTOR3 rot) { m_rot = rot; };		// 角度の設定
 
-	D3DXVECTOR3 GetMove(void) { return m_move; };				// 移動量の取得
+	D3DXVECTOR3 GetMove(void) { return m_move; };		// 移動量の取得
 	void SetMove(D3DXVECTOR3 move) { m_move = move; };	// 移動量の設定
 
-	D3DXMATRIX GetMtxWorld(void) { return m_mtxWorld; };					// ワールドマトリックスの取得
+	D3DXMATRIX GetMtxWorld(void) { return m_mtxWorld; };				// ワールドマトリックスの取得
 	void SetMtxWorld(D3DXMATRIX mtxWorld) { m_mtxWorld = mtxWorld; };	// ワールドマトリックスの設定
 
 	D3DXVECTOR3 GetVtxMax(void) { return m_vtxMax; }
@@ -134,7 +134,7 @@ public:
 	void AutoMove(void);			// 自動移動
 	void RootSearch(void);			// 最短経路検索
 	void RallyRootSearch(void);		// ラリーポイントでの最短経路探索
-	void Patrol(void);				// パトロール用の最短経路探索
+	void Patrol(void);				// 往復用の最短経路探索
 	void Cancel(void);				// 中断
 	void AddEdge(int first, int second, float weight, Node *node);	// エッジの追加
 	void Dijkstra(int nodeMax, int start, int end, Node *node);		// 経路探索
@@ -168,23 +168,25 @@ private:
 	// ダイクストラ法によるルート探索
 	// =============================================================
 	NodeState		m_NodeData;								// マップ情報
+
 	// パート関係
 	CGame::PART		m_bPartSwitch;							// パート情報
 	CGame::PART		m_bPartSwitchOld;						// 前回のパート情報
+
 	// ノード関係
 	int				m_nStartNode;							// 開始ノード番号
 	int				m_nEndNode;								// 終了ノード番号
 	int				m_nNodeOld;								// 前回のノード番号
+
 	// ラリー関係
-	bool			m_bRally;								// ラリー状態か
 	Node			m_node[NODEPOINT_MAX][NODEPOINT_MAX];	// ラリー時のノードの情報
-	int				m_nRallyEndNode[NODEPOINT_MAX];		// ラリー時の終了ノード番号
+	int				m_nRallyEndNode[NODEPOINT_MAX];			// ラリー時の終了ノード番号
 	int				m_nRallyCount;							// クリック数
 	int				m_nRallyCountOld;						// 前回のクリック数
-	// パトロール関係
-	bool			m_bPatrol;								// パトロール状態か
+
 	// ルート検索関係
 	D3DXVECTOR3		m_searchPos;							// クリック時位置
+
 	// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
 	D3DXVECTOR3		m_posDest;								// 目標位置
@@ -192,6 +194,7 @@ private:
 	int				m_nCountPoint;							// 目標までの移動回数
 	int				m_nPoint;								// 現在の移動回数
 	bool			m_bGoal;								// 目的地に到着したか
+
 	// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
