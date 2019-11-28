@@ -88,6 +88,9 @@ public:
 		// radiochat
 		TEXTURE_RADIOCHAT,					// ラジオチャット
 		TEXTURE_RADIOCHAT_MESS,		// ラジオチャットメッセージ
+
+		TEXTURE_SHADOW,
+
 		TEXTURE_MAX
 	}TEXTURE;
 
