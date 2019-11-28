@@ -424,8 +424,8 @@ void CMouseCursor2D::Move(CInputMouse *pMouse)
 	GetWindowRect(CManager::GetRenderer()->GetHWnd(), &rect);
 
 	// さらにサイズ変更を考慮して、現在のサイズで補正（枠サイズ等あるので厳密ではない）
-	m_pos.x = float(pMouse->GetPoint().x - rect.left) - 5.0f;
-	m_pos.y = float(pMouse->GetPoint().y - rect.top) - 30.0f;
+	m_pos.x = float(pMouse->GetPoint().x - rect.left);
+	m_pos.y = float(pMouse->GetPoint().y - rect.top) ;
 
 	// 位置の設定
 	CScene2D::SetPos(m_pos);
