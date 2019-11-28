@@ -41,7 +41,7 @@ CHARACTERSET
 	DISPERTION = 65					# ‚Î‚ç‚Â‚«
 	RELOAD = 170					# ƒŠƒ[ƒhŽžŠÔ
 
-	LIFE = 450						# ‘Ï‹v—Í
+	LIFE = 350						# ‘Ï‹v—Í
 	SPEED = 5.2						# ˆÚ“®—Ê
 	
 	FOOT = 4						# ‘«‚ÌŽn‚Ü‚è”Ô†
