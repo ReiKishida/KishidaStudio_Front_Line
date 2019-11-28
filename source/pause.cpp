@@ -174,7 +174,7 @@ void CPause::Update(void)
 
 	if (pXInput->GetRepeat(0, CXInput::XIJS_BUTTON_16) || pXInput->GetRepeat(0, CXInput::XIJS_BUTTON_0) || pKeyboard->GetRepeat(DIK_W) || pKeyboard->GetRepeat(DIK_UP))
 	{// ‘I‘ğó‘Ô‚ğ‚P‚Âã‚°‚é
-		pSound->PlaySound(CSound::SOUND_LABEL_CURSOR);
+		//pSound->PlaySound(CSound::SOUND_LABEL_CURSOR);
 		m_nNumSelect = (m_nNumSelect + (TYPE_MAX - 1)) % TYPE_MAX;
 
 		for (int nCntPolygon = 0; nCntPolygon < TYPE_MAX; nCntPolygon++)
@@ -192,7 +192,7 @@ void CPause::Update(void)
 
 	if (pXInput->GetRepeat(0, CXInput::XIJS_BUTTON_17) || pXInput->GetRepeat(0, CXInput::XIJS_BUTTON_1) || pKeyboard->GetRepeat(DIK_S) || pKeyboard->GetRepeat(DIK_DOWN))
 	{
-		pSound->PlaySound(CSound::SOUND_LABEL_CURSOR);
+		//pSound->PlaySound(CSound::SOUND_LABEL_CURSOR);
 		m_nNumSelect = (m_nNumSelect + 1) % TYPE_MAX;	// ‘I‘ğó‘Ô‚ğ‚P‚Â‰º‚°‚é
 
 		for (int nCntPolygon = 0; nCntPolygon < TYPE_MAX; nCntPolygon++)

@@ -149,6 +149,8 @@ void CScene::UpdateAll(void)
 		{// NULLでない限り回す
 			nCntPriorities[nCntPriority]++;			// デバッグ用
 
+
+
 			CScene *pSceneNext = pScene->m_pNext;			// 更新内で削除された時のために値を保持
 			if (!pScene->m_bDeath) { pScene->Update(); }	// 更新処理
 			pScene = pSceneNext;							// 次のオブジェクトを入れる

@@ -498,6 +498,7 @@ const void CManager::SetMode(MODE mode)
 		if (m_pMenu != NULL)
 		{// メニュー
 			m_pMenu = NULL;
+
 		}
 		break;
 
@@ -505,6 +506,8 @@ const void CManager::SetMode(MODE mode)
 		if (m_pMechaSelect != NULL)
 		{// メニュー
 			m_pMechaSelect = NULL;
+			m_pSound->StopSound(CSound::SOUND_LABEL_TITLE_MENU);
+
 		}
 		break;
 
@@ -512,6 +515,7 @@ const void CManager::SetMode(MODE mode)
 		if (m_pMatching != NULL)
 		{// メニュー
 			m_pMatching = NULL;
+			m_pSound->StopSound(CSound::SOUND_LABEL_MATCHING);
 		}
 		break;
 
@@ -526,7 +530,7 @@ const void CManager::SetMode(MODE mode)
 	case MODE_GAME:
 		if (m_pGame != NULL)
 		{// ゲーム
-			//m_pSound->StopSound(CSound::SOUND_LABEL_GAME);
+			m_pSound->StopSound(CSound::SOUND_LABEL_GAME);
 			m_pGame = NULL;
 		}
 		break;
@@ -547,7 +551,7 @@ const void CManager::SetMode(MODE mode)
 	case MODE_TITLE:
 		if (m_pTitle == NULL)
 		{// タイトル
-			//m_pSound->PlaySound(CSound::SOUND_LABEL_TITLE);
+			m_pSound->PlaySound(CSound::SOUND_LABEL_TITLE_MENU);
 			m_pCamera->Init();
 			m_pTitle = new CTitle;
 			m_pTitle->Init();
@@ -573,6 +577,7 @@ const void CManager::SetMode(MODE mode)
 	case MODE_MATCHING:
 		if (m_pMatching == NULL)
 		{// メニュー
+			m_pSound->PlaySound(CSound::SOUND_LABEL_MATCHING);
 			m_pMatching = new CMatching;
 			m_pMatching->Init();
 		}
@@ -589,7 +594,7 @@ const void CManager::SetMode(MODE mode)
 	case MODE_GAME:
 		if (m_pGame == NULL)
 		{// ゲーム
-			//m_pSound->PlaySound(CSound::SOUND_LABEL_GAME);
+			m_pSound->PlaySound(CSound::SOUND_LABEL_GAME);
 			m_pCamera->Init();
 			m_pGame = new CGame;
 			m_pGame->Init();
@@ -599,6 +604,7 @@ const void CManager::SetMode(MODE mode)
 	case MODE_RESULT:
 		if (m_pResult == NULL)
 		{// クリア
+			m_pCamera->Init();
 			//m_pSound->PlaySound(CSound::SOUND_LABEL_CLEAR);
 			m_pResult = new CResult;
 			m_pResult->Init();

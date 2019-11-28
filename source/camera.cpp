@@ -62,6 +62,11 @@ HRESULT CCamera::Init(void)
 	m_fLookHeight = 25.0f;
 	m_fZoom = 1.0f;
 
+	if (CManager::GetMode() == CManager::MODE_RESULT)
+	{
+		m_posV = D3DXVECTOR3(700.0f, 40.0f, 230.0f);
+		m_posR = D3DXVECTOR3(0.0f, 0.0f, 450.0f);
+	}
 	return S_OK;
 }
 

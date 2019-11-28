@@ -419,7 +419,7 @@ void CGame::Update(void)
 			{// ƒ|[ƒY‚Å‚È‚­‚È‚Á‚½‚ç”jŠü
 				m_pPause->Uninit();
 				m_pPause = NULL;
-				pSound->PlaySound(CSound::SOUND_LABEL_PAUSEOFF);
+				//pSound->PlaySound(CSound::SOUND_LABEL_PAUSEOFF);
 			}
 		}
 	}

@@ -616,13 +616,13 @@ void CEnemy::Damage(int nDamage, int nMotion)
 				m_pMotion->SetMotion(CMotionManager::TYPE_DAMAGE);
 				m_bDamage[nMotion] = true;
 				CSound *pSound = CManager::GetSound();			// サウンドの取得
-				pSound->PlaySound(CSound::SOUND_LABEL_HIT);		// 攻撃ヒット音の再生
+				//pSound->PlaySound(CSound::SOUND_LABEL_HIT);		// 攻撃ヒット音の再生
 
 				if (0 >= m_pLife->GetLife())
 				{// 体力が0以下になった
 					m_bDeath = true;
 					m_nCntDamage[nMotion] = 0;
-					pSound->PlaySound(CSound::SOUND_LABEL_ENEMYDEATH);	// 敵死亡音の再生
+					//pSound->PlaySound(CSound::SOUND_LABEL_ENEMYDEATH);	// 敵死亡音の再生
 					m_move.y = 10.0f;
 
 					if (m_pMotion)
@@ -635,14 +635,14 @@ void CEnemy::Damage(int nDamage, int nMotion)
 		else if (-1 == nMotion)
 		{// モーションが-1のとき
 			CSound *pSound = CManager::GetSound();			// サウンドの取得
-			pSound->PlaySound(CSound::SOUND_LABEL_HIT);		// 攻撃ヒット音の再生
+			//pSound->PlaySound(CSound::SOUND_LABEL_HIT);		// 攻撃ヒット音の再生
 
 			m_pLife->AddSubtract(nDamage);	// ライフを0にする
 
 			if (0 >= m_pLife->GetLife())
 			{// 体力が0以下になった
 				m_bDeath = true;
-				pSound->PlaySound(CSound::SOUND_LABEL_ENEMYDEATH);	// 敵死亡音の再生
+				//pSound->PlaySound(CSound::SOUND_LABEL_ENEMYDEATH);	// 敵死亡音の再生
 
 				m_move.y = 15.0f;
 

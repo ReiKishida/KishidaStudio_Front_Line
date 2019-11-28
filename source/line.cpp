@@ -91,6 +91,7 @@ void CLine::Update(void)
 //=============================================================================
 void CLine::Draw(void)
 {
+	return;
 	LPDIRECT3DDEVICE9 pDevice = CManager::GetRenderer()->GetDevice();	// デバイスの取得
 	D3DXMATRIX	mtxTrans;				// 計算用マトリックス
 

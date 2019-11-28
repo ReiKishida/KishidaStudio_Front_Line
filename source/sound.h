@@ -28,19 +28,15 @@ public:
 	//*************************************
 	typedef enum
 	{
-		SOUND_LABEL_TITLE = 0,		// タイトル
-		SOUND_LABEL_GAME,			// ゲーム
-		SOUND_LABEL_CLEAR,			// ゲームクリア
-		SOUND_LABEL_PAUSEON,		// ポーズon音
-		SOUND_LABEL_PAUSEOFF,		// ポーズoff音
-		SOUND_LABEL_DECIDE,			// 決定音
-		SOUND_LABEL_CURSOR,			// カーソル移動音
-		SOUND_LABEL_HIT,			// ヒット音
-		SOUND_LABEL_DAMAGE,			// ダメージ音
-		SOUND_LABEL_JUMP,			// ジャンプ音
-		SOUND_LABEL_SLIP,			// スリップ音
-		SOUND_LABEL_ENEMYDEATH,		// 敵死亡音
-		SOUND_LABEL_SWING,			// 素振り音
+		SOUND_LABEL_TITLE_MENU = 0,		// タイトル
+		SOUND_LABEL_MATCHING,			// マッチング
+		SOUND_LABEL_GAME,				// ゲーム
+		//SOUND_LABEL_RESULT,				// リザルト
+		SOUND_LABEL_DECIDE,				// 決定音
+		SOUND_LABEL_MACHINEGUN,			// マシンガン
+		SOUND_LABEL_RIFLE,				// ライフル
+		SOUND_LABEL_SHOTGUN,			// ショットガン
+		SOUND_LABEL_SNIPE,				// スナイパーライフル
 		SOUND_LABEL_MAX,
 	}SOUND_LABEL;
 
@@ -71,22 +67,18 @@ private:
 	BYTE *m_apDataAudio[SOUND_LABEL_MAX];					// オーディオデータへのポインタ
 	DWORD m_aSizeAudio[SOUND_LABEL_MAX];					// オーディオデータサイズ
 
-																// 各音素材のパラメータ
+															// 各音素材のパラメータ
 	SOUNDPARAM m_aSoundParam[SOUND_LABEL_MAX] =
 	{
-		{ "data/BGM/title.wav", -1 },			// タイトル
+		{ "data/BGM/title_menu.wav", -1 },		// タイトル、メニュー
+		{ "data/BGM/matching.wav", -1 },		// マッチング
 		{ "data/BGM/game.wav", -1 },			// ゲーム
-		{ "data/BGM/game_clear.wav", -1 },		// ゲームクリア
-		{ "data/SE/pause_on.wav", 0 },			// ポーズon音
-		{ "data/SE/pause_off.wav", 0 },			// ポーズoff音
-		{ "data/SE/decide000.wav", 0 },			// 決定音
-		{ "data/SE/cursor.wav", 0 },			// カーソル移動音
-		{ "data/SE/hit.wav", 0 },				// ヒット音
-		{ "data/SE/damage.wav", 0 },			// ダメージ音
-		{ "data/SE/jump.wav", 0 },				// ジャンプ音
-		{ "data/SE/slip.wav", -1 },				// スリップ音
-		{ "data/SE/enemy_death.wav", 0 },		// 敵死亡音
-		{ "data/SE/punch-swing.wav", 0 },		// 素振り音
+												//{ "data/BGM/result.wav", -1 },			// リザルト
+		{ "data/SE/decide.wav", 0 },			// 決定
+		{ "data/SE/machine-gun.wav", 0 },		// マシンガン
+		{ "data/SE/rifle.wav", 0 },				// ライフル
+		{ "data/SE/shotgun.wav", 0 },			// ショットガン
+		{ "data/SE/snipe.wav", 0 },				// スナイパーライフル
 	};
 };
 
