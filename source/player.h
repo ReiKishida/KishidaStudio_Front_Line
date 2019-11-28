@@ -233,7 +233,6 @@ private:
 	float			m_fRotDest;			// 目的の角度
 	int				m_nCntState;		// ステートのカウンタ
 	int				m_nNumParts;		// パーツ数
-	int				m_nCurMotion;		// 現在のモーション
 	STATE			m_state;			// 状態
 	float			m_fCameraAngle;		// カメラの向き
 	int				m_nDamageTime;		// ダメージを受けた時の硬直時間

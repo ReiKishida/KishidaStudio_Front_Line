@@ -9,6 +9,7 @@
 
 #include "scene.h"
 #include "server.h"
+#include "mechaSelect.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -17,6 +18,8 @@
 #define GRAVITY				(0.5f)			// 重力
 #define NUMTEX_UV_X			(1)
 #define NUMTEX_UV_Y			(3)
+#define NUM_TEAM			(2)
+#define NUM_RESPAWN_POS		(4)
 
 //*****************************************************************************
 // 前方宣言
@@ -83,7 +86,20 @@ public:
 
 	CButtonManagerStrategy *GetButtonManager(void) { return m_pButtonManager; };
 
+	void SetBlueLinkEnergy(int nBlueLinkEnergy) { m_nBlueLinkEnergy = nBlueLinkEnergy; };
+	int GetBlueLinkEnergy(void) { return m_nBlueLinkEnergy; };
+
+	void SetRedLinkEnergy(int nRedLinkEnergy) { m_nRedLinkEnergy = nRedLinkEnergy; };
+	int GetRedLinkEnergy(void) { return m_nRedLinkEnergy; };
+
+	D3DXVECTOR3 GetRespawnPos(int nTeam, int nPoint) { return m_aRespawnPos[nTeam][nPoint]; };
+
+	static void SetMechaType(int nPlayerIdx, CMechaSelect::MECHATYPE type) { m_aMechaType[nPlayerIdx] = type; };
+	static CMechaSelect::MECHATYPE GetMechaType(int nPlayerIdx) { return m_aMechaType[nPlayerIdx]; };
+
 private:
+	void LoadRespawnPos(void);
+
 	void PrintData(void);
 	void PrintCPUData(void);
 	void ReadMessage(void);
@@ -117,6 +133,12 @@ private:
 	bool m_bConnect[MAX_PLAYER_CONNECT];
 
 	CMouseCursor *m_pMouse;
+
+	int m_nBlueLinkEnergy;
+	int m_nRedLinkEnergy;
+	D3DXVECTOR3 m_aRespawnPos[NUM_TEAM][NUM_RESPAWN_POS];
+
+	static CMechaSelect::MECHATYPE m_aMechaType[MAX_PLAYER_CONNECT];
 };
 
 #endif

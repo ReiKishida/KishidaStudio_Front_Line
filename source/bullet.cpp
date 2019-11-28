@@ -272,7 +272,7 @@ bool CBulletPlayer::BulletCollision(void)
 	}
 
 	// ƒ}ƒbƒv‚Ì“–‚½‚è”»’è
-	D3DXVECTOR3 lengthMax = D3DXVECTOR3(CScene3DBill::GetWidth(), CScene3DBill::GetWidth(), CScene3DBill::GetWidth());
+	D3DXVECTOR3 lengthMax = D3DXVECTOR3(CScene3DBill::GetWidth(), CScene3DBill::GetWidth(), CScene3DBill::GetWidth()) * 2.0f;
 	D3DXVECTOR3 lengthMin = D3DXVECTOR3(-CScene3DBill::GetWidth(), -CScene3DBill::GetWidth(), -CScene3DBill::GetWidth());
 
 	if (CCollision::Collision(&GetPos(), GetPosOld(), lengthMax, lengthMin))

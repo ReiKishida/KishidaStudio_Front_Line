@@ -146,6 +146,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_bCol = false;
 	m_bChatBotton = false;
 	m_bReload = false;
+	m_nRespawnTimer = 0;
 
 	for (int nCnt = 0; nCnt < AI_MAX; nCnt++)
 	{
@@ -652,172 +653,188 @@ void CPlayer::Uninit(void)
 //=========================================
 void CPlayer::Update(void)
 {
-	if (m_bConnect)
+	if (m_Respawn == RESPAWN_START)
+	{	// 戦闘開始 状態
+		Respawn(RESPAWN_START);
+	}
+
+	if (CMenu::GetMode() == CMenu::MODE_MULTI)
 	{
-		if (m_Respawn == RESPAWN_START)
-		{	// 戦闘開始 状態
-			Respawn(RESPAWN_START);
-		}
-
-		if (CMenu::GetMode() == CMenu::MODE_MULTI)
-		{
-			if (m_nPlayerIdx != CManager::GetClient()->GetPlayerIdx())
-			{// プレイヤーの番号がクライアント番号と違う場合
-				if (m_pUpperMotion != NULL && m_pLowerMotion != NULL)
-				{// モーションクラスが使われている
-					if (m_pos != m_posOld)
-					{//過去の位置と現在の位置がずれていた場合
-					 //歩きモーションにする
-						m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
-						m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
-					}
-					else
-					{//ニュートラルモーションにする
-						m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-						m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-					}
+		if (m_nPlayerIdx != CManager::GetClient()->GetPlayerIdx())
+		{// プレイヤーの番号がクライアント番号と違う場合
+			if (m_pUpperMotion != NULL && m_pLowerMotion != NULL)
+			{// モーションクラスが使われている
+				if (m_pos != m_posOld)
+				{//過去の位置と現在の位置がずれていた場合
+				 //歩きモーションにする
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
 				}
-				m_posOld = m_pos;
-			}
-		}
-
-		if (CMenu::GetMode() == CMenu::MODE_MULTI)
-		{
-			if (m_nPlayerIdx == CManager::GetClient()->GetPlayerIdx())
-			{//プレイヤーの番号がクライアント番号と同じ場合
-				m_pReticle->SetDisp(false);
-
-				if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
-				{// アクションパート
-					CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
-					CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
-
-					if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
-					{	// ライフある && 戦闘開始状態の時
-						if (m_nDiff > 0)
-						{	// ダメージ量が0以上の時
-							m_nLife--;
-							m_nDiff--;
-						}
-						if (m_nLife <= 0)
-						{	// ライフがなくなった
-							m_Respawn = RESPAWN_DEATH;		// 行動不能状態
-						}
-
-						// 移動の処理
-						Movement();
-
-						// 弾を撃つ
-						Shoot();
-
-						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
-						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
-
-						m_pReticle->SetDisp(true);
-						m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
-
-						for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-						{// パーツモデルの更新
-							m_pModel[nCntModel]->Update();
-						}
-						CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
-					}
-					if (m_Respawn == RESPAWN_DEATH)
-					{	// 行動不能状態
-						Respawn(m_Respawn);		// リスポーン処理
-					}
-					if (m_Respawn == RESPAWN_SELECT)
-					{	// リスポーン選択状態
-						SelectRespawn();				// リスポーン位置選択
-					}
-
-					// 角度の更新
-					Angle();
-
-					// ライフの設定
-					m_pUINum[1]->SetPlayerLife(m_nLife);
+				else
+				{//ニュートラルモーションにする
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
 				}
 			}
-		}
-		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
-		{
-			if (m_nPlayerIdx == 0)
-			{
-				m_pReticle->SetDisp(false);
-
-				if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
-				{// アクションパート
-					CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
-					CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
-
-					if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
-					{	// ライフある && 戦闘開始状態の時
-						if (m_nDiff > 0)
-						{	// ダメージ量が0以上の時
-							m_nLife--;
-							m_nDiff--;
-						}
-						if (m_nLife <= 0)
-						{	// ライフがなくなった
-							m_Respawn = RESPAWN_DEATH;		// 行動不能状態
-						}
-
-						// 移動の処理
-						Movement();
-
-						// 弾を撃つ
-						Shoot();
-
-						// チャット
-						if (m_bChat == false)
-						{
-							ChatBotton();
-						}
-
-						if (m_bChat == true)
-						{	// チャットメッセージ
-							ChatMess(m_bChat);
-						}
-
-						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
-						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
-
-						m_pReticle->SetDisp(true);
-						m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
-
-						for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-						{// パーツモデルの更新
-							m_pModel[nCntModel]->Update();
-						}
-						CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
-					}
-					if (m_Respawn == RESPAWN_DEATH)
-					{	// 行動不能状態
-						Respawn(m_Respawn);		// リスポーン処理
-					}
-					if (m_Respawn == RESPAWN_SELECT)
-					{	// リスポーン選択状態
-						SelectRespawn();				// リスポーン位置選択
-					}
-
-					// 角度の更新
-					Angle();
-
-					if (pKeyboard->GetTrigger(DIK_1))
-					{
-						m_nLife -= 10;
-					}
-					SetParticle();
-					// ライフの設定
-					m_pUINum[1]->SetPlayerLife(m_nLife);
-				}
-			}
-
+			m_posOld = m_pos;
 		}
 	}
-	else
+
+	if (CMenu::GetMode() == CMenu::MODE_MULTI)
 	{
-		AIUpdate();
+		if (m_nPlayerIdx == CManager::GetClient()->GetPlayerIdx())
+		{//プレイヤーの番号がクライアント番号と同じ場合
+			m_pReticle->SetDisp(false);
+
+			if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+			{// アクションパート
+				CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+				CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
+
+				if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
+				{	// ライフある && 戦闘開始状態の時
+					if (m_nDiff > 0)
+					{	// ダメージ量が0以上の時
+						m_nLife--;
+						m_nDiff--;
+					}
+					if (m_nLife <= 0)
+					{	// ライフがなくなった
+						m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+					}
+
+					// 移動の処理
+					Movement();
+
+					// 弾を撃つ
+					Shoot();
+
+					D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
+					D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+
+					m_pReticle->SetDisp(true);
+					m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
+
+					for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+					{// パーツモデルの更新
+						m_pModel[nCntModel]->Update();
+					}
+					CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
+				}
+				if (m_Respawn == RESPAWN_DEATH)
+				{	// 行動不能状態
+					Respawn(m_Respawn);		// リスポーン処理
+				}
+				if (m_Respawn == RESPAWN_SELECT)
+				{	// リスポーン選択状態
+					SelectRespawn();				// リスポーン位置選択
+				}
+
+				// 角度の更新
+				Angle();
+
+				// ライフの設定
+				m_pUINum[1]->SetPlayerLife(m_nLife);
+
+				if (!m_bConnect)
+				{// コンピュータが操作する場合
+					AIUpdate();
+				}
+			}
+		}
+	}
+	else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+	{
+		if (m_nPlayerIdx == 0)
+		{
+			m_pReticle->SetDisp(false);
+
+			if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+			{// アクションパート
+				CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+				CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
+
+				if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
+				{	// ライフある && 戦闘開始状態の時
+					if (m_nDiff > 0)
+					{	// ダメージ量が0以上の時
+						m_nLife--;
+						m_nDiff--;
+					}
+					if (m_nLife <= 0)
+					{	// ライフがなくなった
+						m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+					}
+
+					// 移動の処理
+					Movement();
+
+					// 弾を撃つ
+					Shoot();
+
+					// 重力
+					//m_move.y -= GRAVITY;
+
+					D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
+					D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+
+					m_pReticle->SetDisp(true);
+					m_pReticle->SetPos(D3DXVECTOR3(sinf(rotCamera.y) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.x) * PLAYER_RETICLE_LENGTH, cosf(rotCamera.y) * PLAYER_RETICLE_LENGTH) + D3DXVECTOR3(m_pos.x, 0.0f, m_pos.z));
+
+					for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+					{// パーツモデルの更新
+						m_pModel[nCntModel]->Update();
+					}
+					CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
+				}
+				if (m_Respawn == RESPAWN_DEATH)
+				{	// 行動不能状態
+					Respawn(m_Respawn);		// リスポーン処理
+				}
+				if (m_Respawn == RESPAWN_SELECT)
+				{	// リスポーン選択状態
+					SelectRespawn();				// リスポーン位置選択
+				}
+
+				// 角度の更新
+				Angle();
+
+				// ライフの設定
+				m_pUINum[1]->SetPlayerLife(m_nLife);
+			}
+		}
+	}
+
+	if (!m_bConnect)
+	{// コンピュータが操作する場合
+		if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+		{// アクションパート
+			if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
+			{	// ライフある && 戦闘開始状態の時
+				if (m_nDiff > 0)
+				{	// ダメージ量が0以上の時
+					m_nLife--;
+					m_nDiff--;
+				}
+				if (m_nLife <= 0)
+				{	// ライフがなくなった
+					m_Respawn = RESPAWN_DEATH;		// 行動不能状態
+				}
+
+				// AIの更新処理
+				AIUpdate();
+			}
+
+			if (m_Respawn == RESPAWN_DEATH)
+			{	// 行動不能状態
+				Respawn(m_Respawn);		// リスポーン処理
+			}
+
+			if (m_Respawn == RESPAWN_SELECT)
+			{	// リスポーン選択状態
+				SelectRespawn();				// リスポーン位置選択
+			}
+		}
 	}
 }
 
@@ -1047,11 +1064,20 @@ void CPlayer::Shoot(void)
 
 	if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_1))
 	{
-		m_bReload = true;
+		if (m_nRemBullet == m_nCapacity)
+		{	// 弾が初期値と同じなら、リロードしない
+			m_bReload = false;
+		}
+		else
+		{	// 減っている時
+			m_bReload = true;
+		}
 	}
 
-	// リロード処理
-	Reload(m_bReload);
+	if (m_bConnect)
+	{// リロード処理
+		Reload(m_bReload);
+	}
 
 	// 残弾の設定
 	m_pUINum[0]->SetRemainBullet(m_nRemBullet);
@@ -1089,22 +1115,20 @@ void CPlayer::Angle(void)
 
 	D3DXVECTOR3 rot = m_pModel[1]->GetRot();
 
-	//if(m_fCameraAngle + (D3DX_PI * 0.25f) < rot.y || m_fCameraAngle + (D3DX_PI * -0.25f) > rot.y)
-	{// 可動域外になった
-		if (m_fRotDest <= D3DX_PI * 0.5f && m_fRotDest >= D3DX_PI * -0.5f)
-		{// 下半身の動きを進行方向に合わせる
-			D3DXVECTOR3 rot = m_pModel[0]->GetRot();
-			m_pModel[0]->SetRot(D3DXVECTOR3(rot.x, m_rot.y + m_fCameraAngle, rot.z));
-			rot = m_pModel[1]->GetRot();
-			rot = D3DXVECTOR3(-rotCamera.x + (D3DX_PI * 0.5f), m_fCameraAngle - fAngle, rot.z);
-			m_pModel[1]->SetRot(rot);
-		}
-		else
-		{// 斜め後ろ向きのとき
-			D3DXVECTOR3 rot = m_pModel[1]->GetRot();
-			rot = D3DXVECTOR3(-rotCamera.x + (D3DX_PI * 0.5f), m_fCameraAngle - (fAngle - D3DX_PI), rot.z);
-			m_pModel[1]->SetRot(rot);
-		}
+	// 可動域外になった
+	if (m_fRotDest <= D3DX_PI * 0.5f && m_fRotDest >= D3DX_PI * -0.5f)
+	{// 下半身の動きを進行方向に合わせる
+		D3DXVECTOR3 rot = m_pModel[0]->GetRot();
+		m_pModel[0]->SetRot(D3DXVECTOR3(rot.x, m_rot.y + m_fCameraAngle, rot.z));
+		rot = m_pModel[1]->GetRot();
+		rot = D3DXVECTOR3(-rotCamera.x + (D3DX_PI * 0.5f), m_fCameraAngle - fAngle, rot.z);
+		m_pModel[1]->SetRot(rot);
+	}
+	else
+	{// 斜め後ろ向きのとき
+		D3DXVECTOR3 rot = m_pModel[1]->GetRot();
+		rot = D3DXVECTOR3(-rotCamera.x + (D3DX_PI * 0.5f), m_fCameraAngle - (fAngle - D3DX_PI), rot.z);
+		m_pModel[1]->SetRot(rot);
 	}
 }
 
@@ -1113,6 +1137,14 @@ void CPlayer::Angle(void)
 //=========================================
 void CPlayer::SetParticle(void)
 {
+	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
+
+	if (pKeyboard->GetTrigger(DIK_R))
+	{
+		CParData::Unload();
+		CParData::Load();
+	}
+
 	if (m_nLife < m_nLifeMax / 4)
 	{// 耐久力が４分の１になった
 		int nParts;

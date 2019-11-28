@@ -112,11 +112,13 @@ HRESULT CUI_NUMBER::Init(void)
 
 	case UI_NUMTYPE_BLUE:
 		GetTeamBlue();									// プレイヤーからBLUEチームチケット取得
+		m_nTeamBlue = CManager::GetGame()->GetBlueLinkEnergy();
 		SetNumDisPlay(m_nTeamBlue, m_UINumType);		// チケット設定
 		break;
 
 	case UI_NUMTYPE_RED:
 		GetTeamRed();									// プレイヤーからREDチームチケット取得
+		m_nTeamRed = CManager::GetGame()->GetRedLinkEnergy();
 		SetNumDisPlay(m_nTeamRed, m_UINumType);		// チケット設定
 		break;
 
@@ -233,6 +235,7 @@ void CUI_NUMBER::Update(void)
 		{
 			m_nDiff += 15;		// ダメージ量設定
 		}
+		m_nDiff = m_nTeamBlue - CManager::GetGame()->GetBlueLinkEnergy();
 		if (m_nDiff > 0)
 		{	// ダメージ量が0以上の時
 			m_nTeamBlue--;
@@ -250,6 +253,8 @@ void CUI_NUMBER::Update(void)
 		{
 			m_nDiff += 15;		// ダメージ量設定
 		}
+		m_nDiff = m_nTeamRed - CManager::GetGame()->GetRedLinkEnergy();
+
 		if (m_nDiff > 0)
 		{	// ダメージ量が0以上の時
 			m_nTeamRed--;

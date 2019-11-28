@@ -403,7 +403,6 @@ void CManager::Uninit(void)
 
 	//サーバーの終了
 	CServer::Cleanup();
-
 }
 
 //=========================================

@@ -41,9 +41,9 @@ PARTICLESET		[ 1 ]
 	INITCOL = 1.00 0.40 0.15 1.00	＃初期カラー
 	FLAMECOL = 0.00 0.00 0.00 0.00	＃フレーム毎のカラーの変化
 	INITSIZE = 1 1					＃初期サイズ
-	FLAMESIZE = -0.050016			＃フレーム毎のサイズの変化
+	FLAMESIZE = -0.090016			＃フレーム毎のサイズの変化
 	EMITTERLIFE = 4					＃エミッタの寿命
-	PARLIFE = 20 35					＃ポリゴンの寿命
+	PARLIFE = 10 20					＃ポリゴンの寿命
 	APPEAR = 1						＃出現間隔
 	SPREAD = 0.80					＃拡散
 	LAP = 4							＃1周に出す個数

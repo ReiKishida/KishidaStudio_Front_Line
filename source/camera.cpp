@@ -153,7 +153,7 @@ void CCamera::Update(void)
 			m_rot.y = D3DX_PI;
 
 			// マップのスクロール
-			if (pKeyboard->GetPress(DIK_LCONTROL) && pInputMouse->GetPress(CInputMouse::DIMS_BUTTON_0))
+			if (pInputMouse->GetPress(CInputMouse::DIMS_BUTTON_1))
 			{// 左CTRLと左クリックでスクロール
 				m_posVDest.x -= (moveX / m_fZoom) * 2.0f;
 				m_posVDest.z += (moveY / m_fZoom) * 2.0f;

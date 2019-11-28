@@ -520,7 +520,7 @@ CMotion::CMotion(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_nType = CMotionManager::TYPE_NEUTRAL;
 	m_pMotionManager = NULL;
 	m_nCntTotalFlame = 0;	// ëççáÉtÉåÅ[ÉÄêî
-	m_bInit = false;
+	m_bInit = true;
 	m_pOrbit = NULL;
 	m_pCollision = NULL;
 	m_nFootIdx = 0;

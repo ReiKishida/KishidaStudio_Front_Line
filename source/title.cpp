@@ -104,6 +104,7 @@ void CTitle::Update(void)
 	// 入力の情報を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();
 	CXInput *pXInput = CManager::GetXInput();
+	CInputMouse *pMouse = CManager::GetInputMouse();
 
 	// サウンドの取得
 	CSound *pSound = CManager::GetSound();
@@ -111,7 +112,7 @@ void CTitle::Update(void)
 	// プレスボタンだけ、点滅する
 	m_pUI[1]->Flashing(m_nFlash);
 
-	if (pKeyboard->GetAnyKey() || pXInput->GetAnyButton(0))
+	if (pKeyboard->GetAnyKey() || pXInput->GetAnyButton(0) || pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0))
 	{// 画面遷移
 		if (CFade::GetFade() == CFade::FADE_NONE)
 		{// フェードがないとき

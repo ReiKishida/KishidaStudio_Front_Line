@@ -76,7 +76,7 @@ void CScene::ReleaseAll(void)
 		while (pScene != NULL)
 		{// オブジェクトを先頭から消していく
 			CScene *pSceneNext = pScene->m_pNext;	// 更新内で削除された時のために値を保持
-			pScene->Uninit();						// 終了処理
+			if (!pScene->m_bDeath) { pScene->Uninit(); }	// 終了処理
 			pScene = pSceneNext;					// 次のオブジェクトを入れる
 		}
 	}
@@ -112,51 +112,22 @@ void CScene::ModeUninit(void)
 }
 
 //==================================
-// ステージ移動時の破棄
-//==================================
-void CScene::StageUninit(void)
-{
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
-	{// 優先順位分まわす
-		CScene *pScene = m_apTop[nCntPriority];	// 先頭から始める
-
-		while (pScene != NULL)
-		{// オブジェクトを先頭から消していく
-			CScene *pSceneNext = pScene->m_pNext;	// 更新内で削除された時のために値を保持
-
-			if (OBJTYPE_ENEMY == pScene->m_objType || OBJTYPE_FIELD == pScene->m_objType || OBJTYPE_MODELOBJECT == pScene->m_objType)
-			{// フェード以外の死亡フラグを立てる
-				pScene->Uninit();					// 終了処理
-			}
-
-			pScene = pSceneNext;					// 次のオブジェクトを入れる
-		}
-	}
-
-	// 削除する
-	ReleaseDeath();
-}
-
-//==================================
 // UIの破棄
 //==================================
 void CScene::UIUninit(void)
 {
-	for (int nCntPriority = 0; nCntPriority < NUM_PRIORITY; nCntPriority++)
-	{// 優先順位分まわす
-		CScene *pScene = m_apTop[nCntPriority];	// 先頭から始める
+	CScene *pScene = m_apTop[6];	// 先頭から始める
 
-		while (pScene != NULL)
-		{// オブジェクトを先頭から消していく
-			CScene *pSceneNext = pScene->m_pNext;	// 更新内で削除された時のために値を保持
+	while (pScene != NULL)
+	{// オブジェクトを先頭から消していく
+		CScene *pSceneNext = pScene->m_pNext;	// 更新内で削除された時のために値を保持
 
-			if (OBJTYPE_UI_TEXTURE == pScene->m_objType || OBJTYPE_UI_NUMBER == pScene->m_objType)
-			{// フェード以外の死亡フラグを立てる
-				pScene->Uninit();					// 終了処理
-			}
-
-			pScene = pSceneNext;					// 次のオブジェクトを入れる
+		if (OBJTYPE_UI_TEXTURE == pScene->m_objType || OBJTYPE_UI_NUMBER == pScene->m_objType)
+		{// フェード以外の死亡フラグを立てる
+			pScene->Uninit();		// 終了処理
 		}
+
+		pScene = pSceneNext;					// 次のオブジェクトを入れる
 	}
 
 	// 削除する

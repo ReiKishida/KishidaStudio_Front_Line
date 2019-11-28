@@ -180,7 +180,7 @@ void CCollision::Uninit(void)
 		}
 
 		// ƒƒ‚ƒŠ‚ÌŠJ•ú
-		delete m_pLine;
+		delete[] m_pLine;
 		m_pLine = NULL;
 	}
 

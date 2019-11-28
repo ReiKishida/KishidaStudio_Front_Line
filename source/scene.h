@@ -84,7 +84,6 @@ public:
 	static void DrawStrategy(void);
 
 	static void ModeUninit(void);
-	static void StageUninit(void);
 	static void UIUninit(void);
 
 	void SwapPriority(int nPriority);		// —Dæ‡ˆÊ‚Ì•ÏX
