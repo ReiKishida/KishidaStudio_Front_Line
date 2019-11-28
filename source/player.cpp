@@ -491,7 +491,7 @@ HRESULT CPlayer::Init(void)
 		m_nTeam = 0;
 
 		// カメラの向きの設定
-		CManager::GetCamera()->SetRot(D3DXVECTOR3(D3DX_PI * 0.5f, D3DX_PI * 0.5f, 0.0f));
+		CManager::GetCamera()->SetRot(D3DXVECTOR3(D3DX_PI * 0.5f, D3DX_PI * -0.5f, 0.0f));
 	}
 	else if (m_nPlayerIdx == 2 || m_nPlayerIdx == 3)
 	{
@@ -503,7 +503,7 @@ HRESULT CPlayer::Init(void)
 		m_nTeam = 1;
 
 		// カメラの向きの設定
-		CManager::GetCamera()->SetRot(D3DXVECTOR3(D3DX_PI * 0.5f, D3DX_PI * -0.5f, 0.0f));
+		CManager::GetCamera()->SetRot(D3DXVECTOR3(D3DX_PI * 0.5f, D3DX_PI * 0.5f, 0.0f));
 	}
 
 	// AIの生成
@@ -966,6 +966,7 @@ void CPlayer::Movement(void)
 		}
 		else if ((fDiffX < 10.0f || fDiffX > -10.0f) && !m_bChatBotton)
 		{// 移動モーション
+			m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
 			m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
 		}
 	}
@@ -1181,36 +1182,81 @@ void CPlayer::SetParticle(void)
 //=========================================
 void CPlayer::Damage(int nDamage)
 {
-	if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
-	{// モーションクラスが使われている
-		if (m_pUpperMotion->GetType() != CMotionManager::TYPE_DAMAGE && m_pLowerMotion->GetType() != CMotionManager::TYPE_DAMAGE)
-		{// ライフクラスが使われている
-			if (m_nLife > 0 && m_bDeath == false)
-			{
-				m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
-				m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
-
-				m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
-
-				m_nLife -= nDamage;
-
-				if (0 >= m_nLife)
+	if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+	{
+		if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
+		{// モーションクラスが使われている
+			if (m_pUpperMotion->GetType() != CMotionManager::TYPE_DAMAGE && m_pLowerMotion->GetType() != CMotionManager::TYPE_DAMAGE)
+			{// ライフクラスが使われている
+				if (m_nLife > 0 && m_bDeath == false)
 				{
-					m_nLife = 0;
-					m_bDeath = true;
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
 
-					switch (m_nTeam)
+					m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+
+					m_nLife -= nDamage;
+
+					if (0 >= m_nLife)
 					{
-					case 0:
-						CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 30);
-						break;
-					case 1:
-						CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 30);
-						break;
+						m_nLife = 0;
+						m_bDeath = true;
+
+						switch (m_nTeam)
+						{
+						case 0:
+							CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 30);
+							break;
+						case 1:
+							CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 30);
+							break;
+						}
+					}
+					//CSound *pSound = CManager::GetSound();				// サウンドの取得
+					//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
+				}
+			}
+		}
+	}
+	else
+	{
+		if (CManager::GetClient() != NULL)
+		{
+			if (CManager::GetClient()->GetPlayerIdx() == m_nPlayerIdx)
+			{
+				if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
+				{// モーションクラスが使われている
+					if (m_pUpperMotion->GetType() != CMotionManager::TYPE_DAMAGE && m_pLowerMotion->GetType() != CMotionManager::TYPE_DAMAGE)
+					{// ライフクラスが使われている
+						if (m_nLife > 0 && m_bDeath == false)
+						{
+							m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
+							m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
+
+							m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+
+							m_nLife -= nDamage;
+
+							if (0 >= m_nLife)
+							{
+								m_nLife = 0;
+								m_bDeath = true;
+
+								switch (m_nTeam)
+								{
+								case 0:
+									CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 30);
+									break;
+								case 1:
+									CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 30);
+									break;
+								}
+							}
+							//CSound *pSound = CManager::GetSound();				// サウンドの取得
+							//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
+						}
 					}
 				}
-				//CSound *pSound = CManager::GetSound();				// サウンドの取得
-				//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
 			}
 		}
 	}
@@ -1433,11 +1479,17 @@ void CPlayer::SelectRespawn(void)
 				break;
 			}
 
+
+			m_pos = CManager::GetGame()->GetRespawnPos(m_nTeam, m_point);
+
 			// 通常状態に戻る
 			m_Respawn = RESPAWN_NONE;
 
 			// ライフの設定
 			m_nLife = m_nLifeMax;
+
+			//死亡していないようにする
+			m_bDeath = false;
 
 			// リスポーン地点が決定したら破棄する
 			for (int nCnt = 0; nCnt < SELECTRESPAWN_BOTTON; nCnt++)
