@@ -38,11 +38,11 @@ CHARACTERSET
 	CAPACITY = 3					# 装弾数
 	ATTACK = 4						# 攻撃力
 	SHOOTS = 5						# 同時発射数
-	DISPERTION = 100				# ばらつき
-	RELOAD = 70						# リロード時間
+	DISPERTION = 110				# ばらつき
+	RELOAD = 100						# リロード時間
 
-	LIFE = 280						# 耐久力
-	SPEED = 5.6						# 移動量
+	LIFE = 300						# 耐久力
+	SPEED = 4.8						# 移動量
 
 	FOOT = 4						# 足の始まり番号
 

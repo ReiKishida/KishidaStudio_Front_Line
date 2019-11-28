@@ -315,7 +315,7 @@ HRESULT CAIMecha::Init(void)
 	{
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{// チームごとの色に設定
-			m_pModel[nCntModel]->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+			m_pModel[nCntModel]->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f));
 		}
 
 		// チームの設定
@@ -325,7 +325,7 @@ HRESULT CAIMecha::Init(void)
 	{
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{// チームごとの色に設定
-			m_pModel[nCntModel]->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f));
+			m_pModel[nCntModel]->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
 		}
 
 		// チームの設定
@@ -736,6 +736,9 @@ void CAIMecha::AIUpdate()
 
 		// 自動移動処理
 		CAIMecha::AutoMove();
+
+		// 敵の探索
+		Distance();
 	}
 	else if (m_bPartSwitch == CGame::PART_STRATEGY)
 	{// ストラテジーパートの場合
@@ -760,6 +763,57 @@ void CAIMecha::AIUpdate()
 		}
 	}
 }
+
+//=============================================================================
+// 敵の探索処理
+//=============================================================================
+bool CAIMecha::Distance(void)
+{
+	// 敵を探す
+	CScene *pScene = CScene::GetSceneTop(4);
+	CScene *pSceneNext = NULL;
+	while (pScene != NULL)
+	{// NULLになるまでループ
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
+
+		if (CScene::OBJTYPE_PLAYER == objType)
+		{//プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pScene;
+			int nTeam = pPlayer->GetTeam();
+			int nIdxPlayer = pPlayer->GetPlayerIdx();
+			if (m_nTeam != nTeam)
+			{//チームが違うとき
+				D3DXVECTOR3 posPlayer = pPlayer->GetPos();
+				if (m_pModel[0]->Collision(posPlayer, 500.0f))
+				{
+					float fAngle = atan2f(posPlayer.x - m_pos.x, posPlayer.z - m_pos.z);
+					m_rot.y = fAngle;
+
+					if (rand() % 60 == 0)
+					{
+						CBulletPlayer::Create(m_pos, fAngle, D3DX_PI * 0.55f, 5, m_nTeam);
+					}
+
+					return true;
+				}
+			}
+		}
+		// 次のオブジェクトを見る
+		pScene = pSceneNext;
+	}
+
+	return false;
+}
+
+//=============================================================================
+// 攻撃処理
+//=============================================================================
+void CAIMecha::Battle(void)
+{
+
+}
+
 
 //=============================================================================
 //	自動移動処理

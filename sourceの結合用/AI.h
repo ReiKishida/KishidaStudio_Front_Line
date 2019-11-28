@@ -39,7 +39,7 @@ public:
 		std::vector<int> to;		// どのノードとつながっているか
 		std::vector<float> cost;	// エッジのコスト
 
-		// ダイクストラ法のために必要な情報
+									// ダイクストラ法のために必要な情報
 		bool done;		// 確定ノードかどうか
 		float minCost;	// スタートノードからの最小コスト
 		int from;		// どのノードから来たか
@@ -119,31 +119,31 @@ public:
 
 	void Damage(int nDamage);
 
-	int GetTeam(void) { return m_nTeam; };
-
 	CModel *GetModel(int nIdx) { return m_pModel[nIdx]; };
 
 	MECHATYPE GetMechaType(void) { return m_mechaType; }
 
+	int GetTeam(void) { return m_nTeam; };
 	// =============================================================
 	// ダイクストラ法によるルート探索
 	// =============================================================
-	D3DXVECTOR3 &GetSearchPos(void) { return m_searchPos; };
-
 	void AIUpdate(void);			// AIの更新
 	void Follow(void);				// 追従処理
 	void NodeSearch(bool node);		// マウス座標からノード検索
 	void AutoMove(void);			// 自動移動
 	void RootSearch(void);			// 最短経路検索
-	void RallyRootSearch(void);		// ラリーポイントでの最短経路探索
-	void Patrol(void);				// 往復用の最短経路探索
+	void RallyRootSearch(void);		// ラリーポイントでの最短経路検索
+	void PatrolRootSearch(void);	// 往復用の最短経路検索
 	void Cancel(void);				// 中断
 	void AddEdge(int first, int second, float weight, Node *node);	// エッジの追加
 	void Dijkstra(int nodeMax, int start, int end, Node *node);		// 経路探索
 	void FileLoad(char* pFileName);	// マップデータファイルの読み込み
-	// =============================================================
+									// =============================================================
 
 private:
+	bool Distance(void);		//範囲探索
+	void Battle(void);			//戦闘
+
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置
 	D3DXVECTOR3		m_rot;				// 回転
@@ -171,25 +171,22 @@ private:
 	// =============================================================
 	NodeState		m_NodeData;								// マップ情報
 
-	// パート関係
+															// パート関係
 	CGame::PART		m_bPartSwitch;							// パート情報
 	CGame::PART		m_bPartSwitchOld;						// 前回のパート情報
 
-	// ノード関係
+															// ノード関係
 	int				m_nStartNode;							// 開始ノード番号
 	int				m_nEndNode;								// 終了ノード番号
 	int				m_nNodeOld;								// 前回のノード番号
 
-	// ラリー関係
+															// ラリー関係
 	Node			m_node[NODEPOINT_MAX][NODEPOINT_MAX];	// ラリー時のノードの情報
 	int				m_nRallyEndNode[NODEPOINT_MAX];			// ラリー時の終了ノード番号
 	int				m_nRallyCount;							// クリック数
 	int				m_nRallyCountOld;						// 前回のクリック数
 
-	// ルート検索関係
-	D3DXVECTOR3		m_searchPos;							// クリック時位置
-
-	// 自動移動関係
+															// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
 	D3DXVECTOR3		m_posDest;								// 目標位置
 	int				m_nBreaktime;							// 休憩時間
@@ -197,7 +194,7 @@ private:
 	int				m_nPoint;								// 現在の移動回数
 	bool			m_bGoal;								// 目的地に到着したか
 
-	// ロジックツリー関係の情報
+															// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
 };
