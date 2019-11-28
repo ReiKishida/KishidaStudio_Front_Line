@@ -41,10 +41,10 @@ CHARACTERSET
 
 	# 弾の設定
 	CAPACITY = 1					# 装弾数
-	ATTACK = 100						# 攻撃力
+	ATTACK = 70						# 攻撃力
 	SHOOTS = 1						# 同時発射数
 	DISPERTION = 0					# ばらつき
-	RELOAD = 130					# リロード時間
+	RELOAD = 120					# リロード時間
 
 	LIFE = 350						# 耐久力
 	SPEED = 4.5						# 移動量
