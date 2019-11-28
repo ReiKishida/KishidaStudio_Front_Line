@@ -52,6 +52,18 @@
 #define SKY_MODEL_NAME		"data/MODEL/sky_dome.x"
 #define NUMTEX_UV_X		(1)
 #define NUMTEX_UV_Y		(3)
+#define GAME_INI			"data/TEXT/game.ini"
+
+#define GAME_SCRIPT			"SCRIPT"
+#define GAME_END_SCRIPT		"END_SCRIPT"
+#define GAME_BLUE			"BLUE"
+#define GAME_BLUE_END		"BLUE_END"
+#define GAME_RED			"RED"
+#define GAME_RED_END		"RED_END"
+#define GAME_SPAWN_A		"A"
+#define GAME_SPAWN_B		"B"
+#define GAME_SPAWN_C		"C"
+#define GAME_SPAWN_D		"D"
 
 //*****************************************************************************
 // 静的メンバ変数
@@ -59,6 +71,7 @@
 CGame::STATE CGame::m_state = CGame::STATE_NONE;
 int CGame::m_nCurStage = 0;
 CPlayer *CGame::m_pPlayer[MAX_PLAYER_CONNECT] = {};
+CMechaSelect::MECHATYPE CGame::m_aMechaType[MAX_PLAYER_CONNECT] = {CMechaSelect::MECHATYPE_EMPTY,CMechaSelect::MECHATYPE_EMPTY ,CMechaSelect::MECHATYPE_EMPTY ,CMechaSelect::MECHATYPE_EMPTY };
 
 //=============================================================================
 // コンストラクタ
@@ -74,12 +87,21 @@ CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType
 	m_part = PART_ACTION;
 	m_pSky = NULL;
 	m_pMouse = NULL;
+	m_nBlueLinkEnergy = 0;
+	m_nRedLinkEnergy = 0;
 
 	for (int nCntConnect = 0; nCntConnect < MAX_PLAYER_CONNECT; nCntConnect++)
 	{
 		m_bConnect[nCntConnect] = false;
 	}
 
+	for (int nCntTeam = 0; nCntTeam < NUM_TEAM; nCntTeam++)
+	{
+		for (int nCntRespawn = 0; nCntRespawn < NUM_RESPAWN_POS; nCntRespawn++)
+		{
+			m_aRespawnPos[nCntTeam][nCntRespawn] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		}
+	}
 }
 
 //=============================================================================
@@ -94,8 +116,15 @@ CGame::~CGame()
 //=============================================================================
 HRESULT CGame::Init(void)
 {
+	m_nBlueLinkEnergy = 100;
+	m_nRedLinkEnergy = 100;
+
+	//リスポーン位置の読み込み
+	LoadRespawnPos();
+
 	// 読み込み
 	CMotionManager::Load();
+	CParData::Load();
 
 	m_pField = CModel::Create();
 	m_pField->SetModel(FIELD_MODEL_NAME);
@@ -104,44 +133,61 @@ HRESULT CGame::Init(void)
 	m_pSky = CModel::Create();
 	m_pSky->SetModel(SKY_MODEL_NAME);
 
-	D3DXVECTOR3 aPos[4];
-	aPos[0] = D3DXVECTOR3(590.0f, 0.0f, 40.0f);
-	aPos[1] = D3DXVECTOR3(590.0f, 0.0f, -60.0f);
-	aPos[2] = D3DXVECTOR3(-760.0f, 0.0f, 40.0f);
-	aPos[3] = D3DXVECTOR3(-760.0f, 0.0f, -60.0f);
-
 	// プレイヤーの生成
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
+		int nTeam = 0;
+
+		if (nCntPlayer == 0 || nCntPlayer == 1)
+		{
+			nTeam = 0;
+		}
+		else if (nCntPlayer == 2 || nCntPlayer == 3)
+		{
+			nTeam = 1;
+		}
+
 		if (CMenu::GetMode() == CMenu::MODE_MULTI)
 		{
 			bool bConnect = false;
 			CClient *pClient = CManager::GetClient();
-			if (pClient != NULL)
-			{
-				CMechaSelect::MECHATYPE type = (CMechaSelect::MECHATYPE)pClient->GetMechaType(nCntPlayer);
-				if (type == -1)
+				if (m_aMechaType[nCntPlayer] == -1)
 				{
-					type = (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX);
-					m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, type, aPos[nCntPlayer], m_bConnect[nCntPlayer]);
+					m_aMechaType[nCntPlayer] = (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX);
+					m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], m_aRespawnPos[nTeam][nCntPlayer], m_bConnect[nCntPlayer]);
 				}
 				else
 				{
 					m_bConnect[nCntPlayer] = true;
-					m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, type, aPos[nCntPlayer], m_bConnect[nCntPlayer]);
+					m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], m_aRespawnPos[nTeam][nCntPlayer], m_bConnect[nCntPlayer]);
 
 				}
-			}
+
+			//if (pClient != NULL)
+			//{
+			//	CMechaSelect::MECHATYPE type = (CMechaSelect::MECHATYPE)pClient->GetMechaType(nCntPlayer);
+			//	if (type == -1)
+			//	{
+			//		type = (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX);
+			//		m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, type,m_aRespawnPos[nTeam][nCntPlayer], m_bConnect[nCntPlayer]);
+			//	}
+			//	else
+			//	{
+			//		m_bConnect[nCntPlayer] = true;
+			//		m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, type, m_aRespawnPos[nTeam][nCntPlayer], m_bConnect[nCntPlayer]);
+
+			//	}
+			//}
 		}
 		else
 		{
 			if (nCntPlayer == 0)
 			{
-				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(), aPos[nCntPlayer], true);
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(), m_aRespawnPos[nTeam][nCntPlayer], true);
 			}
 			else
 			{
-				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX), aPos[nCntPlayer], false);
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX), m_aRespawnPos[nTeam][nCntPlayer], false);
 			}
 		}
 	}
@@ -196,12 +242,11 @@ HRESULT CGame::Init(void)
 //=============================================================================
 void CGame::Uninit(void)
 {
-	//CManager::ReleaseClient();
-
 	// データの破棄
 	CMotionManager::Unload();
 	CModelSetManager::Unload();
 	CEnemy::Unload();
+	CParData::Unload();
 
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
@@ -232,6 +277,18 @@ void CGame::Uninit(void)
 		m_pSky = NULL;
 	}
 
+	if (NULL != m_pMouseCursor)
+	{// マウスカーソルの破棄
+		m_pMouseCursor->Uninit();
+		m_pMouseCursor = NULL;
+	}
+
+	if (NULL != m_pMouse)
+	{// マウスカーソルの破棄
+		m_pMouse->Uninit();
+		m_pMouse = NULL;
+	}
+
 	// オブジェクトを破棄
 	CScene::Release();
 }
@@ -252,16 +309,13 @@ void CGame::Update(void)
 	{
 		if (CManager::GetClient() != NULL)
 		{
-			if (CFade::GetFade() == CFade::FADE_NONE)
+			if (CManager::GetClient()->GetGameMode() == CClient::GAME_MODE_PLAYER)
 			{
-				if (CManager::GetClient()->GetGameMode() == CClient::GAME_MODE_PLAYER)
-				{
-					//必要な情報を書き込む処理
-					PrintData();
-				}
-				//情報を読み取る処理
-				ReadMessage();
+				//必要な情報を書き込む処理
+				PrintData();
 			}
+			//情報を読み取る処理
+			ReadMessage();
 
 			if (m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->GetRespawn() == CPlayer::RESPAWN_NONE)
 			{
@@ -293,7 +347,7 @@ void CGame::Update(void)
 	{
 		if (m_pPlayer[nCntPlayer]->GetDeath() == true)
 		{
-			m_state = STATE_END;
+			//m_state = STATE_END;
 		}
 	}
 	// フェードの取得
@@ -347,9 +401,6 @@ void CGame::Update(void)
 		}
 		break;
 	}
-	CClient *pClient = CManager::GetClient();
-
-	//CDebugProc::Print("種類：%d %d %d %d", pClient->GetMechaType(0), pClient->GetMechaType(1), pClient->GetMechaType(2), pClient->GetMechaType(3));
 
 	CDebugProc::Print("ゲーム");
 }
@@ -576,7 +627,10 @@ void CGame::PrintData(void)
 	{//NULLではない場合
 		if (m_pPlayer[pClient->GetPlayerIdx()] != NULL)
 		{//NULLではない場合
-		 //プレイヤー番号を書き込む
+			pClient->Printf(SERVER_PLAYER_DATA);
+			pClient->Printf(" ");
+
+			 //プレイヤー番号を書き込む
 			pClient->Printf("%d", CManager::GetClient()->GetPlayerIdx());
 			pClient->Printf(" ");
 
@@ -678,8 +732,13 @@ void CGame::PrintData(void)
 			 //	pClient->Printf("0");
 			 //}
 
+				/*pClient->Printf("%d", m_nBlueLinkEnergy);
+				pClient->Printf(" ");
+				pClient->Printf("%d", m_nRedLinkEnergy);
+				pClient->Printf(" ");*/
+
 			 //CPUのデータ情報を書き込む処理
-				PrintCPUData();
+			//PrintCPUData();
 
 			}
 		}
@@ -781,16 +840,21 @@ void CGame::ReadMessage(void)
 		{//接続総数を示している場合
 			pStr += strlen(SERVER_CONNECT_DATA);								//頭出し
 
-																				//接続情報の読み取り処理
+			//接続情報の読み取り処理
 			pStr = ReadConnectData(pStr);
 		}
 		if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
 		{//プレイヤーの開始を示している場合
 			pStr += strlen(SERVER_PLAYER_START);							//頭出し
+			pStr += strlen(" ");
+
 			for (int nCntClient = 0; nCntClient < pClient->GetNumConnect() - 1; nCntClient++)
 			{
-
-				pStr = ReadPlayerData(pStr);
+				if (CServerFunction::Memcmp(pStr,SERVER_PLAYER_DATA) == 0)
+				{
+					pStr += strlen(SERVER_PLAYER_DATA);
+					pStr = ReadPlayerData(pStr);
+				}
 			}
 		}
 	}
@@ -865,7 +929,7 @@ char *CGame::ReadPlayerData(char *pStr)
 			nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 			pStr += nWord;										//頭出し
 
-																//チーム情報の代入
+			//チーム情報の代入
 			nTeam = CServerFunction::ReadInt(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
@@ -966,7 +1030,15 @@ char *CGame::ReadPlayerData(char *pStr)
 			 nWord = CServerFunction::PopString(pStr, "");
 			 pStr += nWord;*/
 
-				pStr = ReadCPUData(pStr);
+				//m_nBlueLinkEnergy = CServerFunction::ReadInt(pStr, "");
+				//nWord = CServerFunction::PopString(pStr, "");
+				//pStr += nWord;
+
+				//m_nRedLinkEnergy = CServerFunction::ReadInt(pStr, "");
+				//nWord = CServerFunction::PopString(pStr, "");
+				//pStr += nWord;
+
+				//pStr = ReadCPUData(pStr);
 
 			}
 			if (bDeath == true)
@@ -1234,4 +1306,87 @@ void CGame::CreateCPUBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECT
 		//弾を発射しているかどうかの設置処理
 		m_pPlayer[nPlayerIdx]->SetShoot(false);
 	}
+}
+
+//=============================================================================
+// リスポーン位置の読み込み
+//=============================================================================
+void CGame::LoadRespawnPos(void)
+{
+	FILE *pFile;	//ファイルのポインタ
+
+	//ファイルの読み込み
+	pFile = fopen(GAME_INI, "r");
+
+	if (pFile == NULL)
+	{//ファイルが読み込めていない場合
+		return;
+	}
+	else if (pFile != NULL)
+	{//ファイルが読み込めた場合
+		char aStr[128] = "\0";
+
+		while (1)
+		{//ループ
+			fscanf(pFile, "%s", aStr);
+			if (strcmp(aStr, GAME_SCRIPT) == 0)
+			{//スクリプトの開始を示している場合
+				while (strcmp(aStr, GAME_END_SCRIPT) != 0)
+				{//スクリプトの終了を示すまでループ
+					fscanf(pFile, "%s", aStr);
+					if (strcmp(aStr, GAME_BLUE) == 0)
+					{//サーバーのIPアドレスを示している場合
+						while (strcmp(aStr,GAME_BLUE_END) != 0)
+						{
+							fscanf(pFile, "%s", aStr);
+
+							if (strcmp(aStr, GAME_SPAWN_A) == 0)
+							{
+								fscanf(pFile, " = %f %f %f", &m_aRespawnPos[0][0].x, &m_aRespawnPos[0][0].y, &m_aRespawnPos[0][0].z);
+							}
+							if (strcmp(aStr, GAME_SPAWN_B) == 0)
+							{
+								fscanf(pFile, " = %f %f %f", &m_aRespawnPos[0][1].x, &m_aRespawnPos[0][1].y, &m_aRespawnPos[0][1].z);
+							}
+							if (strcmp(aStr, GAME_SPAWN_C) == 0)
+							{
+								fscanf(pFile, " = %f %f %f", &m_aRespawnPos[0][2].x, &m_aRespawnPos[0][2].y, &m_aRespawnPos[0][2].z);
+							}
+							if (strcmp(aStr, GAME_SPAWN_D) == 0)
+							{
+								fscanf(pFile, " = %f %f %f", &m_aRespawnPos[0][3].x, &m_aRespawnPos[0][3].y, &m_aRespawnPos[0][3].z);
+							}
+						}
+					}
+					if (strcmp(aStr, GAME_RED) == 0)
+					{//サーバーのIPアドレスを示している場合
+						while (strcmp(aStr, GAME_RED_END) != 0)
+						{
+							fscanf(pFile, "%s", aStr);
+
+							if (strcmp(aStr, GAME_SPAWN_A) == 0)
+							{
+								fscanf(pFile, " = %f %f %f", &m_aRespawnPos[1][0].x, &m_aRespawnPos[1][0].y, &m_aRespawnPos[1][0].z);
+							}
+							if (strcmp(aStr, GAME_SPAWN_B) == 0)
+							{
+								fscanf(pFile, " = %f %f %f", &m_aRespawnPos[1][1].x, &m_aRespawnPos[1][1].y, &m_aRespawnPos[1][1].z);
+							}
+							if (strcmp(aStr, GAME_SPAWN_C) == 0)
+							{
+								fscanf(pFile, " = %f %f %f", &m_aRespawnPos[1][2].x, &m_aRespawnPos[1][2].y, &m_aRespawnPos[1][2].z);
+							}
+							if (strcmp(aStr, GAME_SPAWN_D) == 0)
+							{
+								fscanf(pFile, " = %f %f %f", &m_aRespawnPos[1][3].x, &m_aRespawnPos[1][3].y, &m_aRespawnPos[1][3].z);
+							}
+						}
+					}
+
+				}
+				break;
+			}
+		}
+	}
+
 }

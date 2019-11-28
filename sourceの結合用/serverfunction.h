@@ -39,7 +39,7 @@
 #define SERVER_MODE_MATCHING		"MODE_MATCHING"				//マッチングモード
 #define SERVER_MODE_GAME			"MODE_GAME"					//ゲームモード
 #define SERVER_MODE_RESULT			"MODE_RESULT"				//リザルトモード
-
+#define SERVER_PLAYER_DATA			"PLAYER_DATA = "			//プレイヤー情報
 //*****************************************************************************
 // クラスの定義
 //*****************************************************************************
