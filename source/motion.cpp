@@ -585,12 +585,6 @@ void CMotion::Motion(void)
 	D3DXVECTOR3 rotModel;		// 計算用向き
 	D3DXVECTOR3 posModel;		// 計算用位置
 
-	if (!m_bInit)
-	{// 次のモーションへつなげる
-		m_nCntFlame = m_pFrame[m_nCurKey] / 2;
-		m_bInit = true;
-	}
-
 	//差分の計算
 	fRateMotion = (m_pFrame[m_nCurKey] - m_nCntFlame) * 1.0f;
 

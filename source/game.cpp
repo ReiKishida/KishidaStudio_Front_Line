@@ -125,7 +125,6 @@ HRESULT CGame::Init(void)
 
 	// 読み込み
 	CMotionManager::Load();
-	CParData::Load();
 
 	m_pField = CModel::Create();
 	m_pField->SetModel(FIELD_MODEL_NAME);
@@ -184,11 +183,13 @@ HRESULT CGame::Init(void)
 		{
 			if (nCntPlayer == 0)
 			{
-				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, CMechaSelect::GetMechaType(), m_aRespawnPos[nTeam][nCntPlayer], true);
+				m_aMechaType[nCntPlayer] = CMechaSelect::GetMechaType();
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], m_aRespawnPos[nTeam][nCntPlayer], true);
 			}
 			else
 			{
-				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX), m_aRespawnPos[nTeam][nCntPlayer], false);
+				m_aMechaType[nCntPlayer] = (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX);
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], m_aRespawnPos[nTeam][nCntPlayer], false);
 			}
 		}
 	}
@@ -247,7 +248,6 @@ void CGame::Uninit(void)
 	CMotionManager::Unload();
 	CModelSetManager::Unload();
 	CEnemy::Unload();
-	CParData::Unload();
 
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
@@ -348,7 +348,18 @@ void CGame::Update(void)
 	{
 		if (m_pPlayer[nCntPlayer]->GetDeath() == true)
 		{
-			m_state = STATE_END;
+			//m_state = STATE_END;
+		}
+	}
+
+	if (CManager::GetClient() != NULL)
+	{
+		if (CManager::GetClient()->GetPlayerIdx() == 0)
+		{
+			if (m_nBlueLinkEnergy == 0 || m_nRedLinkEnergy == 0)
+			{
+				m_state = STATE_END;
+			}
 		}
 	}
 	// フェードの取得
@@ -724,19 +735,20 @@ void CGame::PrintData(void)
 
 			if (pClient->GetPlayerIdx() == 0)
 			{//ホストの場合
-			 //if (m_state == STATE_END)
-			 //{
-			 //	pClient->Printf("1");
-			 //}
-			 //else
-			 //{
-			 //	pClient->Printf("0");
-			 //}
+			 if (m_state == STATE_END)
+			 {
+			 	pClient->Printf("1");
+			 }
+			 else
+			 {
+			 	pClient->Printf("0");
+			 }
+			 pClient->Printf(" ");
 
-			 /*pClient->Printf("%d", m_nBlueLinkEnergy);
+			 pClient->Printf("%d", m_nBlueLinkEnergy);
 			 pClient->Printf(" ");
 			 pClient->Printf("%d", m_nRedLinkEnergy);
-			 pClient->Printf(" ");*/
+			 pClient->Printf(" ");
 
 			 //CPUのデータ情報を書き込む処理
 			 //PrintCPUData();
@@ -1027,17 +1039,17 @@ char *CGame::ReadPlayerData(char *pStr)
 			if (nPlayerIdx == 0)
 			{//ホストの場合
 
-			 /*	nState = CServerFunction::ReadInt(pStr, "");
+			 nState = CServerFunction::ReadInt(pStr, "");
 			 nWord = CServerFunction::PopString(pStr, "");
-			 pStr += nWord;*/
+			 pStr += nWord;
 
-			 //m_nBlueLinkEnergy = CServerFunction::ReadInt(pStr, "");
-			 //nWord = CServerFunction::PopString(pStr, "");
-			 //pStr += nWord;
+			 m_nBlueLinkEnergy = CServerFunction::ReadInt(pStr, "");
+			 nWord = CServerFunction::PopString(pStr, "");
+			 pStr += nWord;
 
-			 //m_nRedLinkEnergy = CServerFunction::ReadInt(pStr, "");
-			 //nWord = CServerFunction::PopString(pStr, "");
-			 //pStr += nWord;
+			 m_nRedLinkEnergy = CServerFunction::ReadInt(pStr, "");
+			 nWord = CServerFunction::PopString(pStr, "");
+			 pStr += nWord;
 
 			 //pStr = ReadCPUData(pStr);
 
@@ -1067,7 +1079,7 @@ char *CGame::ReadPlayerData(char *pStr)
 					}
 					if (nState == 1)
 					{
-						//m_state = STATE_END;
+						m_state = STATE_END;
 					}
 				}
 			}

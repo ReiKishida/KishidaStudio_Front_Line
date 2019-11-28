@@ -11,6 +11,7 @@
 #include "game.h"
 #include "model.h"
 #include "mouseCursor.h"
+#include "button.h"
 
 //==================================
 // Ã“Iƒƒ“ƒo•Ï”éŒ¾
@@ -222,6 +223,7 @@ void CRenderer::Draw(void)
 				CManager::GetGame()->GetMouseCursor()->Draw();
 
 				pCamera->Set(1);
+				CManager::GetGame()->GetButtonManager()->MarkerDraw();
 				CManager::GetGame()->GetMouse()->Draw();
 
 				m_pD3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);

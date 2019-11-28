@@ -150,7 +150,6 @@ void CCamera::Update(void)
 		{// ストラテジーパート
 			float moveX = (float)pInputMouse->GetDiffPointX();
 			float moveY = (float)pInputMouse->GetDiffPointY();
-			m_rot.y = D3DX_PI;
 
 			// マップのスクロール
 			if (pInputMouse->GetPress(CInputMouse::DIMS_BUTTON_1))
@@ -173,14 +172,14 @@ void CCamera::Update(void)
 			}
 
 			// 注視点の更新
-			m_posR.x = m_posRDest.x - sinf(m_rot.y) * 0.1f;
+			m_posR.x = m_posRDest.x - sinf(D3DX_PI) * 0.1f;
 			m_posR.y = m_posRDest.y + 100.0f;
-			m_posR.z = m_posRDest.z - cosf(m_rot.y ) * 0.1f;
+			m_posR.z = m_posRDest.z - cosf(D3DX_PI) * 0.1f;
 
 			// 視点の更新
-			m_posV.x = m_posVDest.x + sinf(m_rot.y) * -0.01f;
+			m_posV.x = m_posVDest.x + sinf(D3DX_PI) * -0.01f;
 			m_posV.y = m_posVDest.y + 500.0f;
-			m_posV.z = m_posVDest.z + cosf(m_rot.y) * -0.01f;
+			m_posV.z = m_posVDest.z + cosf(D3DX_PI) * -0.01f;
 		}
 	}
 }
@@ -241,11 +240,22 @@ void CCamera::Set(int nIdxCamera)
 		}
 		else if (pGame->GetPart() == CGame::PART_STRATEGY)
 		{// ストラテジーパート
-			D3DXMatrixOrthoLH(&m_mtxProjection,
-				(float)m_viewport.Width / m_fZoom * 2.0f,
-				(float)m_viewport.Height / m_fZoom * 2.0f,
-				10.0f,
-				8000.0f);
+			if (0 == nIdxCamera)
+			{
+				D3DXMatrixOrthoLH(&m_mtxProjection,
+					(float)m_viewport.Width / m_fZoom * 2.0f,
+					(float)m_viewport.Height / m_fZoom * 2.0f,
+					10.0f,
+					10.0f);
+			}
+			else
+			{
+				D3DXMatrixOrthoLH(&m_mtxProjection,
+					(float)m_viewport.Width / m_fZoom * 2.0f,
+					(float)m_viewport.Height / m_fZoom * 2.0f,
+					10.0f,
+					8000.0f);
+			}
 		}
 	}
 	else

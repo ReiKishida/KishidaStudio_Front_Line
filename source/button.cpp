@@ -13,6 +13,7 @@
 #include "game.h"
 #include "mouseCursor.h"
 #include "fade.h"
+#include "camera.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -528,6 +529,9 @@ CButtonManagerStrategy::CButtonManagerStrategy(int nPriority, CScene::OBJTYPE ob
 	m_pFourth = NULL;
 	m_nSelectAIType = -1;
 	m_bFinish = false;
+	m_bSelect = true;
+	m_pMarker = NULL;
+	m_nSetNumMarker = 0;
 
 	for (int nCntHierarchy = 0; nCntHierarchy < 4; nCntHierarchy++)
 	{
@@ -658,6 +662,26 @@ void CButtonManagerStrategy::Uninit(void)
 		}
 	}
 
+	if (m_pMarker != NULL)
+	{
+		int nNumMarker;		// マーカーの数
+		if (2 == m_aSelectLogic[2]) { nNumMarker = 4; }
+		else { nNumMarker = 1; }
+
+		for (int nCntMarker = 0; nCntMarker < nNumMarker; nCntMarker++)
+		{// マーカーの数分ループ
+			if (m_pMarker[nCntMarker] != NULL)
+			{// マーカーの破棄
+				m_pMarker[nCntMarker]->Uninit();
+				m_pMarker[nCntMarker] = NULL;
+			}
+		}
+
+		// マーカーの破棄
+		delete[] m_pMarker;
+		m_pMarker = NULL;
+	}
+
 	// 自分を破棄
 	CScene::Release();
 }
@@ -667,7 +691,7 @@ void CButtonManagerStrategy::Uninit(void)
 //=========================================
 void CButtonManagerStrategy::Update(void)
 {
-	if (!m_bFinish)
+	if (m_bSelect)
 	{
 		// ドローンかウォーカーの選択処理
 		AITypeSelect();
@@ -693,6 +717,50 @@ void CButtonManagerStrategy::Update(void)
 		}
 	}
 
+	if (m_bFinish && NULL == m_pMarker)
+	{// マーカーの生成
+		int nNumMarker = 0;		// マーカーの数
+		if (2 == m_aSelectLogic[2]) { nNumMarker = 4; }
+		else { nNumMarker = 1; }
+
+		// マーカーを必要な分生成
+		m_pMarker = new CScene3D*[nNumMarker];
+		for (int nCntMarker = 0; nCntMarker < nNumMarker; nCntMarker++)
+		{
+			m_pMarker[nCntMarker] = CScene3D::Create();
+			m_pMarker[nCntMarker]->SetBoolLighting(false);
+		}
+	}
+
+	if (NULL != m_pMarker)
+	{// マーカーの設置
+		int nNumMarker;		// マーカーの数
+		if (2 == m_aSelectLogic[2]) { nNumMarker = 4; }
+		else { nNumMarker = 1; }
+
+		for (int nCntMarker = 0; nCntMarker < nNumMarker; nCntMarker++)
+		{// ズーム倍率に応じてサイズ変更
+			m_pMarker[nCntMarker]->SetSize(D3DXVECTOR3(40.0f, 0.0f, 40.0f) / CManager::GetCamera()->GetZoom());
+		}
+
+		CInputMouse *pMouse = CManager::GetInputMouse();
+
+		if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0))
+		{// 左クリックされた
+
+			if (nNumMarker > m_nSetNumMarker)
+			{// マーカーを置く
+				m_pMarker[m_nSetNumMarker]->SetPos(CManager::GetGame()->GetMouse()->GetPos());
+
+				m_nSetNumMarker++;
+			}
+			else
+			{
+				m_pMarker[m_nSetNumMarker - 1]->SetPos(CManager::GetGame()->GetMouse()->GetPos());
+			}
+		}
+	}
+
 	CDebugProc::Print("選択ボタン：%d %d %d %d", m_aSelectLogic[0], m_aSelectLogic[1], m_aSelectLogic[2], m_aSelectLogic[3]);
 }
 
@@ -701,6 +769,17 @@ void CButtonManagerStrategy::Update(void)
 //=========================================
 void CButtonManagerStrategy::Draw(void)
 {
+}
+
+//=========================================
+// マーカーの描画処理
+//=========================================
+void CButtonManagerStrategy::MarkerDraw(void)
+{
+	for (int nCntMarker = 0; nCntMarker < m_nSetNumMarker; nCntMarker++)
+	{
+		m_pMarker[nCntMarker]->Draw();
+	}
 }
 
 //=========================================
@@ -974,6 +1053,7 @@ void CButtonManagerStrategy::ThirdHierarchy(void)
 					else
 					{
 						m_bFinish = true;
+						m_bSelect = false;
 						ButtonUninit(4);	// ボタンの破棄
 					}
 				}
@@ -1019,11 +1099,8 @@ void CButtonManagerStrategy::FourthHierarchy(void)
 					m_apSelectIcon[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_STRATEGY_ICON)));
 					m_apSelectIcon[3]->SetTex(m_aSelectLogic[3] + 8, 1, 17);
 					m_bFinish = true;
+					m_bSelect = false;
 					ButtonUninit(4);	// ボタンの破棄
-				}
-				else
-				{
-					m_apSelectIcon[3]->SetTex(m_aSelectLogic[3] + 8, 1, 17);
 				}
 			}
 		}
@@ -1036,6 +1113,14 @@ void CButtonManagerStrategy::FourthHierarchy(void)
 			m_pFourth[nCntFourth]->SetSwitch(false);
 		}
 	}
+}
+
+//=========================================
+// マーカーの設置
+//=========================================
+void CButtonManagerStrategy::Marker(void)
+{
+
 }
 
 //=========================================

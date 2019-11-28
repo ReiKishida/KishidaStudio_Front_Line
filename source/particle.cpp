@@ -483,6 +483,8 @@ HRESULT CParData::Load(void)
 
 	if (NULL != pFile)
 	{
+		fscanf(pFile, "%s", aStr);
+
 		while (strcmp(aStr, "END_SCRIPT") != 0)
 		{// 終了メッセージまでループ
 			fscanf(pFile, "%s", aStr);

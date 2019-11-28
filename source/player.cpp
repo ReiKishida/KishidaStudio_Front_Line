@@ -486,7 +486,7 @@ HRESULT CPlayer::Init(void)
 	{
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{
-			m_pModel[nCntModel]->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
+			m_pModel[nCntModel]->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f));
 		}
 		m_nTeam = 0;
 
@@ -497,7 +497,7 @@ HRESULT CPlayer::Init(void)
 	{
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{
-			m_pModel[nCntModel]->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f));
+			m_pModel[nCntModel]->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
 		}
 
 		m_nTeam = 1;
@@ -1185,20 +1185,33 @@ void CPlayer::Damage(int nDamage)
 	{// モーションクラスが使われている
 		if (m_pUpperMotion->GetType() != CMotionManager::TYPE_DAMAGE && m_pLowerMotion->GetType() != CMotionManager::TYPE_DAMAGE)
 		{// ライフクラスが使われている
-			m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
-			m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
-
-			m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
-
-			m_nLife -= nDamage;
-
-			if (0 >= m_nLife)
+			if (m_nLife > 0 && m_bDeath == false)
 			{
-				m_nLife = 0;
-				m_bDeath = true;
+				m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
+				m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
+
+				m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+
+				m_nLife -= nDamage;
+
+				if (0 >= m_nLife)
+				{
+					m_nLife = 0;
+					m_bDeath = true;
+
+					switch (m_nTeam)
+					{
+					case 0:
+						CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 30);
+						break;
+					case 1:
+						CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 30);
+						break;
+					}
+				}
+				//CSound *pSound = CManager::GetSound();				// サウンドの取得
+				//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
 			}
-			//CSound *pSound = CManager::GetSound();				// サウンドの取得
-			//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
 		}
 	}
 }

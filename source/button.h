@@ -128,6 +128,8 @@ public:
 	void Update(void);
 	void Draw(void);
 
+	void MarkerDraw(void);
+
 	static CButtonManagerStrategy *Create(void);
 
 	void ButtonUninit(int nLogic);
@@ -138,11 +140,12 @@ public:
 	bool &GetSelectFinish(void) { return m_bFinish; }
 
 private:
-	void AITypeSelect(void);
-	void FirstHierarchy(void);
-	void SecondHierarchy(void);
-	void ThirdHierarchy(void);
-	void FourthHierarchy(void);
+	void AITypeSelect(void);		// AIの選択処理
+	void FirstHierarchy(void);		// １階層目のボタン
+	void SecondHierarchy(void);		// ２階層目の処理
+	void ThirdHierarchy(void);		// ３階層目の処理
+	void FourthHierarchy(void);		// ４階層目の処理
+	void Marker(void);				// マーカーの設置
 
 	CButton2D *m_pAIType[2];		// ドローンかワーカーどちらか
 	CButton2D **m_pFirst;			// ロジックツリーの１階層目のボタン
@@ -160,10 +163,12 @@ private:
 	CScene2D *m_apSelectIcon[4];	// 選択した項目を表示
 
 	bool	m_bFinish;				// 選択が終了した
+	bool	m_bSelect;				// 選択できる状態かどうか
 
-#ifdef _DEBUG
+	CScene3D **m_pMarker;			// AIの移動の指定位置のマーカー
+	int m_nSetNumMarker;			// 設置したマーカーの数
+
 	bool	m_bDisp;
-#endif
 
 };
 

@@ -15,6 +15,7 @@
 #include "menu.h"
 #include "serverfunction.h"
 #include "mechaSelect.h"
+#include "game.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -72,6 +73,7 @@ HRESULT CMatching::Init(void)
 	for (int nCntConnect = 0; nCntConnect < MAX_PLAYER_CONNECT; nCntConnect++)
 	{
 		m_bConnect[nCntConnect] = false;
+		CGame::SetMechaType(nCntConnect, CMechaSelect::MECHATYPE_EMPTY);
 	}
 
 	if (CMenu::GetMode() == CMenu::MODE_MULTI)
@@ -126,10 +128,11 @@ void CMatching::Update(void)
 	CClient *pClient = CManager::GetClient();
 	if (pClient != NULL)
 	{
-		if (pClient->GetConnect() == true)
-		{
-			//m_bConnect[pClient->GetPlayerIdx()] = true;
-		}
+		CGame::SetMechaType(pClient->GetPlayerIdx(), CMechaSelect::GetMechaType());
+		//if (pClient->GetConnect() == true)
+		//{
+		//	m_bConnect[pClient->GetPlayerIdx()] = true;
+		//}
 	}
 	//必要な情報を書き込む処理
 	PrintData();
@@ -361,7 +364,7 @@ void CMatching::ReadMessage(void)
 
 					if (nPlayerIdx == 0)
 					{
-						//フェード情報を代入																		//メカの種類を代入												//番号を代入
+						//フェード情報を代入
 						nFade = CServerFunction::ReadInt(pStr, "");
 						nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 						pStr += nWord;										//頭出し
@@ -373,13 +376,19 @@ void CMatching::ReadMessage(void)
 						m_bFade = true;
 					}
 
+					if (CGame::GetMechaType(nPlayerIdx) == CMechaSelect::MECHATYPE_EMPTY)
+					{
+						CGame::SetMechaType(nPlayerIdx, (CMechaSelect::MECHATYPE)nMechatype);
+					}
+
 					if (nPlayerIdx != pClient->GetPlayerIdx())
 					{
 						pClient->SetMechaType(nPlayerIdx, nMechatype);
 					}
 				}
 			}
-			CDebugProc::Print("種類：%d %d %d %d", pClient->GetMechaType(0), pClient->GetMechaType(1), pClient->GetMechaType(2), pClient->GetMechaType(3));
+			//CDebugProc::Print("種類：%d %d %d %d", pClient->GetMechaType(0), pClient->GetMechaType(1), pClient->GetMechaType(2), pClient->GetMechaType(3));
+			CDebugProc::Print("種類：%d %d %d %d", CGame::GetMechaType(0), CGame::GetMechaType(1), CGame::GetMechaType(2), CGame::GetMechaType(3));
 			CDebugProc::Print("最小：%d", pClient->GetMinIdx());
 			CDebugProc::Print("最大：%d", pClient->GetMaxIdx());
 		}

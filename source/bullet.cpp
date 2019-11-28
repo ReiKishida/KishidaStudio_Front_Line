@@ -15,6 +15,7 @@
 #include "server.h"
 #include "collisionSet.h"
 #include "particle.h"
+#include "AI.h"
 
 //==================================
 // マクロ定義
@@ -253,7 +254,7 @@ bool CBulletPlayer::BulletCollision(void)
 		CScene::OBJTYPE objType = pScene->GetObjType();
 
 		if (CScene::OBJTYPE_PLAYER == objType)
-		{
+		{// プレイヤー
 			CPlayer *pPlayer = (CPlayer*)pScene;
 			int nTeam = pPlayer->GetTeam();
 			if (m_nTeam != nTeam)
@@ -261,6 +262,20 @@ bool CBulletPlayer::BulletCollision(void)
 				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f))
 				{// 接触している
 					pPlayer->Damage(CBullet::GetDamage());
+					Uninit();
+					return true;		// 接触したのでtrueを返す
+				}
+			}
+		}
+		else if(CScene::OBJTYPE_AI == objType)
+		{// AI機体
+			CAIMecha *pAI = (CAIMecha*)pScene;
+			int nTeam = pAI->GetTeam();
+			if (m_nTeam != nTeam)
+			{
+				if (CScene3DBill::Collision(pAI->GetPos(), 50.0f))
+				{// 接触している
+					pAI->Damage(CBullet::GetDamage());
 					Uninit();
 					return true;		// 接触したのでtrueを返す
 				}

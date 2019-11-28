@@ -24,6 +24,7 @@
 #include "mechaSelect.h"
 #include "server.h"
 #include "matching.h"
+#include "particle.h"
 
 #include <stdio.h>
 //=========================================
@@ -306,6 +307,7 @@ HRESULT CManager::Init(HINSTANCE hInstance, HWND hWnd, bool bWindow)
 
 	// テクスチャの読み込み
 	CTexture::Load();
+	CParData::Load();
 
 	// 現在のモードを設定
 	SetMode(m_mode);
@@ -323,6 +325,7 @@ void CManager::Uninit(void)
 {
 	// データの破棄
 	CScene::ReleaseAll();	// 全てのオブジェクトの破棄
+	CParData::Unload();
 
 	CTexture::Unload();
 
