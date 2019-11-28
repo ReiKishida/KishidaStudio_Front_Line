@@ -134,12 +134,12 @@ void CMatching::Update(void)
 		//	m_bConnect[pClient->GetPlayerIdx()] = true;
 		//}
 	}
+
 	//必要な情報を書き込む処理
 	PrintData();
 
 	//情報を読み取る処理
 	ReadMessage();
-
 	//UIのスクロール処理
 	ScrollUI();
 
@@ -381,6 +381,7 @@ void CMatching::ReadMessage(void)
 						CGame::SetMechaType(nPlayerIdx, (CMechaSelect::MECHATYPE)nMechatype);
 					}
 
+					CGame::SetMechaType(0, (CMechaSelect::MECHATYPE)pClient->GetMechaType(0));
 					if (nPlayerIdx != pClient->GetPlayerIdx())
 					{
 						pClient->SetMechaType(nPlayerIdx, nMechatype);

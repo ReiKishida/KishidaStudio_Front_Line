@@ -1,17 +1,19 @@
 //=============================================================================
 //
 // リザルト処理 [result.h]
-// Author : Takuto Ishida
+// Author : Ayaka Hakozaki
 //
 //=============================================================================
 #ifndef _RESULT_H_
 #define _RESULT_H_
 
 #include "scene.h"
+#include "game.h"
 
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
+#define RESULT_UI_TEX			(2)		// 使用するUIテクスチャの枚数
 
 //*****************************************************************************
 // 前方宣言
@@ -20,6 +22,10 @@ class CNumber;
 class CLogo;
 class CLogoPressButton;
 class CScore;
+class CUI_TEXTURE;
+class CModel;
+class CPlayer;
+class CMechaSelect;
 
 //*****************************************************************************
 // クラス定義
@@ -27,6 +33,13 @@ class CScore;
 class CResult : public CScene
 {
 public:
+	typedef enum
+	{	// 勝ったチーム
+		TEAM_WIN_BLUE = 0,
+		TEAM_WIN_RED,
+		TEAM_WIN_MAX
+	} TEAM_WIN;
+
 	CResult();
 	~CResult();
 	HRESULT Init(void);
@@ -34,18 +47,15 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	static void SetScore(int nScore) { m_nScore = nScore; };
-
+	static void SetTeamWin(TEAM_WIN teamWin) { m_teamWin = teamWin; }
+	static TEAM_WIN GetTeamWin(void) { return m_teamWin; };
 private:
-	static int	m_nScore;		// スコア
-	int			m_nDigit;		// 桁数
-	int			m_nCntResult;	// リザルトの時間
-	int			m_nFlash;		// 点滅させる速度
-
-	CNumber				**m_pNumber;			// 数字クラスのポインタ変数
-	CLogo				*m_pLogo;				// ロゴクラスのポインタ変数
-	CLogoPressButton	*m_pPressButton;		// 入力待ち表示クラスのポインタ変数
-	CScore				*m_pScore;				// スコアクラスのポインタ変数
+	static TEAM_WIN		m_teamWin;								// 勝ったチームを取得
+	static CPlayer				*m_pPlayer[MAX_PLAYER_CONNECT];
+	CMechaSelect::MECHATYPE	m_mechaType[MAX_PLAYER_CONNECT];
+	CModel						*m_pField;									// 地面のモデル
+	CUI_TEXTURE				*m_pUITex[RESULT_UI_TEX];	// UIテクスチャポインタ
+	int								m_nCntFlash;								// プレスボタン点滅
 };
 
 #endif

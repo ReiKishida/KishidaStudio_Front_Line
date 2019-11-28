@@ -69,6 +69,7 @@ public:
 		UIFLAME_RESPAWN_FLAME,	// リスポーンフレーム
 		UIFLAME_TITLE,							// リスポーンタイトル
 		UIFLAME_SELECT_RESPAWN,	// リスポーン選択
+		UIFLAME_TEAM_WIN,				// 勝利チームロゴ
 
 		// ストラテジーパート
 		UIFLAME_1P_INFO,					// 1Pの小隊情報

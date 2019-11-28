@@ -56,12 +56,13 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/UI/cursor.png" },									// マウスカーソル
 		{ "data/TEXTURE/UI/reticle.png" },									// レティクル
 		{ "data/TEXTURE/UI/reload.png" },									// リロードロゴ（アクションパートで使用）
+		{ "data/TEXTURE/UI/team_win.png" },								// 勝利チームのロゴ
 
-																			// TEXTURE
+		// TEXTURE
 		{ "data/TEXTURE/press_any.png" },									// プレスボタン
 		{ "data/TEXTURE/bullet.png" },											// 弾
 
-																				// strategy
+		// strategy
 		{ "data/TEXTURE/strategy/player_1_frame.png" },			// 1Pの小隊情報フレーム
 		{ "data/TEXTURE/strategy/player_2_frame.png" },			// 2Pの小隊情報フレーム
 		{ "data/TEXTURE/strategy/frame_white.png" },				// ただのフレーム（ストラテジーパートで使用）
@@ -70,19 +71,19 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/strategy/drone_button.png" },				// ドローン
 		{ "data/TEXTURE/strategy/strategy_icon.png" },				// ストラテジーのアイコン
 
-																	// mechaSelect
+		// mechaSelect
 		{ "data/TEXTURE/mechaSelect/main_frame.png" },			// メインメニュー、メカセレクトロゴ
 		{ "data/TEXTURE/mechaSelect/aptitude_range.jpg" },		// 距離表示（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_inst.png" },			// 機体説明（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_type.png" },			// 機体の種類（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_select.png" },		// 機体画像（機体選択画面で使用）
 
-																// menu
+		// menu
 		{ "data/TEXTURE/menu/menu_disp.png" },						// モード説明ロゴ（メニュー画面で使用）
 		{ "data/TEXTURE/menu/menu_frame.png" },					// モードフレーム（メニュー画面で使用）
 		{ "data/TEXTURE/menu/menu_inst.png" },						// モードの概要（メニュー選択画面で使用）
 
-																	// matching
+		// matching
 		{ "data/TEXTURE/matching/matching_bg.jpg" },				// マッチング画面の背景（マッチング画面で使用）
 		{ "data/TEXTURE/matching/matching_bg_000.png" },		// マッチングBG_00（マッチング画面で使用）
 		{ "data/TEXTURE/matching/matching_bg_001.png" },		// マッチングBG_01（マッチング画面で使用）
@@ -91,7 +92,7 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/matching/blue_mecha_list.png" },		// BLUEチームメカリスト（マッチング画面で使用）
 		{ "data/TEXTURE/matching/red_mecha_list.png" },			// REDチームメカリスト（マッチング画面で使用）
 
-																// respawn
+		// respawn
 		{ "data/TEXTURE/respawn/start_death.png" },					// 戦闘開始、行動不能ロゴ（アクションパートで使用）
 		{ "data/TEXTURE/respawn/tile_pattern.png" },					// タイルアニメーション（アクションパートで使用）
 		{ "data/TEXTURE/respawn/respawn_sequence.png" },	// 復帰ロゴ（アクションパートで使用）
@@ -100,12 +101,10 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/respawn/respawn_title.jpg" },				// リスポーンタイトル（アクションパートで使用）
 		{ "data/TEXTURE/respawn/select_respawn.png" },			// リスポーン選択（アクションパートで使用）
 
-																// radiochat
+		// radiochat
 		{ "data/TEXTURE/radiochat/radio_chat.png" },						// ラジオチャット（アクションパートで使用）
 		{ "data/TEXTURE/radiochat/radio_chat_message.png" },		// ラジオチャットメッセージ
 
-		// effect
-		{ "data/TEXTURE/EFFECT/shadow000.jpg" },		// 影のエフェクト
 	};
 
 	for (int nCntTexture = 0; nCntTexture < TEXTURE_MAX; nCntTexture++)

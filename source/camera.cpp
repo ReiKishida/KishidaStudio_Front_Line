@@ -182,6 +182,11 @@ void CCamera::Update(void)
 			m_posV.z = m_posVDest.z + cosf(D3DX_PI) * -0.01f;
 		}
 	}
+	else if (CManager::GetMode() == CManager::MODE_RESULT)
+	{
+		m_posV = D3DXVECTOR3(700.0f, 40.0f, 230.0f);
+		m_posR = D3DXVECTOR3(0.0f, 0.0f, 450.0f);
+	}
 }
 
 //=============================================================================

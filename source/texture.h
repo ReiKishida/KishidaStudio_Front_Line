@@ -40,6 +40,7 @@ public:
 		TEXTURE_MOUSECURSOR,			// マウスカーソル
 		TEXTURE_RETICLE,						// レティクル
 		TEXTURE_RELOAD,						// リロードロゴ（アクションパートで使用）
+		TEXTURE_TEAM_WIN,					// 勝利チームのロゴ
 
 		// TEXTURE
 		TEXTURE_PRESS_BUTTON,			// 入力待ち
@@ -89,6 +90,7 @@ public:
 		TEXTURE_RADIOCHAT_MESS,		// ラジオチャットメッセージ
 
 		TEXTURE_SHADOW,
+
 		TEXTURE_MAX
 	}TEXTURE;
 

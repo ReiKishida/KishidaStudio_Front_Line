@@ -310,18 +310,21 @@ void CGame::Update(void)
 	{
 		if (CManager::GetClient() != NULL)
 		{
-			if (CManager::GetClient()->GetGameMode() == CClient::GAME_MODE_PLAYER)
+			if (CFade::GetFade() == CFade::FADE_NONE)
 			{
-				//必要な情報を書き込む処理
-				PrintData();
-			}
-			//情報を読み取る処理
-			ReadMessage();
+				if (CManager::GetClient()->GetGameMode() == CClient::GAME_MODE_PLAYER)
+				{
+					//必要な情報を書き込む処理
+					PrintData();
+				}
+				//情報を読み取る処理
+				ReadMessage();
 
-			if (m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->GetRespawn() == CPlayer::RESPAWN_NONE)
-			{
-				//パートの切り替え処理
-				SwicthPart();
+				if (m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->GetRespawn() == CPlayer::RESPAWN_NONE)
+				{
+					//パートの切り替え処理
+					SwicthPart();
+				}
 			}
 		}
 	}
@@ -352,15 +355,39 @@ void CGame::Update(void)
 		}
 	}
 
-	if (CManager::GetClient() != NULL)
+	if (CMenu::GetMode() == CMenu::MODE_MULTI)
 	{
-		if (CManager::GetClient()->GetPlayerIdx() == 0)
+		if (CManager::GetClient() != NULL)
 		{
-			if (m_nBlueLinkEnergy == 0 || m_nRedLinkEnergy == 0)
+			if (CManager::GetClient()->GetPlayerIdx() == 0)
 			{
-				m_state = STATE_END;
+				if (m_nBlueLinkEnergy <= 0)
+				{
+					m_state = STATE_END;
+					CResult::SetTeamWin(CResult::TEAM_WIN_RED);
+				}
+				else if (m_nRedLinkEnergy <= 0)
+				{
+					m_state = STATE_END;
+					CResult::SetTeamWin(CResult::TEAM_WIN_BLUE);
+				}
+
 			}
 		}
+	}
+	else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+	{
+		if (m_nBlueLinkEnergy <= 0)
+		{
+			m_state = STATE_END;
+			CResult::SetTeamWin(CResult::TEAM_WIN_RED);
+		}
+		else if (m_nRedLinkEnergy <= 0)
+		{
+			m_state = STATE_END;
+			CResult::SetTeamWin(CResult::TEAM_WIN_BLUE);
+		}
+
 	}
 	// フェードの取得
 	CFade::FADE fade = CFade::GetFade();
@@ -415,6 +442,7 @@ void CGame::Update(void)
 	}
 
 	CDebugProc::Print("ゲーム");
+	CDebugProc::Print("機種：%d %d %d %d", m_aMechaType[0], m_aMechaType[1], m_aMechaType[2], m_aMechaType[3]);
 }
 
 //=============================================================================
@@ -508,8 +536,9 @@ void CGame::CreateActionUI(void)
 
 	if (NULL != m_pMouse)
 	{
-		m_pMouse->Uninit();
-		m_pMouse = NULL;
+		//m_pMouse->Uninit();
+		//m_pMouse = NULL;
+		m_pMouse->SetDisp(false);
 	}
 
 	//****************************************
@@ -625,6 +654,11 @@ void CGame::CreateStrategyUI(void)
 	{
 		m_pMouse = CMouseCursor::Create();
 	}
+
+	if (NULL != m_pMouse)
+	{
+		m_pMouse->SetDisp(true);
+	}
 }
 
 //=============================================================================
@@ -640,7 +674,6 @@ void CGame::PrintData(void)
 		if (m_pPlayer[pClient->GetPlayerIdx()] != NULL)
 		{//NULLではない場合
 			pClient->Printf(SERVER_PLAYER_DATA);
-			pClient->Printf(" ");
 
 			//プレイヤー番号を書き込む
 			pClient->Printf("%d", CManager::GetClient()->GetPlayerIdx());
@@ -738,18 +771,21 @@ void CGame::PrintData(void)
 			 if (m_state == STATE_END)
 			 {
 			 	pClient->Printf("1");
+				pClient->Printf(" ");
+				pClient->Printf("%d",CResult::GetTeamWin());
+				pClient->Printf(" ");
 			 }
 			 else
 			 {
 			 	pClient->Printf("0");
+				pClient->Printf(" ");
+
+				pClient->Printf("%d", m_nBlueLinkEnergy);
+				pClient->Printf(" ");
+				pClient->Printf("%d", m_nRedLinkEnergy);
+				pClient->Printf(" ");
+
 			 }
-			 pClient->Printf(" ");
-
-			 pClient->Printf("%d", m_nBlueLinkEnergy);
-			 pClient->Printf(" ");
-			 pClient->Printf("%d", m_nRedLinkEnergy);
-			 pClient->Printf(" ");
-
 			 //CPUのデータ情報を書き込む処理
 			 //PrintCPUData();
 
@@ -1043,14 +1079,20 @@ char *CGame::ReadPlayerData(char *pStr)
 			 nWord = CServerFunction::PopString(pStr, "");
 			 pStr += nWord;
 
-			 m_nBlueLinkEnergy = CServerFunction::ReadInt(pStr, "");
-			 nWord = CServerFunction::PopString(pStr, "");
-			 pStr += nWord;
+			 if (nState == 1)
+			 {
+				 CResult::SetTeamWin((CResult::TEAM_WIN)CServerFunction::ReadInt(pStr, ""));
+			 }
+			 else
+			 {
+				 m_nBlueLinkEnergy = CServerFunction::ReadInt(pStr, "");
+				 nWord = CServerFunction::PopString(pStr, "");
+				 pStr += nWord;
 
-			 m_nRedLinkEnergy = CServerFunction::ReadInt(pStr, "");
-			 nWord = CServerFunction::PopString(pStr, "");
-			 pStr += nWord;
-
+				 m_nRedLinkEnergy = CServerFunction::ReadInt(pStr, "");
+				 nWord = CServerFunction::PopString(pStr, "");
+				 pStr += nWord;
+			 }
 			 //pStr = ReadCPUData(pStr);
 
 			}

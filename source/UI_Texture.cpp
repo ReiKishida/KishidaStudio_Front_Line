@@ -151,7 +151,7 @@ HRESULT CUI_TEXTURE::Init(void)
 		//****************************************
 	case UIFLAME_TEAM_BLUE:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_UPPER_UI));
-		CScene2D::SetTex(0, 1, 3);
+		CScene2D::SetTex(0,1,3);
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
 
@@ -163,7 +163,7 @@ HRESULT CUI_TEXTURE::Init(void)
 
 	case UIFLAME_PLAYER_HP:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_PLAYER_FLAME));
-		CScene2D::SetTex(0, 1, 4);
+		CScene2D::SetTex(0,1,4);
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
 
@@ -215,7 +215,7 @@ HRESULT CUI_TEXTURE::Init(void)
 	case UIFLAME_RELOAD:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_RELOAD));
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-		CScene2D::SetObjType(CScene::OBJTYPE_NONE);
+		CScene2D::SetObjType(OBJTYPE_NONE);
 		break;
 
 	case UIFLAME_START:
@@ -271,6 +271,11 @@ HRESULT CUI_TEXTURE::Init(void)
 		m_colRadioMess = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		break;
 
+	case UIFLAME_TEAM_WIN:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TEAM_WIN));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		break;
+
 		//****************************************
 		// ストラテジーパート
 		//****************************************
@@ -297,28 +302,6 @@ HRESULT CUI_TEXTURE::Init(void)
 	case UIFLAME_STRATEGY_BG:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY_BG));
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.7f));
-
-		// 頂点情報の取得
-		LPDIRECT3DVERTEXBUFFER9 vtxBuff = CScene2D::GetVtxBuff();
-
-		// 頂点情報を設定
-		VERTEX_2D *pVtx;	// 頂点情報のポインタ
-
-		// 頂点バッファをロックし、頂点データへのポインタを取得
-		vtxBuff->Lock(0, 0, (void**)&pVtx, 0);
-
-		//テクスチャの座標設定
-		pVtx[0].tex = D3DXVECTOR2(0.0f, 0.0f);
-		pVtx[1].tex = D3DXVECTOR2(10.0f, 0.0f);
-		pVtx[2].tex = D3DXVECTOR2(0.0f, 10.0f);
-		pVtx[3].tex = D3DXVECTOR2(10.0f, 10.0f);
-
-		// 頂点バッファをアンロック
-		vtxBuff->Unlock();
-
-		// 頂点バッファを設定
-		CScene2D::SetVtxBuff(vtxBuff);
-
 		break;
 	}
 
@@ -344,7 +327,7 @@ void CUI_TEXTURE::Update(void)
 {
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
-																// 背景スクロールカウンター
+	// 背景スクロールカウンター
 	m_nCntBgMove++;
 
 	//****************************************
@@ -437,18 +420,18 @@ HRESULT CUI_TEXTURE3D::Init(void)
 {
 	CScene3D::Init();		// 初期化
 
-							//switch (m_UI3dTex)
-							//{
-							//case UI3DTEX_ACTION:
-							//	CScene3D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_ACTION));
-							//	CScene3D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-							//	break;
+	//switch (m_UI3dTex)
+	//{
+	//case UI3DTEX_ACTION:
+	//	CScene3D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_ACTION));
+	//	CScene3D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+	//	break;
 
-							//case UI3DTEX_STRATEGY:
-							//	CScene3D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY));
-							//	CScene3D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-							//	break;
-							//}
+	//case UI3DTEX_STRATEGY:
+	//	CScene3D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY));
+	//	CScene3D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+	//	break;
+	//}
 	return S_OK;
 }
 
