@@ -79,6 +79,7 @@ HRESULT CMouseCursor::Init()
 	// 情報の初期化
 	m_pCamera = CManager::GetCamera();
 	m_pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_setpos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_size = D3DXVECTOR3(MOUSE_WIDTH, 0.0f, MOUSE_WIDTH);
 	m_nNodeCounter = 0;
 
@@ -112,18 +113,19 @@ void CMouseCursor::Uninit(void)
 //=============================================================================
 void CMouseCursor::Update(void)
 {
+	//CDebugProc::Print("=====マウス用3Dポリゴン======\n");
+	CDebugProc::Print("3Dマップ上のマウスの座標：%.2f %.2f", m_setpos.x, m_setpos.z);
+	//CDebugProc::Print("スクリーン上のマウス座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
+
+
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
 
-														//CDebugProc::Print("=====マウス用3Dポリゴン======\n");
-														//CDebugProc::Print("カーソルの座標：%.2f %.2f", m_pos.x, m_pos.z);
-														//CDebugProc::Print("スクリーン座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
-
-														// 入力時処理
-	CMouseCursor::Input(pKeyboard, pMouse);
-
-	// 移動時処理
+	// 移動処理
 	CMouseCursor::Move(pMouse);
+
+	// 入力処理
+	CMouseCursor::Input(pKeyboard, pMouse);
 }
 
 //=============================================================================
@@ -141,47 +143,6 @@ void CMouseCursor::Draw(void)
 
 	// ライティングON
 	pDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
-}
-
-//=============================================================================
-// 入力処理
-//=============================================================================
-void CMouseCursor::Input(CInputKeyboard *pKeyboard, CInputMouse *pMouse)
-{
-	bool bSet = false;
-	D3DXVECTOR3 SetPos = D3DXVECTOR3(((int)(m_pos.x / 38)) * 38.0f, 0.0f, ((int)(m_pos.z / 36)) * 36.0f);
-
-	if (CManager::GetGame()->GetPart() == CGame::PART_STRATEGY && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true || pMouse->GetPress(DIK_LCONTROL) != true)
-	{// ストラテジーパート時に左クリックでAIの目的地を設定
-		if (CMenu::GetMode() == CMenu::MODE_MULTI)
-		{// マルチモード
-			CManager::GetGame()->GetPlayer(CManager::GetClient()->GetPlayerIdx())->GetMyAI(0)->GetSearchPos() = SetPos;
-		}
-		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
-		{//	シングルモード
-			CManager::GetGame()->GetPlayer(0)->GetMyAI(0)->GetSearchPos() = SetPos;
-		}
-	}
-
-	//if (pKeyboard->GetTrigger(DIK_F11) == true)
-	//{// F11キーでファイルをロード
-	//	CMouseCursor::FileLoad(LOAD_FILENAME);
-
-	//	// ロードしたデータをもとにノードを配置
-	//	for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
-	//	{// 全ノード数分回る
-	//		m_pNodePointer[nCntNode] = m_pNodePointer[nCntNode]->Create(m_LoadNodeData.pos[nCntNode]);
-	//		m_pNodePointer[nCntNode]->GetNodeMax()++;
-	//		m_LoadNodeData.index[nCntNode] = m_pNodePointer[nCntNode]->GetMyNumber();
-	//		for (int nCntConnectNode = 0; nCntConnectNode < m_LoadNodeData.connectNum[nCntNode]; nCntConnectNode++)
-	//		{// 接続ノード数分回る
-	//			m_pNodePointer[nCntNode]->GetConnectMax()++;
-	//			m_pNodePointer[nCntNode]->GetConnect(nCntConnectNode) = m_LoadNodeData.connectIndex[nCntNode][nCntConnectNode];
-	//		}
-
-	//		m_nNodeCounter = m_pNodePointer[nCntNode]->GetNodeMax();
-	//	}
-	//}
 }
 
 //=============================================================================
@@ -232,6 +193,43 @@ void CMouseCursor::Move(CInputMouse *pMouse)
 	// 位置・サイズの設定
 	CScene3D::SetMousePos(m_pos);
 	CScene3D::SetSize(m_size / m_pCamera->GetZoom());
+}
+
+//=============================================================================
+// 入力処理
+//=============================================================================
+void CMouseCursor::Input(CInputKeyboard *pKeyboard, CInputMouse *pMouse)
+{
+	bool bSet = false;
+
+	if (CManager::GetGame()->GetPart() == CGame::PART_STRATEGY)
+	{// ストラテジーパート時に左クリックでAIの目的地を設定
+		m_setpos = D3DXVECTOR3(((int)(m_pos.x / 38)) * 38.0f, 0.0f, ((int)(m_pos.z / 36)) * 36.0f);
+	}
+
+	if (pKeyboard->GetTrigger(DIK_F11) == true)
+	{// F11キーでファイルをロード
+		CMouseCursor::FileLoad(LOAD_FILENAME);
+
+		// ロードしたデータをもとにノードを配置
+		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+		{// 全ノード数分回る
+			if (m_pNodePointer[nCntNode] == NULL)
+			{// ノード可視化用ポリゴンがNULLじゃない
+				m_pNodePointer[nCntNode] = m_pNodePointer[nCntNode]->Create(m_LoadNodeData.pos[nCntNode]);
+				m_pNodePointer[nCntNode]->GetNodeMax()++;
+				m_LoadNodeData.index[nCntNode] = m_pNodePointer[nCntNode]->GetMyNumber();
+
+				for (int nCntConnectNode = 0; nCntConnectNode < m_LoadNodeData.connectNum[nCntNode]; nCntConnectNode++)
+				{// 接続ノード数分回る
+					m_pNodePointer[nCntNode]->GetConnectMax()++;
+					m_pNodePointer[nCntNode]->GetConnect(nCntConnectNode) = m_LoadNodeData.connectIndex[nCntNode][nCntConnectNode];
+				}
+
+				m_nNodeCounter = m_pNodePointer[nCntNode]->GetNodeMax();
+			}
+		}
+	}
 }
 
 //=============================================================================

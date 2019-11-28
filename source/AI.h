@@ -126,15 +126,13 @@ public:
 	// =============================================================
 	// ダイクストラ法によるルート探索
 	// =============================================================
-	D3DXVECTOR3 &GetSearchPos(void) { return m_searchPos; };
-
 	void AIUpdate(void);			// AIの更新
 	void Follow(void);				// 追従処理
 	void NodeSearch(bool node);		// マウス座標からノード検索
 	void AutoMove(void);			// 自動移動
 	void RootSearch(void);			// 最短経路検索
-	void RallyRootSearch(void);		// ラリーポイントでの最短経路探索
-	void Patrol(void);				// 往復用の最短経路探索
+	void RallyRootSearch(void);		// ラリーポイントでの最短経路検索
+	void PatrolRootSearch(void);	// 往復用の最短経路検索
 	void Cancel(void);				// 中断
 	void AddEdge(int first, int second, float weight, Node *node);	// エッジの追加
 	void Dijkstra(int nodeMax, int start, int end, Node *node);		// 経路探索
@@ -183,9 +181,6 @@ private:
 	int				m_nRallyEndNode[NODEPOINT_MAX];			// ラリー時の終了ノード番号
 	int				m_nRallyCount;							// クリック数
 	int				m_nRallyCountOld;						// 前回のクリック数
-
-	// ルート検索関係
-	D3DXVECTOR3		m_searchPos;							// クリック時位置
 
 	// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
