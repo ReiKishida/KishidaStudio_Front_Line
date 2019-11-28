@@ -84,35 +84,10 @@ HRESULT CResult::Init(void)
 	// 点滅
 	m_nCntFlash = RESULT_FLASH;
 
-	// 生成
+	// プレスボタン生成
 	if (m_pUITex[0] == NULL)
 	{
 		m_pUITex[0] = CUI_TEXTURE::Create(D3DXVECTOR3(1000.0f, 650.0f, 0.0f), RESULT_PRESS_WIDTH, RESULT_PRESS_HEIGHT, CUI_TEXTURE::UIFLAME_PRESSBOTTON);		// プレスボタン
-	}
-
-	// BLUE：0,1		RED：2,3
-	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
-	{
-		if (nCntPlayer == 0)
-		{
-			m_pPlayer[0] = CPlayer::Create(nCntPlayer, CGame::GetMechaType(nCntPlayer), D3DXVECTOR3(490.0f + (nCntPlayer + 100), 0.0f, 250.0f), true);
-			m_pPlayer[0]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
-		}
-		if (nCntPlayer == 1)
-		{
-			m_pPlayer[1] = CPlayer::Create(nCntPlayer, CGame::GetMechaType(nCntPlayer), D3DXVECTOR3(490.0f + (nCntPlayer + 100), 0.0f, 320.0f), true);
-			m_pPlayer[1]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
-		}
-		if (nCntPlayer == 2)
-		{
-			m_pPlayer[2] = CPlayer::Create(nCntPlayer, CGame::GetMechaType(nCntPlayer), D3DXVECTOR3(290.0f + (nCntPlayer + 100), 0.0f, 220.0f), true);
-			m_pPlayer[2]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
-		}
-		if (nCntPlayer == 3)
-		{
-			m_pPlayer[3] = CPlayer::Create(nCntPlayer, CGame::GetMechaType(nCntPlayer), D3DXVECTOR3(290.0f + (nCntPlayer + 100), 0.0f, 260.0f), true);
-			m_pPlayer[3]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
-		}
 	}
 
 	return S_OK;
@@ -171,6 +146,21 @@ void CResult::Update(void)
 		{
 			m_pUITex[1] = CUI_TEXTURE::Create(D3DXVECTOR3(250.0f, 100.0f, 0.0f), RESULT_LOGO_WIDTH, RESULT_LOGO_HEIGHT, CUI_TEXTURE::UIFLAME_TEAM_WIN);		// チームロゴ
 			m_pUITex[1]->SetTex(0, 1, TEAM_WIN_LOGO);
+
+			if (m_pPlayer[0] == NULL || m_pPlayer[1] == NULL || m_pPlayer[2] == NULL || m_pPlayer[3] == NULL)
+			{
+				// BLUEが手前
+				m_pPlayer[0] = CPlayer::Create(0, CGame::GetMechaType(0), D3DXVECTOR3(590.0f, 0.0f, 250.0f), true);
+				m_pPlayer[0]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+				m_pPlayer[1] = CPlayer::Create(1, CGame::GetMechaType(1), D3DXVECTOR3(590.0f, 0.0f, 320.0f), true);
+				m_pPlayer[1]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+
+				// REDが奥
+				m_pPlayer[2] = CPlayer::Create(2, CGame::GetMechaType(2), D3DXVECTOR3(390.0f, 0.0f, 220.0f), true);
+				m_pPlayer[2]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+				m_pPlayer[3] = CPlayer::Create(3, CGame::GetMechaType(3), D3DXVECTOR3(390.0f, 0.0f, 260.0f), true);
+				m_pPlayer[3]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+			}
 		}
 		break;
 
@@ -179,6 +169,21 @@ void CResult::Update(void)
 		{
 			m_pUITex[1] = CUI_TEXTURE::Create(D3DXVECTOR3(250.0f, 100.0f, 0.0f), RESULT_LOGO_WIDTH, RESULT_LOGO_HEIGHT, CUI_TEXTURE::UIFLAME_TEAM_WIN);		// チームロゴ
 			m_pUITex[1]->SetTex(1, 1, TEAM_WIN_LOGO);
+		}
+
+		if (m_pPlayer[0] == NULL || m_pPlayer[1] == NULL || m_pPlayer[2] == NULL || m_pPlayer[3] == NULL)
+		{
+			// BLUEが奥
+			m_pPlayer[0] = CPlayer::Create(0, CGame::GetMechaType(0), D3DXVECTOR3(390.0f, 0.0f, 220.0f), true);
+			m_pPlayer[0]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+			m_pPlayer[1] = CPlayer::Create(1, CGame::GetMechaType(1), D3DXVECTOR3(390.0f, 0.0f, 260.0f), true);
+			m_pPlayer[1]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+
+			// REDが手前
+			m_pPlayer[2] = CPlayer::Create(2, CGame::GetMechaType(2), D3DXVECTOR3(590.0f, 0.0f, 250.0f), true);
+			m_pPlayer[2]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+			m_pPlayer[3] = CPlayer::Create(3, CGame::GetMechaType(3), D3DXVECTOR3(590.0f, 0.0f, 320.0f), true);
+			m_pPlayer[3]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
 		}
 		break;
 	}
