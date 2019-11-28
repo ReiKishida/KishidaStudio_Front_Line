@@ -125,7 +125,6 @@ HRESULT CGame::Init(void)
 
 	// 読み込み
 	CMotionManager::Load();
-	CParData::Load();
 
 	m_pField = CModel::Create();
 	m_pField->SetModel(FIELD_MODEL_NAME);
@@ -249,7 +248,6 @@ void CGame::Uninit(void)
 	CMotionManager::Unload();
 	CModelSetManager::Unload();
 	CEnemy::Unload();
-	CParData::Unload();
 
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
@@ -354,16 +352,28 @@ void CGame::Update(void)
 		}
 	}
 
-	if (CManager::GetClient() != NULL)
+	if (CMenu::GetMode() == CMenu::MODE_MULTI)
 	{
-		if (CManager::GetClient()->GetPlayerIdx() == 0)
+		if (CManager::GetClient() != NULL)
 		{
-			if (m_nBlueLinkEnergy == 0 || m_nRedLinkEnergy == 0)
+			if (CManager::GetClient()->GetPlayerIdx() == 0)
 			{
-				m_state = STATE_END;
+				if (m_nBlueLinkEnergy == 0 || m_nRedLinkEnergy == 0)
+				{
+					m_state = STATE_END;
+				}
 			}
 		}
 	}
+	else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+	{
+		if (m_nBlueLinkEnergy <= 70 || m_nRedLinkEnergy <= 70)
+		{
+			m_state = STATE_END;
+			CResult::SetTeamWin(CResult::TEAM_WIN_BLUE);
+		}
+	}
+
 	// フェードの取得
 	CFade::FADE fade = CFade::GetFade();
 
