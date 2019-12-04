@@ -35,7 +35,7 @@
 #include "menu.h"
 #include "AI.h"
 #include "particle.h"
-
+#include "search.h"
 //==================================
 // マクロ定義
 //==================================
@@ -43,6 +43,11 @@
 #define LIGHT_FILE				"data/TEXT/PLAYER/light/model_light.txt"
 #define HEAVY_FILE				"data/TEXT/PLAYER/heavy/model_heavy.txt"
 #define SNIPE_FILE				"data/TEXT/PLAYER/snipe/model_snipe.txt"
+//戦闘用
+#define ASSULT_BATTLE_FILE		"data/TEXT/PLAYER/assult/battle_assult.txt"
+#define LIGHT_BATTLE_FILE		"data/TEXT/PLAYER/light/battle_light.txt"
+#define HEAVY_BATTLE_FILE		"data/TEXT/PLAYER/heavy/battle_heavy.txt"
+#define SNIPE_BATTLE_FILE		"data/TEXT/PLAYER/snipe/battle_snipe.txt"
 
 #define PLAYER_DAMAGE_TIME		(60)		// ダメージを受けた時の無敵時間
 #define PLAYER_DAMAGE_MOVE		(40)		// ダメージを受けてから動けるようになるまでの時間
@@ -74,6 +79,10 @@
 #define DATA_REFERENCE_TIME	(5)			// データの参照を行う間隔(回)
 #define PLAYER_BREAKTIME	(1)			// 休憩時間(フレーム)
 #define PLAYER_FINALPOINT_BREAKTIME	(120)	// 最終地点の休憩時間(フレーム)
+
+#define MAX_CHAR (254)					//読み取る文字数
+#define MAX_SEARCH (4)	//センサー数
+#define FIND_FIND_CHARACTER_PRIORITY (4)				//探すプレイヤーの優先順位
 
 //==================================
 // 静的メンバ変数宣言
@@ -119,7 +128,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_pUpperMotion = NULL;
 	m_pLowerMotion = NULL;
 	m_pReticle = NULL;
-	m_pShadow = NULL;
+	//m_pShadow = NULL;
 	m_nPlayerIdx = 0;
 	m_posOld = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_bShoot = false;
@@ -148,6 +157,18 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_bReload = false;
 	m_nRespawnTimer = 0;
 	m_bAllyCol = false;
+
+	//AI戦闘系の変数
+	m_pSearch = NULL;
+	m_fSearchLength = 0.0f;
+	m_fSearchAngle = 0.0f;
+	m_SearchVec_0 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_SearchVec_1 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_SearchVec_2 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_fRange = 0.0f;
+	m_fRotDestUpper = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_bFind = false;
+
 
 	for (int nCnt = 0; nCnt < AI_MAX; nCnt++)
 	{
@@ -188,7 +209,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 //=========================================
 // デストラクタ
 //=========================================
-CPlayer::~CPlayer(){}
+CPlayer::~CPlayer() {}
 
 //=========================================
 // 初期化処理
@@ -382,9 +403,9 @@ HRESULT CPlayer::Init(void)
 		m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);	// ニュートラルモーションを設定
 	}
 
-	if (NULL == m_pShadow)
+	//if (NULL == m_pShadow)
 	{// 影の生成
-		//m_pShadow = CShadow::Create(&m_pos);
+	 //m_pShadow = CShadow::Create(m_pos, PLAYER_PRIORITY - 1);
 	}
 
 	if (CManager::GetMode() == CManager::MODE_GAME)
@@ -549,16 +570,19 @@ HRESULT CPlayer::Init(void)
 
 	if (!m_bConnect)
 	{// 人間が接続していない場合
+		LoadBattleFile();
+		m_fRotDestUpper = D3DXVECTOR3(D3DX_PI * 0.5f, D3DX_PI, 0.0f);
+
 		// マップ関係==============================================================================
 		CPlayer::FileLoad(LOAD_FILENAME);
 
 		// 開始時点のノードの初期化
 		float fMinLength = 100000, fLength = 100000;	// 差分系
 
-		// 開始時点のノードの初期化
+														// 開始時点のノードの初期化
 		for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
 		{// ノードの数だけ回る
-			// 差分を求める
+		 // 差分を求める
 			fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
 
 			if (fMinLength > fLength)
@@ -598,11 +622,11 @@ void CPlayer::Uninit(void)
 		m_pReticle = NULL;
 	}
 
-	if (m_pShadow != NULL)
-	{// 影がNULLじゃない
-		m_pShadow->Uninit();
-		m_pShadow = NULL;
-	}
+	//if (m_pShadow != NULL)
+	//{// 影がNULLじゃない
+	//	m_pShadow->Uninit();
+	//	m_pShadow = NULL;
+	//}
 
 	if (NULL != m_pUpperMotion)
 	{// モーションクラスの破棄
@@ -614,6 +638,24 @@ void CPlayer::Uninit(void)
 	{// モーションクラスの破棄
 		m_pLowerMotion->Uninit();
 		m_pLowerMotion = NULL;
+	}
+
+
+	if (NULL != m_pSearch)
+	{
+		for (int nCntSearch = 0; nCntSearch < MAX_SEARCH; nCntSearch++)
+		{// モデルの破棄
+			if (NULL != m_pSearch[nCntSearch])
+			{
+				m_pSearch[nCntSearch]->Uninit();
+				delete m_pSearch[nCntSearch];
+				m_pSearch[nCntSearch] = NULL;
+			}
+		}
+
+		// メモリの開放
+		delete[] m_pSearch;
+		m_pSearch = NULL;
 	}
 
 	if (NULL != m_pModel)
@@ -718,28 +760,6 @@ void CPlayer::Update(void)
 						// 弾を撃つ
 						Shoot();
 
-						if (m_bChat == false)
-						{
-							//ラジオチャットの生成
-							ChatBotton();
-						}
-						else if (m_bChat == true)
-						{
-							ChatMess(m_bChat);
-						}
-
-						if (m_bAllyChat == true)
-						{
-							if (m_pUITexAllyRadio == NULL)
-							{
-								m_pUITexAllyRadio = CUI_TEXTURE::Create(D3DXVECTOR3(1280.0f, 550.0f, 0.0f), RADIOCHAT_MESS_WIDTH, RADIOCHAT_MESS_HEIGHT, CUI_TEXTURE::UIFLAME_RADIOCHAT_MESS);
-								m_pUITexAllyRadio->SetTex((int)m_allyRadiochat, 1, RADIOCHAT_BOTTON_PATTERN);
-							}
-							else if (m_pUITexAllyRadio != NULL)
-							{
-								AllyChatMess();
-							}
-						}
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -785,11 +805,6 @@ void CPlayer::Update(void)
 					CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 					CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
 
-					if (pKeyboard->GetTrigger(DIK_K) == true)
-					{
-						Damage(m_nLifeMax);
-					}
-
 					if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
 					{	// ライフある && 戦闘開始状態の時
 						if (m_nDiff > 0)
@@ -811,15 +826,6 @@ void CPlayer::Update(void)
 						// 重力
 						//m_move.y -= GRAVITY;
 
-						if (m_bChat == false)
-						{
-							//ラジオチャットの生成
-							ChatBotton();
-						}
-						else if(m_bChat == true)
-						{
-							ChatMess(m_bChat);
-						}
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -868,6 +874,7 @@ void CPlayer::Update(void)
 
 					// AIの更新処理
 					AIUpdate();
+					Angle();
 				}
 
 				if (m_Respawn == RESPAWN_DEATH)
@@ -898,7 +905,7 @@ void CPlayer::Draw(void)
 
 	D3DXMATRIX mtxRot, mtxTrans;	// 計算用マトリックス
 
-	// ワールドマトリックスの初期化
+									// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_mtxWorld);
 
 	// 回転を反映
@@ -916,6 +923,14 @@ void CPlayer::Draw(void)
 	{// モデルの描画処理
 		m_pModel[nCntModel]->Draw();
 	}
+
+	if (m_bConnect != true)
+	{
+		for (int nCntSearch = 0; nCntSearch < MAX_SEARCH; nCntSearch++)
+		{// モデルの描画処理
+			m_pSearch[nCntSearch]->Draw();
+		}
+	}
 }
 
 //=========================================
@@ -929,7 +944,10 @@ void CPlayer::Movement(void)
 	bool bKey = false;				// ボタン押下フラグ
 	float fRotY = CManager::GetCamera()->GetRotY();
 	float fDirMove;
-
+	if (pKeyboard->GetTrigger(DIK_7))
+	{
+		Damage(m_nLifeMax);
+	}
 	CDirectInput *pDirectInput = CManager::GetDirectInput();	//DirectInputの取得
 	CDirectInput::GamePad *DirectInputStick = pDirectInput->GetgamePadStick();
 
@@ -1026,7 +1044,7 @@ void CPlayer::Movement(void)
 
 	// マップの当たり判定
 	if (CCollision::Collision(&pos, m_posOld, m_vtxMax, m_vtxMin)) { m_pos = pos; }
-	else{ m_pos += m_move; }
+	else { m_pos += m_move; }
 }
 
 //=========================================
@@ -1178,6 +1196,52 @@ void CPlayer::Angle(void)
 		D3DXVECTOR3 rot = m_pModel[1]->GetRot();
 		rot = D3DXVECTOR3(-rotCamera.x + (D3DX_PI * 0.5f), m_fCameraAngle - (fAngle - D3DX_PI), rot.z);
 		m_pModel[1]->SetRot(rot);
+	}
+
+
+	if (!m_bConnect)
+	{
+		// 角度を求める
+		D3DXVECTOR3 rotCamera = m_fRotDestUpper;
+		float fDiffRot;
+		float fAngle = D3DX_PI + rotCamera.y;
+
+		// 目的の角度の調節
+		if (m_fRotDest > D3DX_PI) { m_fRotDest -= D3DX_PI * 2.0f; }
+		if (m_fRotDest < -D3DX_PI) { m_fRotDest += D3DX_PI * 2.0f; }
+
+		// 目的の角度への差分
+		fDiffRot = m_fRotDest - m_rot.y;
+		if (fDiffRot > D3DX_PI) { fDiffRot -= D3DX_PI * 2.0f; }
+		if (fDiffRot < -D3DX_PI) { fDiffRot += D3DX_PI * 2.0f; }
+
+		// 角度の更新
+		m_rot.y += fDiffRot * 0.05f;
+		if (m_rot.y > D3DX_PI) { m_rot.y -= D3DX_PI * 2.0f; }
+		if (m_rot.y < -D3DX_PI) { m_rot.y += D3DX_PI * 2.0f; }
+
+		m_fCameraAngle = fAngle - m_rot.y;
+
+		// 差分の調節
+		if (m_fCameraAngle > D3DX_PI) { m_fCameraAngle -= D3DX_PI * 2.0f; }
+		if (m_fCameraAngle < -D3DX_PI) { m_fCameraAngle += D3DX_PI * 2.0f; }
+
+		if (m_fRotDest <= D3DX_PI * 0.5f && m_fRotDest >= D3DX_PI * -0.5f)
+		{// 下半身の動きを進行方向に合わせる
+			D3DXVECTOR3 rot = m_pModel[0]->GetRot();
+			m_pModel[0]->SetRot(D3DXVECTOR3(rot.x, m_rot.y + m_fCameraAngle, rot.z));
+			rot = m_pModel[1]->GetRot();
+			rot = D3DXVECTOR3(-rotCamera.x + (D3DX_PI * 0.5f), m_fCameraAngle - fAngle, rot.z);
+			m_pModel[1]->SetRot(rot);
+		}
+		else
+		{// 斜め後ろ向きのとき
+			D3DXVECTOR3 rot = m_pModel[1]->GetRot();
+			rot = D3DXVECTOR3(-rotCamera.x + (D3DX_PI * 0.5f), m_fCameraAngle - (fAngle - D3DX_PI), rot.z);
+			m_pModel[1]->SetRot(rot);
+		}
+
+
 	}
 }
 
@@ -1338,7 +1402,7 @@ D3DXVECTOR3 CPlayer::CalcScreenToWorld(float fScreenX, float fScreenY)
 //=========================================
 void CPlayer::Reload(bool bReload)
 {
-	if(bReload == true)
+	if (bReload == true)
 	{
 		m_nCntReRoad++;		// カウンター加算
 
@@ -1802,6 +1866,379 @@ void CPlayer::AllyChatMess(void)
 }
 
 //=============================================================================
+//	戦闘用テキスト読み込み
+//=============================================================================
+void CPlayer::LoadBattleFile(void)
+{
+	FILE *pFile;									// 読み込むファイル
+	char acLine[MAX_CHAR];							// 1行読み込む変数
+	char acData[MAX_CHAR];							// 1文読み込む変数
+
+
+	char *pBattleFileName = "";	//読み込むテキスト
+	if (CMechaSelect::MECHATYPE_ASSULT == m_mecha) { pBattleFileName = ASSULT_BATTLE_FILE; }
+	else if (CMechaSelect::MECHATYPE_LIGHT == m_mecha) { pBattleFileName = LIGHT_BATTLE_FILE; }
+	else if (CMechaSelect::MECHATYPE_HEAVY == m_mecha) { pBattleFileName = HEAVY_BATTLE_FILE; }
+	else if (CMechaSelect::MECHATYPE_SHOOTER == m_mecha) { pBattleFileName = SNIPE_BATTLE_FILE; }
+
+	// ファイルを開く
+	pFile = fopen(pBattleFileName, "r");
+
+
+	if (pFile != NULL)
+	{
+		sscanf(&acLine[0], "%s", &acData);				// 文をデータにコピー
+
+		while (fgets(&acLine[0], MAX_CHAR, pFile) != NULL)
+		{
+			sscanf(&acLine[0], "%s", &acData);				// 文をデータにコピー
+
+			if (memcmp(acData, "SCRIPT", 6) == 0)
+			{// "SCRIPT"の文字列があったら
+				while (strcmp(acData, "END_SCRIPT") != 0)
+				{// "END_SCRIPT"が来るまで情報を取得し続ける
+					fgets(&acLine[0], MAXCHAR, pFile);					// 行を取得
+					sscanf(&acLine[0], "%s", &acData);					// データをコピー
+					if (memcmp(acData, "CHARACTERSET", 12) == 0)
+					{// "CHARACTERSET"の文字列があったら
+
+						m_pSearch = new CSearch*[MAX_SEARCH];
+						for (int nCntSearch = 0; nCntSearch < MAX_SEARCH; nCntSearch++)
+						{//数分ループ
+							m_pSearch[nCntSearch] = CSearch::Create(&m_pModel[1]->GetMtxWorld());
+
+							m_pSearch[nCntSearch]->SetParent(NULL);
+						}
+
+						while (strcmp(acData, "END_CHARACTERSET") != 0)
+						{// "END_CHARACTERSET"が来るまで情報を取得し続ける
+							fgets(&acLine[0], MAXCHAR, pFile);					// 行を取得
+							sscanf(&acLine[0], "%s", &acData);					// データをコピー
+							if (strcmp(acData, "SEARCH_LENGTH") == 0)
+							{// SEARCH_LENGTHがあったら
+								sscanf(&acLine[0], "%s %s %f", &acData[0], &acData[0], &m_fSearchLength);	// 認識距離
+								for (int nCntSearch = 0; nCntSearch < 3; nCntSearch++)
+								{//数分ループ
+									m_pSearch[nCntSearch]->SetPos(D3DXVECTOR3(0.0f, 0.0f, -m_fSearchLength));
+								}
+								m_pSearch[3]->SetPos(D3DXVECTOR3(0.0f, 0.0f, 150.0f));
+							}
+							if (strcmp(acData, "SEARCH_ANGLE") == 0)
+							{// SEARCH_ANGLEがあったら
+								float rot;
+								sscanf(&acLine[0], "%s %s %f", &acData[0], &acData[0], &rot);	// 認識角度
+																								//テキストの角度通りに代入する
+								m_fSearchAngle = (D3DX_PI * 2 / 360.0f * rot);
+								for (int nCntSearch = 1; nCntSearch < 3; nCntSearch++)
+								{//数分ループ
+									if (nCntSearch = 1)
+									{
+										m_pSearch[nCntSearch]->SetRot(D3DXVECTOR3(0.0f, m_fSearchAngle, 0.0f));
+									}
+									if (nCntSearch = 2)
+									{
+										m_pSearch[nCntSearch]->SetRot(D3DXVECTOR3(0.0f, -m_fSearchAngle, 0.0f));
+									}
+								}
+							}
+						}
+					}
+				}
+			}//SCRIPT
+		}//while
+		fclose(pFile);// 開いたファイルを閉じる
+	}//ファイルが開けてたら
+	else
+	{// ファイルがないとき
+		MessageBox(0, "ファイルがありません", "戦闘用テキスト", MB_YESNO);
+	}
+}
+
+
+//=============================================================================
+//	探索
+//=============================================================================
+bool CPlayer::Distance(void)
+{
+	bool bFind = false;
+
+	D3DXMATRIX mtxSearch1 = m_pSearch[1]->GetMtxWorld();
+	D3DXMATRIX mtxSearch2 = m_pSearch[2]->GetMtxWorld();
+
+
+	//空のベクトルに代入
+	D3DXVECTOR3 VecPos_0 = D3DXVECTOR3(mtxSearch1._41, mtxSearch1._42, mtxSearch1._43);//左側
+	D3DXVECTOR3 VecPos_1 = D3DXVECTOR3(mtxSearch2._41, mtxSearch2._42, mtxSearch2._43);//右側
+
+	D3DXVECTOR3 EmpVec_0;//左側
+	D3DXVECTOR3 EmpVec_1;//右側
+	D3DXVECTOR3 EmpVec_2;//左右間
+
+	D3DXVECTOR3 Vec_C_P;//CPUとプレイヤーのベクトル
+	D3DXVECTOR3 Vec_0_P;//点０とプレイヤーのベクトル
+	D3DXVECTOR3 Vec_1_P;//点１とプレイヤーのベクトル
+
+
+	float fCrossProduct0;//外積計算用
+	float fCrossProduct1;//外積計算用
+	float fCrossProduct2;//外積計算用
+
+
+						 // 敵を探す
+	CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
+	CScene *pSceneNext = NULL;
+	while (pScene != NULL)
+	{// NULLになるまでループ
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
+
+		if (CScene::OBJTYPE_PLAYER == objType)
+		{//プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pScene;
+			int nTeam = pPlayer->GetTeam();
+			int nIdxPlayer = pPlayer->GetPlayerIdx();
+			if (m_nTeam != nTeam)
+			{//チームが違うとき
+			 //認識用ベクトルの計算
+				m_SearchVec_0 = CSearch::Sub_Vector(VecPos_1, m_pos);
+				EmpVec_0 = CSearch::Sub_Vector(pPlayer->GetPos(), VecPos_1);
+
+				m_SearchVec_1 = CSearch::Sub_Vector(VecPos_0, VecPos_1);
+				EmpVec_1 = CSearch::Sub_Vector(pPlayer->GetPos(), VecPos_0);
+
+				m_SearchVec_2 = CSearch::Sub_Vector(m_pos, VecPos_0);
+				EmpVec_2 = CSearch::Sub_Vector(pPlayer->GetPos(), m_pos);
+
+				//外積計算
+				fCrossProduct0 = (m_SearchVec_0.x * EmpVec_0.z) - (m_SearchVec_0.z * EmpVec_0.x);
+				fCrossProduct1 = (m_SearchVec_1.x * EmpVec_1.z) - (m_SearchVec_1.z * EmpVec_1.x);
+				fCrossProduct2 = (m_SearchVec_2.x * EmpVec_2.z) - (m_SearchVec_2.z * EmpVec_2.x);
+
+
+
+				//CDebugProc::Print("CPUベクトル１：%.2f %.2f %.2f", m_SearchVec_0.x, m_SearchVec_0.y, m_SearchVec_0.z);
+				//CDebugProc::Print("CPUベクトル２：%.2f %.2f %.2f", m_SearchVec_1.x, m_SearchVec_1.y, m_SearchVec_1.z);
+				//CDebugProc::Print("CPUベクトル３：%.2f %.2f %.2f", m_SearchVec_2.x, m_SearchVec_2.y, m_SearchVec_2.z);
+
+				//CDebugProc::Print("fCrossProduct0：%.2f", fCrossProduct0);
+				//CDebugProc::Print("fCrossProduct1：%.2f", fCrossProduct1);
+				//CDebugProc::Print("fCrossProduct2：%.2f", fCrossProduct2);
+
+
+				if ((fCrossProduct0 > 0.0f && fCrossProduct1 > 0.0f && fCrossProduct2 > 0.0f) || (fCrossProduct0 < 0.0f && fCrossProduct1 < 0.0f && fCrossProduct2 < 0.0f))
+				{//三角形の内側に敵がいる
+					bFind = true;
+					return bFind;
+				}
+				else
+				{
+					bFind = false;
+				}
+
+				CDebugProc::Print("bFind = %d", bFind);
+			}
+		}
+		// 次のオブジェクトを見る
+		pScene = pSceneNext;
+	}
+
+	return bFind;
+}
+
+//=============================================================================
+//	先頭
+//=============================================================================
+void CPlayer::Battle(void)
+{
+	CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
+	CScene *pSceneNext = NULL;
+	D3DXVECTOR3 dispertion;								// ブレ
+
+	while (pScene != NULL)
+	{// NULLになるまでループ
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
+
+		if (CScene::OBJTYPE_PLAYER == objType)
+		{//プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pScene;
+			int nTeam = pPlayer->GetTeam();
+			if (m_nTeam != nTeam)
+			{//チームが違うとき
+
+				if (rand() % 20 == 0)
+				{
+					//弾撃ち
+					CpuShoot();
+				}
+
+			}//チームが違うとき
+		}//プレイヤーオブジェクトのとき
+		 // 次のオブジェクトを見る
+		pScene = pSceneNext;
+	}
+}
+
+//=============================================================================
+//	移動
+//=============================================================================
+void CPlayer::BattleMovent(void)
+{
+	m_posOld = m_pos;
+	bool bKey = false;				// ボタン押下フラグ
+	float fDirMove;
+
+	// 敵を探す
+	CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
+	CScene *pSceneNext = NULL;
+	D3DXVECTOR3 dispertion;								// ブレ
+
+	while (pScene != NULL)
+	{// NULLになるまでループ
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
+
+		if (CScene::OBJTYPE_PLAYER == objType)
+		{//プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pScene;
+			int nTeam = pPlayer->GetTeam();
+			int IdxPlayer = pPlayer->GetPlayerIdx();
+			if (m_nTeam != nTeam)
+			{//チームが違うとき
+
+				m_fRotDestUpper.y = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);			//上半身の方向
+
+
+				fDirMove = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);			//移動方向
+
+				bKey = true;
+
+			}//チームが違うとき
+		}//プレイヤーオブジェクトのとき
+
+		 // 次のオブジェクトを見る
+		pScene = pSceneNext;
+	}
+
+	if (bKey)
+	{// 移動量の加算
+		m_move = D3DXVECTOR3(sinf(fDirMove), 0.0f, cosf(fDirMove)) * 3.0f;
+	}
+
+	if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
+	{// モーションクラスが使われている
+		float fDiffX = (float)CManager::GetInputMouse()->GetDiffPointX();
+		if (bKey)
+		{// 移動モーション
+			if (fDirMove >= D3DX_PI * 0.75f || fDirMove <= D3DX_PI * -0.75f)
+			{// バックラン
+				m_pUpperMotion->SetMotion(CMotionManager::TYPE_BACK);
+				m_pLowerMotion->SetMotion(CMotionManager::TYPE_BACK);
+			}
+			else
+			{// 通常移動
+				m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
+				m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
+			}
+		}
+		else if (fDiffX == 0.0f)
+		{// ニュートラルモーション
+			m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+			m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+		}
+		else if (fDiffX < 10.0f || fDiffX > -10.0f)
+		{// 移動モーション
+			m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
+		}
+	}
+
+	m_move.x += (0 - m_move.x) * 0.4f;
+	m_move.z += (0 - m_move.z) * 0.4f;
+
+	D3DXVECTOR3 pos = m_pos + m_move;
+
+	// マップの当たり判定
+	if (CCollision::Collision(&pos, m_posOld, m_vtxMax, m_vtxMin)) { m_pos = pos; }
+	else { m_pos += m_move; }
+}
+
+//=============================================================================
+//	たまたま
+//=============================================================================
+void CPlayer::CpuShoot(void)
+{
+	D3DXVECTOR3 dispertion;								// ブレ
+
+														// 弾の発射間隔
+	m_nCntShoot = (m_nCntShoot + 1) % 7;
+
+	if (m_nRemBullet > 0)
+	{
+		if ((m_mecha != CMechaSelect::MECHATYPE_LIGHT && !m_bShootButton) || (m_mecha == CMechaSelect::MECHATYPE_LIGHT &&m_nCntShoot == 1))
+		{
+			for (int nCntShoots = 0; nCntShoots < m_nNumShoot; nCntShoots++)
+			{
+				// カメラの角度と注視点を取得
+				D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
+				D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+
+				// レティクル（目的の位置）の取得
+				D3DXMATRIX MtxSearch = m_pSearch[0]->GetMtxWorld();
+				D3DXVECTOR3 posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
+				if (m_nDispertion != 0)
+				{// ブレが０でないとき
+					dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
+					posReticle += dispertion;
+				}
+
+				// 射出口の位置の取得
+				D3DXMATRIX mtxCanon = m_pModel[2]->GetMtxWorld();
+				D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
+
+				// 水平方向の角度の計算
+				m_pAngle[nCntShoots * 2] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
+				m_pAngleV[nCntShoots * 2] = rotCamera.x;
+				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
+
+				// 弾の生成
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam);
+
+				// レティクル（目的の位置）の取得
+				posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
+				if (m_nDispertion != 0)
+				{// ブレが０でないとき
+					dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
+					posReticle += dispertion;
+				}
+
+				// 射出口の位置の取得
+				mtxCanon = m_pModel[3]->GetMtxWorld();
+				posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
+
+				// 水平方向の角度の計算
+				m_pAngle[nCntShoots * 2 + 1] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
+				m_pAngleV[nCntShoots * 2 + 1] = rotCamera.x;
+				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
+
+				// 弾の生成
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam);
+
+				m_bShoot = true;
+			}
+
+			m_nRemBullet--;
+		}
+		else
+		{
+			m_bShoot = false;
+		}
+	}
+
+	// リロード処理
+	//Reload();
+}
+
+//=============================================================================
 //	AI更新処理
 //=============================================================================
 void CPlayer::AIUpdate(void)
@@ -1817,8 +2254,28 @@ void CPlayer::AIUpdate(void)
 	//CDebugProc::Print("ゴールした回数: %d\n", m_nGoalCount);
 	//CDebugProc::Print("\n");
 
-	// 自動移動処理
-	CPlayer::AutoMove();
+	for (int nCntSearch = 0; nCntSearch < MAX_SEARCH; nCntSearch++)
+	{// 探索の更新処理
+		m_pSearch[nCntSearch]->Update();
+	}
+
+
+	m_bFind = Distance();
+	if (m_bFind == true)
+	{
+		//戦闘時の移動処理
+		BattleMovent();
+
+		//戦闘の処理
+		Battle();
+	}
+	else
+	{
+		// 自動移動処理
+		CPlayer::AutoMove();
+	}
+	//CDebugProc::Print("m_bFind: %d", m_bFind);
+
 }
 
 //=============================================================================
@@ -1842,7 +2299,9 @@ void CPlayer::AutoMove()
 		bMove = true;
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
-		m_rot.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
+		//m_rot.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
+		m_fRotDestUpper.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) /*+ D3DX_PI*/;
+
 	}
 	else if (m_nBreaktime < 0)
 	{// 移動中
@@ -1859,7 +2318,7 @@ void CPlayer::AutoMove()
 			m_nCountPoint = -1;	// 目的までの移動回数の初期化
 			m_nGoalCount++;		// ゴールした回数を増やす
 
-			// ポイント検索
+								// ポイント検索
 			CPlayer::NodeSearch();
 			// ポイントへの経路探索
 			CPlayer::RootSearch();
@@ -1882,7 +2341,9 @@ void CPlayer::AutoMove()
 
 		if (m_nBreaktime == PLAYER_FINALPOINT_BREAKTIME - 1 || m_nBreaktime % (PLAYER_FINALPOINT_BREAKTIME / m_NodeData.connectNum[m_nStartNode]) == 0)
 		{// 繋がってるノードの方向すべてを見る
-			m_rot.y = VigilanceRot[m_nVigilanceCount];
+		 //m_rot.y = VigilanceRot[m_nVigilanceCount];
+			m_fRotDestUpper.y = VigilanceRot[m_nVigilanceCount] + D3DX_PI;
+
 			m_nVigilanceCount++;
 
 			if (m_nVigilanceCount >= m_NodeData.connectNum[m_nStartNode])
@@ -1896,13 +2357,13 @@ void CPlayer::AutoMove()
 	{// モーションクラスが使われている
 		if (bMove)
 		{// 移動している
-			// 移動モーション
+		 // 移動モーション
 			m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
 			m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
 		}
 		else
 		{// 移動していない
-			// ニュートラルモーション
+		 // ニュートラルモーション
 			m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
 			m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
 		}
@@ -2248,7 +2709,5 @@ void CPlayer::CreateRespawnPosIcon(void)
 			m_pUIRespawnPosIcon[3]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
 		}
 		break;
-		break;
 	}
-
 }

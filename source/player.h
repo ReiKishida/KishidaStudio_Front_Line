@@ -18,9 +18,8 @@
 #define TEAM_RED			(100)
 #define PLAYER_UI_NUM		(2)		// 数字UIの枚数
 #define COLLECTIONDATA_MAX	(12)	// 収集するデータの最大数
-#define RANDOM_MOVE_POINT	(10)	// ランダム移動の地点数
+#define RANDOM_MOVE_POINT	(11)	// ランダム移動の地点数
 #define ENEMY_PLAYER_MAX	(2)		// 敵プレイヤーの数
-#define NODE_MAX			(256)	// ノードの最大数
 
 // リロード
 #define RELOAD_TEX									(2)			// リロードで使用するテクスチャ数
@@ -57,6 +56,7 @@ class CMouseCursor2D;
 class CButton2D;
 class CInputMouse;
 class CAIMecha;
+class CSearch;
 
 //*****************************************************************************
 // クラス定義
@@ -112,7 +112,7 @@ public:
 		std::vector<int> to;		// どのノードとつながっているか
 		std::vector<float> cost;	// エッジのコスト
 
-		// ダイクストラ法のために必要な情報
+									// ダイクストラ法のために必要な情報
 		bool done;		// 確定ノードかどうか
 		float minCost;	// スタートノードからの最小コスト
 		int from;		// どのノードから来たか
@@ -121,10 +121,10 @@ public:
 	typedef struct
 	{
 		int nodeMax;							// ノードの総数
-		int	index[NODE_MAX];					// 自分のノード番号
-		int connectNum[NODE_MAX];				// 接続ノード数
-		int connectIndex[NODE_MAX][NODE_MAX];	// 接続ノード番号
-		D3DXVECTOR3 pos[NODE_MAX];				// 各ノードの位置
+		int	index[NODEPOINT_MAX];					// 自分のノード番号
+		int connectNum[NODEPOINT_MAX];				// 接続ノード数
+		int connectIndex[NODEPOINT_MAX][CONNECT_MAX];	// 接続ノード番号
+		D3DXVECTOR3 pos[NODEPOINT_MAX];				// 各ノードの位置
 	}NodeState;
 
 	// =============================================================
@@ -222,8 +222,15 @@ private:
 	void SelectRespawn(void);						// リスポーン位置選択処理
 	void ChatBotton(void);							// ラジオチャットボタンの生成
 	void ChatMess(bool bChat);					// ボタンが押されて、メッセージ表示
-	void AllyChatMess(void);
 	void CreateRespawnPosIcon(void);
+	void AllyChatMess(void);
+
+	//戦闘系の処理
+	void LoadBattleFile(void);	//戦闘用のテキストの読み込み
+	bool Distance(void);		//範囲探索
+	void Battle(void);			//戦闘
+	void BattleMovent(void);	//戦闘時の移動
+	void CpuShoot(void);		//弾発射
 
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置
@@ -234,7 +241,7 @@ private:
 	CModel			**m_pModel;			// モデルクラスのポインタ変数
 	CMotion			*m_pUpperMotion;	// 上半身モーションクラスのポインタ変数
 	CMotion			*m_pLowerMotion;	// 下半身モーションクラスのポインタ変数
-	CShadow			*m_pShadow;			// 影のポインタ変数
+										//CShadow			*m_pShadow;			// 影のポインタ変数
 	float			m_fRotDest;			// 目的の角度
 	int				m_nCntState;		// ステートのカウンタ
 	int				m_nNumParts;		// パーツ数
@@ -267,35 +274,33 @@ private:
 
 	bool			m_bConnect;			// 接続しているかどうか
 
-	// =============================================================
-	// UI関係
-	// =============================================================
+										// =============================================================
+										// UI関係
+										// =============================================================
 	CUI_NUMBER	*m_pUINum[PLAYER_UI_NUM];			// 数字UIのポインタ
 	CMouseCursor2D *m_pCursor;										// カーソルクラスのポインタ変数（ラジオチャット、リスポーン位置選択）
 	int m_nDiff;																		// 差分
 	int m_nRemBullet;															// 残弾
 
-	// リロード
+																				// リロード
 	CUI_TEXTURE		*m_pUITexReload[RELOAD_TEX];		// リロードで使用するテクスチャ
 	CGauge2D			*m_pGauge;											// ゲージ
 	int						m_nCntReRoad;
 	bool						m_bReload;											// リロード状態かどうか
 
-	// リスポーン
+																					// リスポーン
 	CUI_TEXTURE		*m_pUITexRespawn[RESPAWN_TEX];		// リスポーンで使用するテクスチャ
+	CUI_TEXTURE			*m_pUIRespawnPosIcon[SELECTRESPAWN_BOTTON];		//リスポーン位置のアイコン
 	CUI_NUMBER		*m_pUINumRespawn;									// 戦線復帰カウンター
 	RESPAWN			m_Respawn;												// リスポーンタイプの取得
-	int				m_nRespawnTimer;										// タイマー
-	float			m_nDisTime;												// ロゴ表示時間
+	int						m_nRespawnTimer;										// タイマー
+	float						m_nDisTime;												// ロゴ表示時間
 
-
-	// リスポーン位置選択
+																						// リスポーン位置選択
 	CButton2D			*m_pUISelectResBotton[SELECTRESPAWN_BOTTON];		// ラジオチャットボタンUI
 	CUI_TEXTURE			*m_pUITexSelectRes[SERECTRESPAWN_TEX];				// ラジオチャットメッセージUITex
-	CUI_TEXTURE			*m_pUIRespawnPosIcon[SELECTRESPAWN_BOTTON];		//リスポーン位置のアイコン
 	POINT				m_point;										// リスポーン位置の管理
-
-	// ラジオチャット
+																		// ラジオチャット
 	CButton2D			*m_pUIRadioBotton[RADIOCHAT_BOTTON];		// ラジオチャットボタンUI
 	CUI_TEXTURE		*m_pUITexRadio;														// ラジオチャットメッセージUITex
 	CUI_TEXTURE		*m_pUITexAllyRadio;												// 味方ラジオチャットメッセージUITex
@@ -309,9 +314,9 @@ private:
 	int						m_moveSpeed;														// テクスチャ動くスピード
 	int						m_nTexTimer;															// テクスチャ表示タイマー
 
-	// =============================================================
-	// AI関係
-	// =============================================================
+																									// =============================================================
+																									// AI関係
+																									// =============================================================
 	D3DXVECTOR3 m_waypoint[NODEPOINT_MAX];	// 中間地点
 	D3DXVECTOR3 m_collectionPos[ENEMY_PLAYER_MAX][COLLECTIONDATA_MAX];	// 収集したデータ
 	D3DXVECTOR3	m_posDest;				// 目標位置
@@ -333,11 +338,34 @@ private:
 	bool m_bCollectSwitch;				// 平均値割り出し方法の切り替え
 	static	D3DXVECTOR3	m_searchPos;	// クリック時位置
 
-	int m_nMovePoint[RANDOM_MOVE_POINT] = {5, 26, 49, 73, 92, 115, 143, 171, 176, 202 };	// ランダム移動の登録地点
+	int m_nMovePoint[RANDOM_MOVE_POINT] = { 0, 24, 47, 72, 144, 183, 188, 229, 279, 287, 316 }; // ランダム移動の登録地点
 
 	NodeState m_NodeData;						// マップ情報へのポインタ
 	static CPlayer *m_pPlayer;					// プレイヤークラスへのポインタ
 	CAIMecha *m_pAI[AI_MAX];			// 自分のAIクラスへのポインタ
+
+										// =============================================================
+										//AI戦闘系の変数
+										// =============================================================
+										//戦闘に必要な変数
+	CSearch **m_pSearch;					//探索のポインタクラス
+
+											//認識系
+	float m_fSearchLength;					//認識距離
+	float m_fSearchAngle;					//認識角度
+	D3DXVECTOR3 m_SearchVec_0;				//認識用ベクトル１
+	D3DXVECTOR3 m_SearchVec_1;				//認識用ベクトル２
+	D3DXVECTOR3 m_SearchVec_2;				//認識用ベクトル２
+
+											//攻撃系
+	float	m_fRange;						//範囲
+
+											//移動系
+	D3DXVECTOR3 m_fRotDestUpper;			//上半身
+
+	bool m_bFind;
+
+
 };
 
 #endif
