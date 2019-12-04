@@ -691,13 +691,6 @@ void CGame::PrintData(void)
 			pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetModel(1)->GetRot().x, m_pPlayer[pClient->GetPlayerIdx()]->GetModel(1)->GetRot().y, m_pPlayer[pClient->GetPlayerIdx()]->GetModel(1)->GetRot().z);
 			pClient->Printf(" ");
 
-#if 1
-			//カメラの視点を書き込む
-			pClient->Printf("%.1f %.1f %.1f", CManager::GetCamera()->GetPosV().x, CManager::GetCamera()->GetPosV().y, CManager::GetCamera()->GetPosV().z);
-
-			//カメラの注視点を書き込む
-			pClient->Printf("%.1f %.1f %.1f", CManager::GetCamera()->GetPosR().x, CManager::GetCamera()->GetPosR().y, CManager::GetCamera()->GetPosR().z);
-#endif
 			//カメラの向きを書き込む
 			pClient->Printf("%.1f %.1f %.1f", CManager::GetCamera()->GetRot().x, CManager::GetCamera()->GetRot().y, CManager::GetCamera()->GetRot().z);
 			pClient->Printf(" ");
@@ -1037,24 +1030,6 @@ char *CGame::ReadPlayerData(char *pStr)
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
 
-#if 1
-			//カメラの視点を代入
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-
-			//カメラの注視点を代入
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-
-#endif
 			//カメラの向きを代入
 			cameraRot.x = CServerFunction::ReadFloat(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
