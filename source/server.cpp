@@ -461,11 +461,48 @@ void CClient::SetIdx(void)
 	strcat(m_aSendMessage, aStr);
 	send(m_sockClient, m_aSendMessage, strlen(m_aSendMessage), 0);
 
-	memset(m_aReceiveMessage, 0, MAX_SERVER_DATA);
+
+	while (1)
+	{
+		memset(m_aReceiveMessage, 0, MAX_SERVER_DATA);
+		m_nLengthData = recv(m_sockClient, &m_aReceiveMessage[0], MAX_SERVER_DATA, 0);
+
+		char *pStr = m_aReceiveMessage;
+		int nWord = 0;
+
+		if (CServerFunction::Memcmp(pStr, " ") == 0)
+		{
+			pStr += strlen(" ");
+		}
+
+		if (CServerFunction::Memcmp(pStr, SERVER_CLIENT_IDX) == 0)
+		{
+			pStr += strlen(SERVER_CLIENT_IDX);
+			m_nClientIdx = CServerFunction::ReadInt(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");
+			pStr += nWord;
+			if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_IDX) == 0)
+			{
+				pStr += strlen(SERVER_PLAYER_IDX);
+				m_nPlayerIdx = CServerFunction::ReadInt(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				break;
+			}
+		}
+	}
+
+#if 0	//ver.1
 	m_nLengthData = recv(m_sockClient, &m_aReceiveMessage[0], MAX_SERVER_DATA, 0);
 
 	char *pStr = m_aReceiveMessage;
 	int nWord = 0;
+
+	if (CServerFunction::Memcmp(pStr, " ") == 0)
+	{
+		pStr += strlen(" ");
+	}
+
 	if (CServerFunction::Memcmp(pStr, SERVER_CLIENT_IDX) == 0)
 	{
 		pStr += strlen(SERVER_CLIENT_IDX);
@@ -478,9 +515,10 @@ void CClient::SetIdx(void)
 			m_nPlayerIdx = CServerFunction::ReadInt(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
+			break;
 		}
 	}
-
+#endif
 	//m_nClientIdx = CServerFunction::ReadInt(m_aReceiveMessage, SERVER_CLIENT_IDX);
 
 }

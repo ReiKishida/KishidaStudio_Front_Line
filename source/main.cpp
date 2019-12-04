@@ -14,7 +14,7 @@
 //*****************************************************************************
 #define CLASS_NAME		"AppClass"		// ウインドウのクラス名
 #define WINDOW_NAME		"FrontLine"	// ウインドウのキャプション名
-#define WINDOW_MODE		(false)			// ウィンドウモード(falseでフルスクリーン)
+#define WINDOW_MODE		(true)			// ウィンドウモード(falseでフルスクリーン)
 
 //*****************************************************************************
 // プロトタイプ宣言
@@ -62,7 +62,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DWORD dwFPSLastTime;
 
 	// マウスカーソルを隠す
-	ShowCursor(false);
+	ShowCursor(true);
 
 	// ウィンドウクラスの登録
 	RegisterClassEx(&wcex);

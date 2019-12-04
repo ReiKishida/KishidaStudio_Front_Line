@@ -124,6 +124,9 @@ public:
 	MECHATYPE GetMechaType(void) { return m_mechaType; }
 
 	int GetTeam(void) { return m_nTeam; };
+	void SetDeath(bool bDeath) { m_bDeath = bDeath; };
+	bool GetDeath(void) { return m_bDeath; };
+
 	// =============================================================
 	// ダイクストラ法によるルート探索
 	// =============================================================
@@ -197,6 +200,8 @@ private:
 															// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
+
+	bool			m_bDeath;								//死亡しているかどうか
 };
 
 #endif

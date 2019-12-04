@@ -182,11 +182,14 @@ public:
 	int GetTeam(void) { return m_nTeam; };
 	bool &GetDeath(void) { return m_bDeath; };
 
+	void SetLife(int nLife) { m_nLife = nLife; };
+	int GetLife(void) { return m_nLife; };
 	int GetLifeMax(void) { return m_nLifeMax; }
 
 	// ラジオチャット
 	RADIOCHAT GetRadioChat(void) { return m_radiochat; }									// ラジオチャット情報の取得
-	void SetRadioChat(RADIOCHAT radiochat) { m_radiochat = radiochat; }			// ラジオチャットの設定
+	void SetRadioChat(RADIOCHAT radiochat) { m_radiochat = radiochat; }						// ラジオチャットの設定
+	void SetChat(bool bChat) { m_bChat = bChat; };											//チャット情報の設置処理
 	bool GetChat(void) { return m_bChat; }																// チャット情報の取得
 	void SetAllyChat(bool bAllyChat) { m_bAllyChat = bAllyChat; }							// 味方のチャットが使用しているかどうかの設定
 	void SetAllyRadioChat(RADIOCHAT allyRadioChat) { m_allyRadiochat = allyRadioChat; }		// 味方のチャット情報の設定
@@ -219,6 +222,8 @@ private:
 	void SelectRespawn(void);						// リスポーン位置選択処理
 	void ChatBotton(void);							// ラジオチャットボタンの生成
 	void ChatMess(bool bChat);					// ボタンが押されて、メッセージ表示
+	void AllyChatMess(void);
+	void CreateRespawnPosIcon(void);
 
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置
@@ -280,13 +285,15 @@ private:
 	CUI_TEXTURE		*m_pUITexRespawn[RESPAWN_TEX];		// リスポーンで使用するテクスチャ
 	CUI_NUMBER		*m_pUINumRespawn;									// 戦線復帰カウンター
 	RESPAWN			m_Respawn;												// リスポーンタイプの取得
-	int						m_nRespawnTimer;										// タイマー
-	float						m_nDisTime;												// ロゴ表示時間
+	int				m_nRespawnTimer;										// タイマー
+	float			m_nDisTime;												// ロゴ表示時間
+
 
 	// リスポーン位置選択
-	CButton2D			*m_pUISelectResBotton[SELECTRESPAWN_BOTTON];	// ラジオチャットボタンUI
-	CUI_TEXTURE		*m_pUITexSelectRes[SERECTRESPAWN_TEX];				// ラジオチャットメッセージUITex
-	POINT					m_point;																				// リスポーン位置の管理
+	CButton2D			*m_pUISelectResBotton[SELECTRESPAWN_BOTTON];		// ラジオチャットボタンUI
+	CUI_TEXTURE			*m_pUITexSelectRes[SERECTRESPAWN_TEX];				// ラジオチャットメッセージUITex
+	CUI_TEXTURE			*m_pUIRespawnPosIcon[SELECTRESPAWN_BOTTON];		//リスポーン位置のアイコン
+	POINT				m_point;										// リスポーン位置の管理
 
 	// ラジオチャット
 	CButton2D			*m_pUIRadioBotton[RADIOCHAT_BOTTON];		// ラジオチャットボタンUI
@@ -297,6 +304,7 @@ private:
 	bool						m_bChat;																	// チャット開始かどうか
 	bool						m_bAllyChat;															// 味方のチャット
 	bool						m_bCol;																	// 色の管理
+	bool						m_bAllyCol;															//味方の色の管理
 	bool						m_bChatBotton;														// チャットボタン生成中かどうか
 	int						m_moveSpeed;														// テクスチャ動くスピード
 	int						m_nTexTimer;															// テクスチャ表示タイマー

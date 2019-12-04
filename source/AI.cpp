@@ -19,6 +19,7 @@
 #include "input.h"
 #include "button.h"
 #include "mouseCursor.h"
+#include "menu.h"
 
 //==================================
 // マクロ定義
@@ -82,6 +83,7 @@ CAIMecha::CAIMecha(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_nNumShoot = 0;
 	m_pPlayer = NULL;
 	m_nTeam = 0;
+	m_bDeath = false;
 }
 
 //=========================================
@@ -492,28 +494,60 @@ void CAIMecha::Draw(void)
 //=============================================================================
 void CAIMecha::Damage(int nDamage)
 {
-	if (m_nLife > 0)
-	{
-		m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+	if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+	{//シングルプレイの場合
+		if (m_nLife > 0)
+		{//体力が０より大きい場合
+			m_state = STATE_DAMAGE;				// ダメージを受けている状態にする
 
-		m_nLife -= nDamage;
+			m_nLife -= nDamage;					// 体力の減算処理
 
-		if (0 >= m_nLife)
-		{
-			m_nLife = 0;
-
-			switch (m_nTeam)
-			{
-			case 0:
-				CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 20);
-				break;
-			case 1:
-				CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 20);
-				break;
+			if (0 >= m_nLife)
+			{//体力が０以下になった場合
+				m_nLife = 0;
+				m_bDeath = true;
+				//チーム別の処理
+				switch (m_nTeam)
+				{
+				case 0:
+					CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 20);	//ブルーチームのリンクエネルギーを減算
+					break;
+				case 1:
+					CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 20);	//レッドチームのリンクエネルギーを減算
+					break;
+				}
 			}
 		}
-		//CSound *pSound = CManager::GetSound();				// サウンドの取得
-		//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
+	}
+	else
+	{
+		if (CManager::GetClient() != NULL)
+		{
+			if (CManager::GetClient()->GetPlayerIdx() == m_pPlayer->GetPlayerIdx())
+			{
+				if (m_nLife > 0 && m_bDeath == false)
+				{//体力が０より大きい場合
+					m_state = STATE_DAMAGE;				// ダメージを受けている状態にする
+
+					m_nLife -= nDamage;					// 体力の減算処理
+					if (0 >= m_nLife)
+					{//体力が０以下になった場合
+						m_nLife = 0;
+						m_bDeath = true;
+						//チーム別の処理
+						switch (m_nTeam)
+						{
+						case 0:
+							CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 20);	//ブルーチームのリンクエネルギーを減算
+							break;
+						case 1:
+							CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 20);	//レッドチームのリンクエネルギーを減算
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 }
 

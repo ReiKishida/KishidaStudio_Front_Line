@@ -18,6 +18,7 @@
 // 前方宣言
 //*****************************************************************************
 class CNumber;
+class CGauge2D;
 
 //*****************************************************************************
 // 数字UIクラス
@@ -55,10 +56,10 @@ public:
 	void SetTime(int nTime) { m_nTimer = nTime; }								// タイマーの設定
 	int GetTime(void) { return m_nTimer; }												// タイマーの取得
 
-	//****************************************
-	// 各タイプの取得と設定
-	//****************************************
-	// タイプ
+																						//****************************************
+																						// 各タイプの取得と設定
+																						//****************************************
+																						// タイプ
 	void SetNumType(UI_NUMTYPE UINumType) { m_UINumType = UINumType; };
 	UI_NUMTYPE GetNumType(void) { return m_UINumType; }
 
@@ -92,6 +93,10 @@ public:
 	UI_NUMTYPE		m_UINumType;		// 数字UIのタイプ管理
 
 private:
+	static int				m_nRemBullet;							// 取得してきた残弾の管理
+	static int				m_nPlayerLife;							// プレイヤーのライフ
+	static int				m_nTeamBlue, m_nTeamRed;		// BLUEチーム、REDチーム
+	static int				m_nCntRespawn;						// 戦線復帰カウンター
 	D3DXVECTOR3	m_pos;											// 位置
 	D3DXCOLOR		m_col;											// カラー
 	float						m_fWidth, m_fHeight;					// 幅、高さ
@@ -100,12 +105,12 @@ private:
 	int						m_nDigits;									// 桁数
 	int						m_nDiff;										// 差分
 	int						m_nUV, m_nUV_X, m_nUV_Y;		// テクスチャUV
-	static int				m_nRemBullet;							// 取得してきた残弾の管理
-	static int				m_nPlayerLife;							// プレイヤーのライフ
-	static int				m_nTeamBlue, m_nTeamRed;		// BLUEチーム、REDチーム
-	static int				m_nCntRespawn;						// 戦線復帰カウンター
 	int						m_nTimer;									// カウンター
 	int						m_nDecrease;
+	CGauge2D			*m_pGaugeBlue;							// BLUEチームゲージ
+	CGauge2D			*m_pGaugeRed;							// REDチームゲージ
+	int						m_nDamege, m_nInitGauge;		// ダメージ量保存、ゲージ値保存
+	int						m_nNum;										// ゲージの値計算用、ダメージ量
 };
 
 #endif

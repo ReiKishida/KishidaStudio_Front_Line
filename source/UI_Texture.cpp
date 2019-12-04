@@ -151,7 +151,7 @@ HRESULT CUI_TEXTURE::Init(void)
 		//****************************************
 	case UIFLAME_TEAM_BLUE:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_UPPER_UI));
-		CScene2D::SetTex(0,1,3);
+		CScene2D::SetTex(0, 1, 3);
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
 
@@ -163,7 +163,7 @@ HRESULT CUI_TEXTURE::Init(void)
 
 	case UIFLAME_PLAYER_HP:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_PLAYER_FLAME));
-		CScene2D::SetTex(0,1,4);
+		CScene2D::SetTex(0, 1, 4);
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
 
@@ -327,7 +327,7 @@ void CUI_TEXTURE::Update(void)
 {
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
-	// 背景スクロールカウンター
+																// 背景スクロールカウンター
 	m_nCntBgMove++;
 
 	//****************************************
@@ -420,18 +420,18 @@ HRESULT CUI_TEXTURE3D::Init(void)
 {
 	CScene3D::Init();		// 初期化
 
-	//switch (m_UI3dTex)
-	//{
-	//case UI3DTEX_ACTION:
-	//	CScene3D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_ACTION));
-	//	CScene3D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-	//	break;
+							//switch (m_UI3dTex)
+							//{
+							//case UI3DTEX_ACTION:
+							//	CScene3D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_ACTION));
+							//	CScene3D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+							//	break;
 
-	//case UI3DTEX_STRATEGY:
-	//	CScene3D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY));
-	//	CScene3D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-	//	break;
-	//}
+							//case UI3DTEX_STRATEGY:
+							//	CScene3D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY));
+							//	CScene3D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+							//	break;
+							//}
 	return S_OK;
 }
 
