@@ -95,8 +95,8 @@ void CTexture::Load(void)
 		// respawn
 		{ "data/TEXTURE/respawn/start_death.png" },					// 戦闘開始、行動不能ロゴ（アクションパートで使用）
 		{ "data/TEXTURE/respawn/tile_pattern.png" },					// タイルアニメーション（アクションパートで使用）
-		{ "data/TEXTURE/respawn/respawn_sequence.png" },	// 復帰ロゴ（アクションパートで使用）
-		{ "data/TEXTURE/respawn/map_b.jpg" },							// リスポーンマップ（アクションパートで使用）
+		{ "data/TEXTURE/respawn/respawn_sequence.png" },		// 復帰ロゴ（アクションパートで使用）
+		{ "data/TEXTURE/respawn/respawn_map.png" },				// リスポーンマップ（アクションパートで使用）
 		{ "data/TEXTURE/respawn/respawn_frame.jpg" },			// リスポーンフレーム（アクションパートで使用）
 		{ "data/TEXTURE/respawn/respawn_title.jpg" },				// リスポーンタイトル（アクションパートで使用）
 		{ "data/TEXTURE/respawn/select_respawn.png" },			// リスポーン選択（アクションパートで使用）

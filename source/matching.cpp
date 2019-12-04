@@ -376,15 +376,18 @@ void CMatching::ReadMessage(void)
 						m_bFade = true;
 					}
 
-					if (CGame::GetMechaType(nPlayerIdx) == CMechaSelect::MECHATYPE_EMPTY)
+					if (CFade::GetFade() == CFade::FADE_NONE  || CFade::GetFade() == CFade::FADE_IN)
 					{
-						CGame::SetMechaType(nPlayerIdx, (CMechaSelect::MECHATYPE)nMechatype);
-					}
+						if (CGame::GetMechaType(nPlayerIdx) == CMechaSelect::MECHATYPE_EMPTY)
+						{
+							CGame::SetMechaType(nPlayerIdx, (CMechaSelect::MECHATYPE)nMechatype);
+						}
 
-					CGame::SetMechaType(0, (CMechaSelect::MECHATYPE)pClient->GetMechaType(0));
-					if (nPlayerIdx != pClient->GetPlayerIdx())
-					{
-						pClient->SetMechaType(nPlayerIdx, nMechatype);
+						CGame::SetMechaType(0, (CMechaSelect::MECHATYPE)pClient->GetMechaType(0));
+						if (nPlayerIdx != pClient->GetPlayerIdx())
+						{
+							pClient->SetMechaType(nPlayerIdx, nMechatype);
+						}
 					}
 				}
 			}
@@ -397,7 +400,7 @@ void CMatching::ReadMessage(void)
 		{//
 			if (m_bConnect[nCntPlayer] == true)
 			{
-				m_pPlayerUI[nCntPlayer]->SetTex(pClient->GetMechaType(nCntPlayer) + 1, 1, 5);
+				m_pPlayerUI[nCntPlayer]->SetTex(CGame::GetMechaType(nCntPlayer) + 1/*pClient->GetMechaType(nCntPlayer) + 1*/, 1, 5);
 			}
 			else if (m_bConnect[nCntPlayer] == false)
 			{
@@ -435,6 +438,7 @@ void CMatching::CheckFade(void)
 		//		m_bFade = true;	//フェードをする状態にする
 		//	}
 		//}
+
 		if (m_nNumBlue == 2 && m_nNumRed == 2 && m_bFade == false)
 		{
 			if (pClient->GetPlayerIdx() == 0)
@@ -442,6 +446,14 @@ void CMatching::CheckFade(void)
 				m_bFade = true;
 			}
 		}
+
+		/*if (pClient->GetNumConnect() == 2)
+		{
+			if (pClient->GetPlayerIdx() == 0)
+			{
+				m_bFade = true;
+			}
+		}*/
 	}
 	if (m_bFade == true)
 	{

@@ -75,9 +75,10 @@ public:
 		UIFLAME_1P_INFO,					// 1Pの小隊情報
 		UIFLAME_2P_INFO,					// 2Pの小隊情報
 		UIFLAME_FLAME_WHITE,			// ただの白フレーム
-		UIFLAME_FLAME_BLUE,			// ただの青フレーム
+		UIFLAME_FLAME_BLUE,				// ただの青フレーム
 		UIFLAME_STRATEGY_BG,			// ストラテジーパートの背景
 
+		UI_FLAME_RESPAWNPOS,			//リスポーン位置
 		UIFLAME_MAX							// タイプの最大数
 	} UI_TEXTYPE;
 

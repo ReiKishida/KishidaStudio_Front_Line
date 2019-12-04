@@ -138,6 +138,9 @@ private:
 	int m_nRedLinkEnergy;
 	D3DXVECTOR3 m_aRespawnPos[NUM_TEAM][NUM_RESPAWN_POS];
 
+	bool m_bPlayerDeath[MAX_PLAYER_CONNECT];
+	bool m_bAIDeath[2][MAX_PLAYER_CONNECT];
+
 	static CMechaSelect::MECHATYPE m_aMechaType[MAX_PLAYER_CONNECT];
 };
 

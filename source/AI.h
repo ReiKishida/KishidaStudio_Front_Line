@@ -124,6 +124,9 @@ public:
 	MECHATYPE GetMechaType(void) { return m_mechaType; }
 
 	int GetTeam(void) { return m_nTeam; };
+	void SetDeath(bool bDeath) { m_bDeath = bDeath; };
+	bool GetDeath(void) { return m_bDeath; };
+
 	// =============================================================
 	// ダイクストラ法によるルート探索
 	// =============================================================
@@ -141,9 +144,6 @@ public:
 									// =============================================================
 
 private:
-	bool Distance(void);		//範囲探索
-	void Battle(void);			//戦闘
-
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置
 	D3DXVECTOR3		m_rot;				// 回転
@@ -189,6 +189,7 @@ private:
 															// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
 	D3DXVECTOR3		m_posDest;								// 目標位置
+	D3DXVECTOR3		m_rotDest;								// 目標位置
 	int				m_nBreaktime;							// 休憩時間
 	int				m_nCountPoint;							// 目標までの移動回数
 	int				m_nPoint;								// 現在の移動回数
@@ -197,6 +198,8 @@ private:
 															// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
+
+	bool			m_bDeath;								//死亡しているかどうか
 };
 
 #endif

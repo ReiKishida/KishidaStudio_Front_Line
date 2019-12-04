@@ -15,6 +15,7 @@
 #include "game.h"
 #include "player.h"
 #include "menu.h"
+#include "gauge.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -47,6 +48,12 @@ CUI_NUMBER::CUI_NUMBER(int nPriority, CScene::OBJTYPE objType) : CScene2D(nPrior
 	m_nDigits = 0;
 	m_nTimer = 0;
 	m_nDecrease = 0;
+	m_pGaugeBlue = NULL;
+	m_pGaugeRed = NULL;
+	m_nDamege = 0;
+	m_nInitGauge = 0;
+	m_nNum = 0;
+	m_nDiff = 0;
 }
 
 //=============================================================================
@@ -110,21 +117,33 @@ HRESULT CUI_NUMBER::Init(void)
 		SetNumDisPlay(m_nPlayerLife, m_UINumType);		// ライフを設定
 		break;
 
-	case UI_NUMTYPE_BLUE:
-		GetTeamBlue();									// プレイヤーからBLUEチームチケット取得
-		m_nTeamBlue = CManager::GetGame()->GetBlueLinkEnergy();
-		SetNumDisPlay(m_nTeamBlue, m_UINumType);		// チケット設定
-		break;
-
-	case UI_NUMTYPE_RED:
-		GetTeamRed();									// プレイヤーからREDチームチケット取得
-		m_nTeamRed = CManager::GetGame()->GetRedLinkEnergy();
-		SetNumDisPlay(m_nTeamRed, m_UINumType);		// チケット設定
-		break;
-
 	case UI_NUMTYPE_CNTRESPAWN:
 		m_nCntRespawn = 5;		// カウント初期値
 		SetNumDisPlay(m_nCntRespawn, m_UINumType);		// チケット設定
+		break;
+
+	case UI_NUMTYPE_BLUE:
+		m_nInitGauge = CManager::GetGame()->GetBlueLinkEnergy();		// ゲームからBLUEチームチケット取得
+		if (m_pGaugeBlue == NULL)
+		{
+			m_pGaugeBlue = CGauge2D::Create(2, m_pos, 0.0f, (float)m_nInitGauge, m_fWidth, m_fHeight);
+		}
+		if (m_pGaugeBlue != NULL)
+		{
+			m_pGaugeBlue->SetColor(D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 0);	// 元の長さ
+			m_pGaugeBlue->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f), 1);	// 現在の体力
+		}
+
+		break;
+
+	case UI_NUMTYPE_RED:
+		m_nInitGauge = CManager::GetGame()->GetRedLinkEnergy();		// ゲームからREDチームチケット取得
+		if (m_pGaugeRed == NULL)
+		{
+			m_pGaugeRed = CGauge2D::Create(2, m_pos, 0.0f, (float)m_nInitGauge, m_fWidth, m_fHeight);
+			m_pGaugeRed->SetColor(D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 0);	// 元の長さ
+			m_pGaugeRed->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f), 1);	// 現在の体力
+		}
 		break;
 	}
 
@@ -136,6 +155,18 @@ HRESULT CUI_NUMBER::Init(void)
 //=============================================================================
 void CUI_NUMBER::Uninit(void)
 {
+	if (m_pGaugeBlue != NULL)
+	{	// BLUEゲージ
+		m_pGaugeBlue->Uninit();
+		m_pGaugeBlue = NULL;
+	}
+
+	if (m_pGaugeRed != NULL)
+	{	// REDゲージ
+		m_pGaugeRed->Uninit();
+		m_pGaugeRed = NULL;
+	}
+
 	if (NULL != m_apNumber)
 	{// 使われている場合破棄する
 		for (int nCntScore = 0; nCntScore < m_nDigits; nCntScore++)
@@ -163,9 +194,9 @@ void CUI_NUMBER::Update(void)
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	m_UINumType = CUI_NUMBER::GetNumType();							// 現在のタイプを取得
 
-	//****************************************
-	// タイプ別処理
-	//****************************************
+																	//****************************************
+																	// タイプ別処理
+																	//****************************************
 	switch (m_UINumType)
 	{
 	case UI_NUMTYPE_REMAINBULLET:
@@ -230,43 +261,6 @@ void CUI_NUMBER::Update(void)
 
 		break;
 
-	case UI_NUMTYPE_BLUE:
-		if (pKeyboard->GetTrigger(DIK_F3))
-		{
-			m_nDiff += 15;		// ダメージ量設定
-		}
-		m_nDiff = m_nTeamBlue - CManager::GetGame()->GetBlueLinkEnergy();
-		if (m_nDiff > 0)
-		{	// ダメージ量が0以上の時
-			m_nTeamBlue--;
-			m_nDiff--;
-		}
-
-		if (m_nTeamBlue >= 0)
-		{	// 0以上の時、数字更新
-			SetNum(m_nTeamBlue, TEAM_BLUE, m_col);
-		}
-		break;
-
-	case UI_NUMTYPE_RED:
-		if (pKeyboard->GetTrigger(DIK_F3))
-		{
-			m_nDiff += 15;		// ダメージ量設定
-		}
-		m_nDiff = m_nTeamRed - CManager::GetGame()->GetRedLinkEnergy();
-
-		if (m_nDiff > 0)
-		{	// ダメージ量が0以上の時
-			m_nTeamRed--;
-			m_nDiff--;
-		}
-
-		if (m_nTeamRed >= 0)
-		{	// 0以上の時、数字更新
-			SetNum(m_nTeamRed, TEAM_RED, m_col);
-		}
-		break;
-
 	case UI_NUMTYPE_CNTRESPAWN:
 		m_nTimer++;
 		if (m_nTimer % 60 == 0)
@@ -285,6 +279,38 @@ void CUI_NUMBER::Update(void)
 
 		SetTime(m_nTimer);
 
+		break;
+
+	case UI_NUMTYPE_BLUE:
+		if (m_pGaugeBlue != NULL)
+		{
+			m_nDiff = m_nInitGauge - CManager::GetGame()->GetBlueLinkEnergy();		// ダメージ量取得
+
+			if (m_nDiff > 0)
+			{
+				m_nInitGauge--;
+				m_nDiff--;
+			}
+
+			m_pGaugeBlue->AddSubtract((float)m_nInitGauge);	// ゲージの増減
+			m_pGaugeBlue->SetValue((float)m_nInitGauge);			// ゲージの値設定
+		}
+		break;
+
+	case UI_NUMTYPE_RED:
+		if (m_pGaugeRed != NULL)
+		{
+			m_nDiff = m_nInitGauge - CManager::GetGame()->GetRedLinkEnergy();		// ダメージ量取得
+
+			if (m_nDiff > 0)
+			{
+				m_nInitGauge--;
+				m_nDiff--;
+			}
+
+			m_pGaugeRed->AddSubtract((float)m_nInitGauge);		// ゲージの増減
+			m_pGaugeRed->SetValue((float)m_nInitGauge);			// ゲージの値設定
+		}
 		break;
 	}
 
@@ -390,9 +416,9 @@ void CUI_NUMBER::SetNum(int nCalcNum, int nDefNum, D3DXCOLOR col)
 {
 	m_nDigits = GetDigits();			// SetNumDisPlayで設定した桁を取得
 
-	//****************************************
-	//現在の値の表示設定
-	//****************************************
+										//****************************************
+										//現在の値の表示設定
+										//****************************************
 	int nDigits = (int)log10f((float)nCalcNum) + 1;
 	if (nDigits <= 0) { nDigits = 1; }		// 桁数が0以下のとき
 

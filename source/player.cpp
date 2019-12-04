@@ -147,6 +147,8 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_bChatBotton = false;
 	m_bReload = false;
 	m_nRespawnTimer = 0;
+	m_bAllyCol = false;
+
 	for (int nCnt = 0; nCnt < AI_MAX; nCnt++)
 	{
 		m_pAI[nCnt] = NULL;
@@ -165,6 +167,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	for (int nCnt = 0; nCnt < SELECTRESPAWN_BOTTON; nCnt++)
 	{	// リスポーンボタン
 		m_pUISelectResBotton[nCnt] = NULL;
+		m_pUIRespawnPosIcon[nCnt] = NULL;
 	}
 
 	for (int nCnt = 0; nCnt < RESPAWN_TEX; nCnt++)
@@ -715,6 +718,28 @@ void CPlayer::Update(void)
 						// 弾を撃つ
 						Shoot();
 
+						if (m_bChat == false)
+						{
+							//ラジオチャットの生成
+							ChatBotton();
+						}
+						else if (m_bChat == true)
+						{
+							ChatMess(m_bChat);
+						}
+
+						if (m_bAllyChat == true)
+						{
+							if (m_pUITexAllyRadio == NULL)
+							{
+								m_pUITexAllyRadio = CUI_TEXTURE::Create(D3DXVECTOR3(1280.0f, 550.0f, 0.0f), RADIOCHAT_MESS_WIDTH, RADIOCHAT_MESS_HEIGHT, CUI_TEXTURE::UIFLAME_RADIOCHAT_MESS);
+								m_pUITexAllyRadio->SetTex((int)m_allyRadiochat, 1, RADIOCHAT_BOTTON_PATTERN);
+							}
+							else if (m_pUITexAllyRadio != NULL)
+							{
+								AllyChatMess();
+							}
+						}
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -760,6 +785,11 @@ void CPlayer::Update(void)
 					CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 					CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
 
+					if (pKeyboard->GetTrigger(DIK_K) == true)
+					{
+						Damage(m_nLifeMax);
+					}
+
 					if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
 					{	// ライフある && 戦闘開始状態の時
 						if (m_nDiff > 0)
@@ -781,6 +811,15 @@ void CPlayer::Update(void)
 						// 重力
 						//m_move.y -= GRAVITY;
 
+						if (m_bChat == false)
+						{
+							//ラジオチャットの生成
+							ChatBotton();
+						}
+						else if(m_bChat == true)
+						{
+							ChatMess(m_bChat);
+						}
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -1229,10 +1268,10 @@ void CPlayer::Damage(int nDamage)
 	}
 	else
 	{
-		//if (CManager::GetClient() != NULL)
-		//{
-		//	if (CManager::GetClient()->GetPlayerIdx() == m_nPlayerIdx)
-		//	{
+		if (CManager::GetClient() != NULL)
+		{
+			if (CManager::GetClient()->GetPlayerIdx() == m_nPlayerIdx)
+			{
 				if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
 				{// モーションクラスが使われている
 					if (m_pUpperMotion->GetType() != CMotionManager::TYPE_DAMAGE && m_pLowerMotion->GetType() != CMotionManager::TYPE_DAMAGE)
@@ -1267,8 +1306,8 @@ void CPlayer::Damage(int nDamage)
 					}
 				}
 			}
-	//	}
-	//}
+		}
+	}
 }
 
 //=========================================
@@ -1432,7 +1471,7 @@ void CPlayer::SelectRespawn(void)
 	if (m_pUITexSelectRes[0] == NULL || m_pUITexSelectRes[1] == NULL || m_pUITexSelectRes[2] == NULL || m_pUITexSelectRes[3] == NULL || m_pCursor == NULL)
 	{	// UIの生成
 		m_pUITexSelectRes[0] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH, SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_NONE);	// 下地
-		m_pUITexSelectRes[1] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 360.0f, 0.0f), 500.0f, 370.0f, CUI_TEXTURE::UIFLAME_MAP);	// マップ
+		m_pUITexSelectRes[1] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 360.0f, 0.0f), 650.0f, 370.0f, CUI_TEXTURE::UIFLAME_MAP);	// マップ
 		m_pUITexSelectRes[2] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 120.0f, 0.0f), 400.0f, 80.0f, CUI_TEXTURE::UIFLAME_TITLE);	// リスポーンタイトル
 		m_pUITexSelectRes[3] = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, PLAYER_UI_HEIGHT, 0.0f), 500.0f, 100.0f, CUI_TEXTURE::UIFLAME_RESPAWN_FLAME);		// フレーム
 		m_pCursor = CMouseCursor2D::Create();		// カーソル
@@ -1448,6 +1487,9 @@ void CPlayer::SelectRespawn(void)
 			m_pUISelectResBotton[nCnt]->SetTex(nCnt, 1, 4);
 		}
 	}
+
+	//リスポーン位置のアイコンの生成
+	CreateRespawnPosIcon();
 
 	if (m_pUISelectResBotton[0] != NULL || m_pUISelectResBotton[1] != NULL || m_pUISelectResBotton[2] != NULL || m_pUISelectResBotton[3] != NULL)
 	{	// 生成されていた時
@@ -1470,6 +1512,21 @@ void CPlayer::SelectRespawn(void)
 			}
 		}
 
+		for (int nCntButton = 0; nCntButton < SELECTRESPAWN_BOTTON; nCntButton++)
+		{
+			if (m_pUIRespawnPosIcon[nCntButton] != NULL)
+			{
+				if (nSelect == nCntButton)
+				{
+					m_pUIRespawnPosIcon[nCntButton]->SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+				}
+				else
+				{
+					m_pUIRespawnPosIcon[nCntButton]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+				}
+			}
+		}
+
 		// ボタン押された時の処理
 		if (bBottonSwitch)
 		{	// trueの時
@@ -1487,7 +1544,6 @@ void CPlayer::SelectRespawn(void)
 			case POINT_D:
 				break;
 			}
-
 
 			m_pos = CManager::GetGame()->GetRespawnPos(m_nTeam, m_point);
 
@@ -1516,6 +1572,15 @@ void CPlayer::SelectRespawn(void)
 				{	// テクスチャの破棄
 					m_pUITexSelectRes[nCnt]->Uninit();
 					m_pUITexSelectRes[nCnt] = NULL;
+				}
+			}
+
+			for (int nCnt = 0; nCnt < SELECTRESPAWN_BOTTON; nCnt++)
+			{
+				if (m_pUIRespawnPosIcon[nCnt] != NULL)
+				{	// テクスチャの破棄
+					m_pUIRespawnPosIcon[nCnt]->Uninit();
+					m_pUIRespawnPosIcon[nCnt] = NULL;
 				}
 			}
 
@@ -1589,7 +1654,7 @@ void CPlayer::ChatBotton(void)
 	{	// ボタンとカーソルが生成された
 		m_bChat = false;
 		int nSelect = -1;
-		m_radiochat = RADIOCHAT_OK;
+		//m_radiochat = RADIOCHAT_OK;
 
 		// ボタンの判定
 		for (int nCntButton = 0; nCntButton < RADIOCHAT_BOTTON; nCntButton++)
@@ -1601,6 +1666,7 @@ void CPlayer::ChatBotton(void)
 					m_bChat = true;
 					m_radiochat = (RADIOCHAT)nCntButton;
 					break;
+
 				}
 				nSelect = nCntButton;
 			}
@@ -1677,6 +1743,60 @@ void CPlayer::ChatMess(bool bChat)
 			m_bChat = false;					// チャットしていない
 			bMove = false;
 			m_bCol = false;
+
+		}
+	}
+}
+
+//=============================================================================
+//	仲間のメッセージを表示する処理
+//=============================================================================
+void CPlayer::AllyChatMess(void)
+{
+	if (m_pUITexAllyRadio != NULL)
+	{
+		bool bMove = false;		// 止まったかどうか
+		D3DXVECTOR3 texPos = m_pUITexAllyRadio->GetPos();		// 現在の位置を取得
+		D3DXCOLOR texCol = m_pUITexAllyRadio->GetColor();		// 現在の色を取得
+
+		if (texPos.x >= 1080.0f)
+		{	// 設定した位置以上だったら動く
+			texPos.x -= m_moveSpeed;					// テクスチャ動かす
+		}
+		else
+		{	// 設定した位置以下だったら、止まる
+			bMove = true;		// 止まった！
+		}
+
+		if (bMove == true && texCol.a >= 1.0f)
+		{	// 止まった && 透明度が1.0以上の時
+			m_nTexTimer++;		// カウンター加算
+			if (m_nTexTimer % RADIOCHAT_DISPLAY_TIME == 0)
+			{	// 5秒経ったら
+				m_nTexTimer = 0;
+				m_bAllyCol = true;
+			}
+		}
+
+		if (m_bAllyCol == true)
+		{
+			texCol.a -= RADIOCHAT_COL;
+		}
+
+		m_pUITexAllyRadio->SetPos(texPos);			// 位置を更新
+		m_pUITexAllyRadio->SetColor(texCol);		// 色を更新
+
+		if (texCol.a <= 0.0f)
+		{	// 完全に色消えた
+			if (m_pUITexAllyRadio != NULL)
+			{	// メッセージテクスチャの破棄
+				m_pUITexAllyRadio->Uninit();
+				m_pUITexAllyRadio = NULL;
+			}
+			m_bAllyChat = false;					// チャットしていない
+			bMove = false;
+			m_bAllyCol = false;
+			m_bAllyChat = false;
 		}
 	}
 }
@@ -2070,4 +2190,65 @@ void CPlayer::FileLoad(char* pFileName)
 	}
 
 	m_NodeData = OneState;	// データの代入
+}
+
+//=============================================================================
+// リスポーン位置のアイコンを生成
+//=============================================================================
+void CPlayer::CreateRespawnPosIcon(void)
+{
+	//スポーン位置のUI生成
+	switch (m_nTeam)
+	{//チームによって生成分け
+	case 0:
+		if (m_pUIRespawnPosIcon[0] == NULL && m_pUIRespawnPosIcon[1] == NULL && m_pUIRespawnPosIcon[2] == NULL && m_pUIRespawnPosIcon[3] == NULL)
+		{
+			m_pUIRespawnPosIcon[0] = CUI_TEXTURE::Create(D3DXVECTOR3(355.0f, 210.0f, 0.0f), 30.0f, 30.0f, CUI_TEXTURE::UI_FLAME_RESPAWNPOS);
+			m_pUIRespawnPosIcon[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUIRespawnPosIcon[0]->SetTex(0, 1, 4);
+			m_pUIRespawnPosIcon[0]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+
+			m_pUIRespawnPosIcon[1] = CUI_TEXTURE::Create(D3DXVECTOR3(355.0f, 330.0f, 0.0f), 30.0f, 30.0f, CUI_TEXTURE::UI_FLAME_RESPAWNPOS);
+			m_pUIRespawnPosIcon[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUIRespawnPosIcon[1]->SetTex(1, 1, 4);
+			m_pUIRespawnPosIcon[1]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+
+			m_pUIRespawnPosIcon[2] = CUI_TEXTURE::Create(D3DXVECTOR3(355.0f, 390.0f, 0.0f), 30.0f, 30.0f, CUI_TEXTURE::UI_FLAME_RESPAWNPOS);
+			m_pUIRespawnPosIcon[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUIRespawnPosIcon[2]->SetTex(2, 1, 4);
+			m_pUIRespawnPosIcon[2]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+
+			m_pUIRespawnPosIcon[3] = CUI_TEXTURE::Create(D3DXVECTOR3(355.0f, 485.0f, 0.0f), 30.0f, 30.0f, CUI_TEXTURE::UI_FLAME_RESPAWNPOS);
+			m_pUIRespawnPosIcon[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUIRespawnPosIcon[3]->SetTex(3, 1, 4);
+			m_pUIRespawnPosIcon[3]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+		}
+		break;
+	case 1:
+		if (m_pUIRespawnPosIcon[0] == NULL && m_pUIRespawnPosIcon[1] == NULL && m_pUIRespawnPosIcon[2] == NULL && m_pUIRespawnPosIcon[3] == NULL)
+		{
+			m_pUIRespawnPosIcon[0] = CUI_TEXTURE::Create(D3DXVECTOR3(925.0f, 210.0f, 0.0f), 30.0f, 30.0f, CUI_TEXTURE::UI_FLAME_RESPAWNPOS);
+			m_pUIRespawnPosIcon[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUIRespawnPosIcon[0]->SetTex(0, 1, 4);
+			m_pUIRespawnPosIcon[0]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+
+			m_pUIRespawnPosIcon[1] = CUI_TEXTURE::Create(D3DXVECTOR3(925.0f, 330.0f, 0.0f), 30.0f, 30.0f, CUI_TEXTURE::UI_FLAME_RESPAWNPOS);
+			m_pUIRespawnPosIcon[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUIRespawnPosIcon[1]->SetTex(1, 1, 4);
+			m_pUIRespawnPosIcon[1]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+
+			m_pUIRespawnPosIcon[2] = CUI_TEXTURE::Create(D3DXVECTOR3(925.0f, 390.0f, 0.0f), 30.0f, 30.0f, CUI_TEXTURE::UI_FLAME_RESPAWNPOS);
+			m_pUIRespawnPosIcon[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUIRespawnPosIcon[2]->SetTex(2, 1, 4);
+			m_pUIRespawnPosIcon[2]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+
+			m_pUIRespawnPosIcon[3] = CUI_TEXTURE::Create(D3DXVECTOR3(925.0f, 510.0f, 0.0f), 30.0f, 30.0f, CUI_TEXTURE::UI_FLAME_RESPAWNPOS);
+			m_pUIRespawnPosIcon[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_SELECT_RESPAWN)));
+			m_pUIRespawnPosIcon[3]->SetTex(3, 1, 4);
+			m_pUIRespawnPosIcon[3]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
+		}
+		break;
+		break;
+	}
+
 }

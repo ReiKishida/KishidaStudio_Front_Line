@@ -219,7 +219,7 @@ HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical,
 void CBulletPlayer::Uninit(void)
 {
 	m_pPlayer = NULL;
-	CParticle::Create(CBullet::GetPos(), 1);
+	//CParticle::Create(CBullet::GetPos(), 1);
 	CScene3DBill::Uninit();
 }
 
