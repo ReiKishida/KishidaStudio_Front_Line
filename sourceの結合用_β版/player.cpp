@@ -147,6 +147,8 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_bChatBotton = false;
 	m_bReload = false;
 	m_nRespawnTimer = 0;
+	m_bAllyCol = false;
+
 	for (int nCnt = 0; nCnt < AI_MAX; nCnt++)
 	{
 		m_pAI[nCnt] = NULL;
@@ -716,6 +718,28 @@ void CPlayer::Update(void)
 						// 弾を撃つ
 						Shoot();
 
+						if (m_bChat == false)
+						{
+							//ラジオチャットの生成
+							ChatBotton();
+						}
+						else if (m_bChat == true)
+						{
+							ChatMess(m_bChat);
+						}
+
+						if (m_bAllyChat == true)
+						{
+							if (m_pUITexAllyRadio == NULL)
+							{
+								m_pUITexAllyRadio = CUI_TEXTURE::Create(D3DXVECTOR3(1280.0f, 550.0f, 0.0f), RADIOCHAT_MESS_WIDTH, RADIOCHAT_MESS_HEIGHT, CUI_TEXTURE::UIFLAME_RADIOCHAT_MESS);
+								m_pUITexAllyRadio->SetTex((int)m_allyRadiochat, 1, RADIOCHAT_BOTTON_PATTERN);
+							}
+							else if (m_pUITexAllyRadio != NULL)
+							{
+								AllyChatMess();
+							}
+						}
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -787,6 +811,15 @@ void CPlayer::Update(void)
 						// 重力
 						//m_move.y -= GRAVITY;
 
+						if (m_bChat == false)
+						{
+							//ラジオチャットの生成
+							ChatBotton();
+						}
+						else if(m_bChat == true)
+						{
+							ChatMess(m_bChat);
+						}
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -1235,10 +1268,10 @@ void CPlayer::Damage(int nDamage)
 	}
 	else
 	{
-		//if (CManager::GetClient() != NULL)
-		//{
-		//	if (CManager::GetClient()->GetPlayerIdx() == m_nPlayerIdx)
-		//	{
+		if (CManager::GetClient() != NULL)
+		{
+			if (CManager::GetClient()->GetPlayerIdx() == m_nPlayerIdx)
+			{
 				if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
 				{// モーションクラスが使われている
 					if (m_pUpperMotion->GetType() != CMotionManager::TYPE_DAMAGE && m_pLowerMotion->GetType() != CMotionManager::TYPE_DAMAGE)
@@ -1273,8 +1306,8 @@ void CPlayer::Damage(int nDamage)
 					}
 				}
 			}
-	//	}
-	//}
+		}
+	}
 }
 
 //=========================================
@@ -1621,7 +1654,7 @@ void CPlayer::ChatBotton(void)
 	{	// ボタンとカーソルが生成された
 		m_bChat = false;
 		int nSelect = -1;
-		m_radiochat = RADIOCHAT_OK;
+		//m_radiochat = RADIOCHAT_OK;
 
 		// ボタンの判定
 		for (int nCntButton = 0; nCntButton < RADIOCHAT_BOTTON; nCntButton++)
@@ -1633,6 +1666,7 @@ void CPlayer::ChatBotton(void)
 					m_bChat = true;
 					m_radiochat = (RADIOCHAT)nCntButton;
 					break;
+
 				}
 				nSelect = nCntButton;
 			}
@@ -1709,6 +1743,60 @@ void CPlayer::ChatMess(bool bChat)
 			m_bChat = false;					// チャットしていない
 			bMove = false;
 			m_bCol = false;
+
+		}
+	}
+}
+
+//=============================================================================
+//	仲間のメッセージを表示する処理
+//=============================================================================
+void CPlayer::AllyChatMess(void)
+{
+	if (m_pUITexAllyRadio != NULL)
+	{
+		bool bMove = false;		// 止まったかどうか
+		D3DXVECTOR3 texPos = m_pUITexAllyRadio->GetPos();		// 現在の位置を取得
+		D3DXCOLOR texCol = m_pUITexAllyRadio->GetColor();		// 現在の色を取得
+
+		if (texPos.x >= 1080.0f)
+		{	// 設定した位置以上だったら動く
+			texPos.x -= m_moveSpeed;					// テクスチャ動かす
+		}
+		else
+		{	// 設定した位置以下だったら、止まる
+			bMove = true;		// 止まった！
+		}
+
+		if (bMove == true && texCol.a >= 1.0f)
+		{	// 止まった && 透明度が1.0以上の時
+			m_nTexTimer++;		// カウンター加算
+			if (m_nTexTimer % RADIOCHAT_DISPLAY_TIME == 0)
+			{	// 5秒経ったら
+				m_nTexTimer = 0;
+				m_bAllyCol = true;
+			}
+		}
+
+		if (m_bAllyCol == true)
+		{
+			texCol.a -= RADIOCHAT_COL;
+		}
+
+		m_pUITexAllyRadio->SetPos(texPos);			// 位置を更新
+		m_pUITexAllyRadio->SetColor(texCol);		// 色を更新
+
+		if (texCol.a <= 0.0f)
+		{	// 完全に色消えた
+			if (m_pUITexAllyRadio != NULL)
+			{	// メッセージテクスチャの破棄
+				m_pUITexAllyRadio->Uninit();
+				m_pUITexAllyRadio = NULL;
+			}
+			m_bAllyChat = false;					// チャットしていない
+			bMove = false;
+			m_bAllyCol = false;
+			m_bAllyChat = false;
 		}
 	}
 }

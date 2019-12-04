@@ -124,6 +124,9 @@ public:
 	MECHATYPE GetMechaType(void) { return m_mechaType; }
 
 	int GetTeam(void) { return m_nTeam; };
+	void SetDeath(bool bDeath) { m_bDeath = bDeath; };
+	bool GetDeath(void) { return m_bDeath; };
+
 	// =============================================================
 	// ダイクストラ法によるルート探索
 	// =============================================================
@@ -138,9 +141,12 @@ public:
 	void AddEdge(int first, int second, float weight, Node *node);	// エッジの追加
 	void Dijkstra(int nodeMax, int start, int end, Node *node);		// 経路探索
 	void FileLoad(char* pFileName);	// マップデータファイルの読み込み
-	// =============================================================
+									// =============================================================
 
 private:
+	bool Distance(void);		//範囲探索
+	void Battle(void);			//戦闘
+
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置
 	D3DXVECTOR3		m_rot;				// 回転
@@ -163,38 +169,39 @@ private:
 	int				m_nNumShoot;		// 発射数
 	int				m_nTeam;			// チーム
 
-	// =============================================================
-	// ダイクストラ法によるルート探索
-	// =============================================================
+										// =============================================================
+										// ダイクストラ法によるルート探索
+										// =============================================================
 	NodeState		m_NodeData;								// マップ情報
 
-	// パート関係
+															// パート関係
 	CGame::PART		m_bPartSwitch;							// パート情報
 	CGame::PART		m_bPartSwitchOld;						// 前回のパート情報
 
-	// ノード関係
+															// ノード関係
 	int				m_nStartNode;							// 開始ノード番号
 	int				m_nEndNode;								// 終了ノード番号
 	int				m_nNodeOld;								// 前回のノード番号
 
-	// ラリー関係
+															// ラリー関係
 	Node			m_node[NODEPOINT_MAX][NODEPOINT_MAX];	// ラリー時のノードの情報
 	int				m_nRallyEndNode[NODEPOINT_MAX];			// ラリー時の終了ノード番号
 	int				m_nRallyCount;							// クリック数
 	int				m_nRallyCountOld;						// 前回のクリック数
 
-	// 自動移動関係
+															// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
 	D3DXVECTOR3		m_posDest;								// 目標位置
-	D3DXVECTOR3		m_rotDest;								// 目標位置
 	int				m_nBreaktime;							// 休憩時間
 	int				m_nCountPoint;							// 目標までの移動回数
 	int				m_nPoint;								// 現在の移動回数
 	bool			m_bGoal;								// 目的地に到着したか
 
-	// ロジックツリー関係の情報
+															// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
+
+	bool			m_bDeath;								//死亡しているかどうか
 };
 
 #endif
