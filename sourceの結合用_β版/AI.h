@@ -126,7 +126,6 @@ public:
 	int GetTeam(void) { return m_nTeam; };
 	void SetDeath(bool bDeath) { m_bDeath = bDeath; };
 	bool GetDeath(void) { return m_bDeath; };
-
 	// =============================================================
 	// ダイクストラ法によるルート探索
 	// =============================================================
@@ -185,6 +184,12 @@ private:
 	int				m_nRallyEndNode[NODEPOINT_MAX];			// ラリー時の終了ノード番号
 	int				m_nRallyCount;							// クリック数
 	int				m_nRallyCountOld;						// 前回のクリック数
+
+	// パトロール関係
+	bool			m_bPatrol;								// 往復移動状態か
+	int				m_nPatrolStartNode;						// パトロール時の開始ノード番号
+	D3DXVECTOR3		m_patrolWaypoint[NODEPOINT_MAX];		// パトロール時の中間地点
+	int				m_nCountPatrolPoint;					// パトロール時の目標までの移動回数
 
 	// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
