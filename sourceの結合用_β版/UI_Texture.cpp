@@ -12,6 +12,7 @@
 #include "debugProc.h"
 #include "fade.h"
 #include "UI_Number.h"
+#include "menu.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -302,6 +303,14 @@ HRESULT CUI_TEXTURE::Init(void)
 	case UIFLAME_STRATEGY_BG:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY_BG));
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.7f));
+		break;
+
+		//****************************************
+		// メニュー
+		//****************************************
+	case UIFLAME_MENU_MESS:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_MENU_INST));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
 	}
 

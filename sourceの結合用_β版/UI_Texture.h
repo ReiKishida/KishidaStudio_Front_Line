@@ -79,6 +79,9 @@ public:
 		UIFLAME_STRATEGY_BG,			// ストラテジーパートの背景
 
 		UI_FLAME_RESPAWNPOS,			//リスポーン位置
+
+		// メニュー
+		UIFLAME_MENU_MESS,			// メニューメッセージ
 		UIFLAME_MAX							// タイプの最大数
 	} UI_TEXTYPE;
 

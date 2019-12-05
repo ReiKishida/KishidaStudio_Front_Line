@@ -63,9 +63,9 @@ public:
 		TEXTURE_MECHA_SELECT,			// 機体画像（機体選択画面で使用）
 
 		// menu
-		TEXTURE_MENU_DISP,					// モード説明ロゴ（メニュー画面で使用）
 		TEXTURE_MENU_FLAME,				// モードフレーム（メニュー画面で使用）
 		TEXTURE_MENU_INST,					// モードの概要（メニュー選択画面で使用）
+		TEXTURE_MENU_INFOMETION,	// インフォメーション
 
 		// matching
 		TEXTURE_MATCHING_BG,			// マッチング画面の背景（マッチング画面で使用）

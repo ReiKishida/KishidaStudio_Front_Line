@@ -72,16 +72,16 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/strategy/strategy_icon.png" },				// ストラテジーのアイコン
 
 		// mechaSelect
-		{ "data/TEXTURE/mechaSelect/main_frame.png" },			// メインメニュー、メカセレクトロゴ
+		{ "data/TEXTURE/mechaSelect/meun_title.png" },			// メインメニュー、メカセレクトロゴ
 		{ "data/TEXTURE/mechaSelect/aptitude_range.jpg" },		// 距離表示（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_inst.png" },			// 機体説明（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_type.png" },			// 機体の種類（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_select.png" },		// 機体画像（機体選択画面で使用）
 
 		// menu
-		{ "data/TEXTURE/menu/menu_disp.png" },						// モード説明ロゴ（メニュー画面で使用）
 		{ "data/TEXTURE/menu/menu_frame.png" },					// モードフレーム（メニュー画面で使用）
 		{ "data/TEXTURE/menu/menu_inst.png" },						// モードの概要（メニュー選択画面で使用）
+		{ "data/TEXTURE/menu/infomation.png" },						// インフォメーション
 
 		// matching
 		{ "data/TEXTURE/matching/matching_bg.jpg" },				// マッチング画面の背景（マッチング画面で使用）
