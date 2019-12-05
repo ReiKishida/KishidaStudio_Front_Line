@@ -1,0 +1,28 @@
+
+scene2D.h
+
+void SetTexMove(int nUV, int nUV_X, int nUV_Y, int nCntBg_X, int nCntBg_Y, float fScrollSpeed);
+
+
+
+scene2D.cpp
+
+//=============================================================================
+// 分割したテクスチャをスクロールする処理
+//=============================================================================
+void CScene2D::SetTexMove(int nUV, int nUV_X, int nUV_Y, int nCntBg_X, int nCntBg_Y, float fScrollSpeed)
+{
+	VERTEX_2D * pVtx;			//頂点情報へのポインタ
+
+	//頂点バッファをロックし、頂点データへのポインタを取得
+	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	//テクスチャの座標設定
+	pVtx[0].tex = D3DXVECTOR2((nUV % nUV_X) * (1.0f / nUV_X) + (nCntBg_X * (fScrollSpeed + 1)), (nUV / nUV_X) * (1.0f / nUV_Y) + (nCntBg_Y * (fScrollSpeed + 1)));
+	pVtx[1].tex = D3DXVECTOR2((nUV % nUV_X) * (1.0f / nUV_X) + (1.0f / nUV_X) + (nCntBg_X * (fScrollSpeed + 1)), (nUV / nUV_X) * (1.0f / nUV_Y) + (nCntBg_Y * (fScrollSpeed + 1)));
+	pVtx[2].tex = D3DXVECTOR2((nUV % nUV_X) * (1.0f / nUV_X) + (nCntBg_X * (fScrollSpeed + 1)), (nUV / nUV_X) * (1.0f / nUV_Y) + (1.0f / nUV_Y) + (nCntBg_Y * (fScrollSpeed + 1)));
+	pVtx[3].tex = D3DXVECTOR2((nUV % nUV_X) * (1.0f / nUV_X) + (1.0f / nUV_X) + (nCntBg_X * (fScrollSpeed + 1)), (nUV / nUV_X) * (1.0f / nUV_Y) + (1.0f / nUV_Y) + (nCntBg_Y * (fScrollSpeed + 1)));
+
+	//頂点バッファをアンロックする
+	m_pVtxBuff->Unlock();
+}
