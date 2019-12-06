@@ -54,6 +54,8 @@ CUI_NUMBER::CUI_NUMBER(int nPriority, CScene::OBJTYPE objType) : CScene2D(nPrior
 	m_nInitGauge = 0;
 	m_nNum = 0;
 	m_nDiff = 0;
+	m_pUITex = NULL;
+	m_nCntMove = 0;
 }
 
 //=============================================================================
@@ -130,10 +132,14 @@ HRESULT CUI_NUMBER::Init(void)
 		}
 		if (m_pGaugeBlue != NULL)
 		{
-			m_pGaugeBlue->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f), 0);	// 元の長さ
-			m_pGaugeBlue->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f), 1);	// 現在の体力
+			m_pGaugeBlue->SetColor(D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 0);	// 元の長さ
+			m_pGaugeBlue->SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 1);	// 現在の体力
+			m_pGaugeBlue->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_LINK_BLUE), 1);
 		}
-
+		if (m_pUITex == NULL)
+		{
+			m_pUITex = CUI_TEXTURE::Create(m_pos, m_fWidth, m_fHeight, CUI_TEXTURE::UIFLAME_LINK_FLAME);
+		}
 		break;
 
 	case UI_NUMTYPE_RED:
@@ -143,6 +149,11 @@ HRESULT CUI_NUMBER::Init(void)
 			m_pGaugeRed = CGauge2D::Create(2, m_pos, 0.0f, (float)m_nInitGauge, m_fWidth, m_fHeight);
 			m_pGaugeRed->SetColor(D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 0);	// 元の長さ
 			m_pGaugeRed->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f), 1);	// 現在の体力
+			m_pGaugeRed->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_LINK_RED), 1);
+		}
+		if (m_pUITex == NULL)
+		{
+			m_pUITex = CUI_TEXTURE::Create(m_pos, m_fWidth, m_fHeight, CUI_TEXTURE::UIFLAME_LINK_FLAME);
 		}
 		break;
 	}
@@ -155,6 +166,12 @@ HRESULT CUI_NUMBER::Init(void)
 //=============================================================================
 void CUI_NUMBER::Uninit(void)
 {
+	if (m_pUITex != NULL)
+	{	// リンクゲージの破棄
+		m_pUITex->Uninit();
+		m_pUITex = NULL;
+	}
+
 	if (m_pGaugeBlue != NULL)
 	{	// BLUEゲージ
 		m_pGaugeBlue->Uninit();
@@ -193,6 +210,9 @@ void CUI_NUMBER::Update(void)
 {
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	m_UINumType = CUI_NUMBER::GetNumType();							// 現在のタイプを取得
+
+	// カウンター加算
+	m_nCntMove++;
 
 	//****************************************
 	// タイプ別処理
@@ -284,6 +304,11 @@ void CUI_NUMBER::Update(void)
 	case UI_NUMTYPE_BLUE:
 		if (m_pGaugeBlue != NULL)
 		{
+			//if (pKeyboard->GetTrigger(DIK_N))
+			//{
+			//	m_nDiff = 20;
+			//}
+
 			m_nDiff = m_nInitGauge - CManager::GetGame()->GetBlueLinkEnergy();		// ダメージ量取得
 
 			if (m_nDiff > 0)
@@ -416,9 +441,9 @@ void CUI_NUMBER::SetNum(int nCalcNum, int nDefNum, D3DXCOLOR col)
 {
 	m_nDigits = GetDigits();			// SetNumDisPlayで設定した桁を取得
 
-	//****************************************
-	//現在の値の表示設定
-	//****************************************
+										//****************************************
+										//現在の値の表示設定
+										//****************************************
 	int nDigits = (int)log10f((float)nCalcNum) + 1;
 	if (nDigits <= 0) { nDigits = 1; }		// 桁数が0以下のとき
 

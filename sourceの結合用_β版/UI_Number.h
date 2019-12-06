@@ -19,6 +19,7 @@
 //*****************************************************************************
 class CNumber;
 class CGauge2D;
+class CUI_TEXTURE;
 
 //*****************************************************************************
 // 数字UIクラス
@@ -111,6 +112,8 @@ private:
 	CGauge2D			*m_pGaugeRed;							// REDチームゲージ
 	int						m_nDamege, m_nInitGauge;		// ダメージ量保存、ゲージ値保存
 	int						m_nNum;										// ゲージの値計算用、ダメージ量
+	CUI_TEXTURE		*m_pUITex;									// ゲージフレーム
+	int						m_nCntMove;								// スクロールカウンター
 };
 
 #endif
