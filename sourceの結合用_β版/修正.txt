@@ -1,0 +1,68 @@
+
+
+
+scene2D追加
+
+	void SetTexMove(int nUV, int nUV_X, int nUV_Y, int nCntBg_X, int nCntBg_Y, float fScrollSpeed);
+
+
+//=============================================================================
+// 分割したテクスチャをスクロールする処理
+//=============================================================================
+void CScene2D::SetTexMove(int nUV, int nUV_X, int nUV_Y, int nCntBg_X, int nCntBg_Y, float fScrollSpeed)
+{
+	VERTEX_2D * pVtx;			//頂点情報へのポインタ
+
+	//頂点バッファをロックし、頂点データへのポインタを取得
+	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+
+	//テクスチャの座標設定
+	pVtx[0].tex = D3DXVECTOR2((nUV % nUV_X) * (1.0f / nUV_X) + (nCntBg_X * (fScrollSpeed + 1)), (nUV / nUV_X) * (1.0f / nUV_Y) + (nCntBg_Y * (fScrollSpeed + 1)));
+	pVtx[1].tex = D3DXVECTOR2((nUV % nUV_X) * (1.0f / nUV_X) + (1.0f / nUV_X) + (nCntBg_X * (fScrollSpeed + 1)), (nUV / nUV_X) * (1.0f / nUV_Y) + (nCntBg_Y * (fScrollSpeed + 1)));
+	pVtx[2].tex = D3DXVECTOR2((nUV % nUV_X) * (1.0f / nUV_X) + (nCntBg_X * (fScrollSpeed + 1)), (nUV / nUV_X) * (1.0f / nUV_Y) + (1.0f / nUV_Y) + (nCntBg_Y * (fScrollSpeed + 1)));
+	pVtx[3].tex = D3DXVECTOR2((nUV % nUV_X) * (1.0f / nUV_X) + (1.0f / nUV_X) + (nCntBg_X * (fScrollSpeed + 1)), (nUV / nUV_X) * (1.0f / nUV_Y) + (1.0f / nUV_Y) + (nCntBg_Y * (fScrollSpeed + 1)));
+
+	//頂点バッファをアンロックする
+	m_pVtxBuff->Unlock();
+}
+
+
+button追加
+
+
+	bool InRangeMenu(D3DXVECTOR3 pos);
+
+
+//=========================================
+// 範囲内かチェック（メニュー、機体選択で使用）
+//=========================================
+bool CButton2D::InRangeMenu(D3DXVECTOR3 _pos)
+{
+	if (CFade::GetFade() != CFade::FADE_NONE) { return false; }
+
+	D3DXVECTOR3 pos = CScene2D::GetPos();
+
+	if (pos.x - (m_size.x * 0.4f) <= _pos.x && pos.x + (m_size.x * 0.4f) >= _pos.x)
+	{// X軸が範囲内
+		if (pos.y - (m_size.y * 0.4f) <= _pos.y && pos.y + (m_size.y * 0.4f) >= _pos.y)
+		{// Y軸が範囲内
+			m_bInRange = true;
+			CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+			return m_bInRange;
+		}
+	}
+
+	if (m_bRelease)
+	{// クリックされたが起動せずに範囲外に出た
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetSize(m_size.x, m_size.y);
+	}
+
+	// 起動していない
+	if (!m_bSwitch) { CScene2D::SetColor(BUTTON_UNSELECTED_COLOR); }
+
+	// フラグを負にする
+	m_bInRange = false;
+	m_bRelease = false;
+	return m_bInRange;
+}
