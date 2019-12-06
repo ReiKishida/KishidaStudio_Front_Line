@@ -57,6 +57,9 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/UI/reticle.png" },									// レティクル
 		{ "data/TEXTURE/UI/reload.png" },									// リロードロゴ（アクションパートで使用）
 		{ "data/TEXTURE/UI/team_win.png" },								// 勝利チームのロゴ
+		{ "data/TEXTURE/UI/linkenergy_blue.png" },					// BLUEリンクゲージ
+		{ "data/TEXTURE/UI/linkenergy_red.png" },						// REDリンクゲージ
+		{ "data/TEXTURE/UI/linkenergy_frame.png" },					// リンクゲージフレーム
 
 		// TEXTURE
 		{ "data/TEXTURE/press_any.png" },									// プレスボタン
@@ -77,6 +80,8 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/mechaSelect/mecha_inst.png" },			// 機体説明（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_type.png" },			// 機体の種類（機体選択画面で使用）
 		{ "data/TEXTURE/mechaSelect/mecha_select.png" },		// 機体画像（機体選択画面で使用）
+		{ "data/TEXTURE/mechaSelect/back.png" },					// 前の画面へ戻る
+		{ "data/TEXTURE/mechaSelect/mecha_range.png" },		// 飛距離（long, shortロゴ）
 
 		// menu
 		{ "data/TEXTURE/menu/menu_frame.png" },					// モードフレーム（メニュー画面で使用）
@@ -105,6 +110,11 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/radiochat/radio_chat.png" },						// ラジオチャット（アクションパートで使用）
 		{ "data/TEXTURE/radiochat/radio_chat_message.png" },		// ラジオチャットメッセージ
 
+		// option
+		{ "data/TEXTURE/option/option_icon.png" },						// オプションアイコン
+		{ "data/TEXTURE/option/option_frame.png" },						// オプションフレーム
+		{ "data/TEXTURE/option/batsu.png" },									// バツボタン
+		{ "data/TEXTURE/option/toggle.png" },									// トグルスイッチ
 	};
 
 	for (int nCntTexture = 0; nCntTexture < TEXTURE_MAX; nCntTexture++)

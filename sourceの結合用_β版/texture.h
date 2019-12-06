@@ -41,6 +41,9 @@ public:
 		TEXTURE_RETICLE,						// レティクル
 		TEXTURE_RELOAD,						// リロードロゴ（アクションパートで使用）
 		TEXTURE_TEAM_WIN,					// 勝利チームのロゴ
+		TEXTURE_LINK_BLUE,					// BLUEリンクゲージ
+		TEXTURE_LINK_RED,						// REDリンクゲージ
+		TEXTURE_LINK_FLAME,				// リンクゲージフレーム
 
 		// TEXTURE
 		TEXTURE_PRESS_BUTTON,			// 入力待ち
@@ -61,6 +64,8 @@ public:
 		TEXTURE_MECHASEL_INST,			// 機体説明（機体選択画面で使用）
 		TEXTURE_MECHATYPE,				// 機体の種類（機体選択画面で使用）
 		TEXTURE_MECHA_SELECT,			// 機体画像（機体選択画面で使用）
+		TEXTURE_BACK,							// 前の画面へ戻る
+		TEXTURE_RANGE,							// 飛距離（long, shortロゴ）
 
 		// menu
 		TEXTURE_MENU_FLAME,				// モードフレーム（メニュー画面で使用）
@@ -88,6 +93,12 @@ public:
 		// radiochat
 		TEXTURE_RADIOCHAT,					// ラジオチャット
 		TEXTURE_RADIOCHAT_MESS,		// ラジオチャットメッセージ
+
+		// option
+		TEXTURE_OPTION_ICON,				// オプションアイコン
+		TEXTURE_OPTION_FLAME,			// オプションフレーム
+		TEXTURE_OPTION_BATSU,			// バツボタン
+		TEXTURE_OPTION_TOGGlE,			// トグルスイッチ
 
 		TEXTURE_SHADOW,
 

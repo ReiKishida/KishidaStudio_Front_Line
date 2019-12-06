@@ -18,8 +18,8 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define MENU_LOGO_WIDTH		(420.0f)	// メニューロゴの幅1
-#define MENU_LOGO_HEIGHT	(90.0f)	// メニューロゴの高さ
+#define MENU_LOGO_WIDTH		(420.0f)	// メニューロゴの幅
+#define MENU_LOGO_HEIGHT		(90.0f)		// メニューロゴの高さ
 #define MENU_LOGO_POS		(D3DXVECTOR3(MENU_LOGO_WIDTH / 2.0f + 10.0f, MENU_LOGO_HEIGHT / 2.0f + 10.0f, 0.0f))			// メニューロゴの位置
 
 #define MENU_MESSAGE_WIDTH		(1280.0f)	// メッセージ表示の幅
@@ -68,60 +68,8 @@ CMenu::~CMenu()
 //=============================================================================
 HRESULT CMenu::Init(void)
 {
-	// 背景の生成
-	m_pBg = CBg::Create();
-
-	// メニューロゴ
-	if (m_apUI[0] == NULL && m_apUI[1] == NULL)
-	{
-		m_apUI[0] = CScene2D::Create();
-		m_apUI[0]->SetPos(MENU_LOGO_POS);
-		m_apUI[0]->SetSize(MENU_LOGO_WIDTH, MENU_LOGO_HEIGHT);
-		m_apUI[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_LOGO)));
-		m_apUI[0]->SetTex(0, 1, TEX_MENU_LOGO);
-
-		// インフォメーション
-		m_apUI[1] = CScene2D::Create();
-		m_apUI[1]->SetPos(D3DXVECTOR3(SCREEN_WIDTH / 2, 650.0f, 0.0f));
-		m_apUI[1]->SetSize(SCREEN_WIDTH, 140.0f);
-		m_apUI[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_INFOMETION)));
-	}
-
-	// メニューメッセージ
-	if (m_apUITexMess == NULL)
-	{
-		m_apUITexMess = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 685.0f, 0.0f), MENU_MESSAGE_WIDTH, MENU_MESSAGE_HEIGHT, CUI_TEXTURE::UIFLAME_MENU_MESS);
-	}
-
-	// ボタンの生成
-	if (m_apButtonUI[0] == NULL && m_apButtonUI[1] == NULL && m_apButtonUI[2] == NULL && m_apButtonUI[3] == NULL && m_apButtonUI[4] == NULL && m_apButtonUI[5] == NULL)
-	{
-		m_apButtonUI[0] = CButton2D::Create(D3DXVECTOR3(250.0f, 325.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// シングルプレイ
-		m_apButtonUI[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
-		m_apButtonUI[0]->SetTex(0, 1, TEX_MENU_FLAME);
-
-		m_apButtonUI[1] = CButton2D::Create(D3DXVECTOR3(495.0f, 465.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// マルチプレイ
-		m_apButtonUI[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
-		m_apButtonUI[1]->SetTex(1, 1, TEX_MENU_FLAME);
-
-		m_apButtonUI[2] = CButton2D::Create(D3DXVECTOR3(740.0f, 325.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// チュートリアル
-		m_apButtonUI[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
-		m_apButtonUI[2]->SetTex(2, 1, TEX_MENU_FLAME);
-
-		m_apButtonUI[3] = CButton2D::Create(D3DXVECTOR3(985.0f, 465.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// quit
-		m_apButtonUI[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
-		m_apButtonUI[3]->SetTex(4, 1, TEX_MENU_FLAME);
-
-		m_apButtonUI[4] = CButton2D::Create(D3DXVECTOR3(985.0f, 185.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// credit
-		m_apButtonUI[4]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
-		m_apButtonUI[4]->SetTex(3, 1, TEX_MENU_FLAME);
-	}
-
-	// カーソルの生成
-	if (m_pCursor == NULL)
-	{
-		m_pCursor = CMouseCursor2D::Create();
-	}
+	// 生成
+	MenuCreate();
 
 	return S_OK;
 }
@@ -188,7 +136,7 @@ void CMenu::Update(void)
 
 	for (int nCntButton = 0; nCntButton < MENU_NUM_BUTTON; nCntButton++)
 	{// ボタンの判定
-		if (m_apButtonUI[nCntButton]->InRange(m_pCursor->GetMousePosition()))
+		if (m_apButtonUI[nCntButton]->InRangeMenu(m_pCursor->GetMousePosition()))
 		{// 範囲内かチェック
 			if (m_apButtonUI[nCntButton]->ClickRelease())
 			{// クリックされた
@@ -275,4 +223,65 @@ void CMenu::Update(void)
 //=============================================================================
 void CMenu::Draw(void)
 {
+}
+
+//=============================================================================
+// ロゴの生成
+//=============================================================================
+void CMenu::MenuCreate(void)
+{
+	// 背景の生成
+	m_pBg = CBg::Create();
+
+	// メニューロゴ
+	if (m_apUI[0] == NULL && m_apUI[1] == NULL)
+	{
+		m_apUI[0] = CScene2D::Create();
+		m_apUI[0]->SetPos(MENU_LOGO_POS);
+		m_apUI[0]->SetSize(MENU_LOGO_WIDTH, MENU_LOGO_HEIGHT);
+		m_apUI[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_LOGO)));
+		m_apUI[0]->SetTex(0, 1, TEX_MENU_LOGO);
+
+		// インフォメーション
+		m_apUI[1] = CScene2D::Create();
+		m_apUI[1]->SetPos(D3DXVECTOR3(SCREEN_WIDTH / 2, 650.0f, 0.0f));
+		m_apUI[1]->SetSize(SCREEN_WIDTH, 140.0f);
+		m_apUI[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_INFOMETION)));
+	}
+
+	// メニューメッセージ
+	if (m_apUITexMess == NULL)
+	{
+		m_apUITexMess = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 685.0f, 0.0f), MENU_MESSAGE_WIDTH, MENU_MESSAGE_HEIGHT, CUI_TEXTURE::UIFLAME_MENU_MESS);
+	}
+
+	// ボタンの生成
+	if (m_apButtonUI[0] == NULL && m_apButtonUI[1] == NULL && m_apButtonUI[2] == NULL && m_apButtonUI[3] == NULL && m_apButtonUI[4] == NULL && m_apButtonUI[5] == NULL)
+	{
+		m_apButtonUI[0] = CButton2D::Create(D3DXVECTOR3(250.0f, 325.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// シングルプレイ
+		m_apButtonUI[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
+		m_apButtonUI[0]->SetTex(0, 1, TEX_MENU_FLAME);
+
+		m_apButtonUI[1] = CButton2D::Create(D3DXVECTOR3(495.0f, 465.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// マルチプレイ
+		m_apButtonUI[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
+		m_apButtonUI[1]->SetTex(1, 1, TEX_MENU_FLAME);
+
+		m_apButtonUI[2] = CButton2D::Create(D3DXVECTOR3(740.0f, 325.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// チュートリアル
+		m_apButtonUI[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
+		m_apButtonUI[2]->SetTex(2, 1, TEX_MENU_FLAME);
+
+		m_apButtonUI[3] = CButton2D::Create(D3DXVECTOR3(985.0f, 465.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// quit
+		m_apButtonUI[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
+		m_apButtonUI[3]->SetTex(4, 1, TEX_MENU_FLAME);
+
+		m_apButtonUI[4] = CButton2D::Create(D3DXVECTOR3(985.0f, 185.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// credit
+		m_apButtonUI[4]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));
+		m_apButtonUI[4]->SetTex(3, 1, TEX_MENU_FLAME);
+	}
+
+	// カーソルの生成
+	if (m_pCursor == NULL)
+	{
+		m_pCursor = CMouseCursor2D::Create();
+	}
 }

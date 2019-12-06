@@ -210,6 +210,16 @@ HRESULT CUI_TEXTURE::Init(void)
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
 
+	case UIFLAME_LINK_FLAME:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_LINK_FLAME));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		break;
+
+	case UIFLAME_OPTION_FLAME:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_OPTION_FLAME));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		break;
+
 		//****************************************
 		// アクションパート
 		//****************************************

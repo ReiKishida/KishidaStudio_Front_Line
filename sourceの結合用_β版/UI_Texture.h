@@ -58,6 +58,8 @@ public:
 		UIFLAME_STRATEGY_PART,		// ストラテジーパート切り替え
 		UIFLAME_RADIOCHAT,				// ラジオチャット
 		UIFLAME_RADIOCHAT_MESS,	// ラジオチャットメッセージ
+		UIFLAME_LINK_FLAME,				// リンクゲージフレーム
+		UIFLAME_OPTION_FLAME,		// オプションフレーム
 
 		// アクションパート
 		UIFLAME_RELOAD,					// リロードロゴ

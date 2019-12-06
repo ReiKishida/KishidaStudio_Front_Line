@@ -53,6 +53,8 @@ public:
 
 	static MODE GetMode(void) { return m_mode; };
 
+	void MenuCreate(void);		// ロゴなどの生成
+
 private:
 	CBg							*m_pBg;														// 背景のポインタ変数
 	CButton2D				*m_apButtonUI[MENU_NUM_BUTTON];	// ボタンクラスのポインタ変数
