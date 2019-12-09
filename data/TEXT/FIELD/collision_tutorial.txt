@@ -1,0 +1,53 @@
+#********************************************************************
+#
+#    当たり判定配置ファイル[collision.txt]
+#    Auther : TAKUTO ISHIDA
+#
+#********************************************************************
+SCRIPT
+
+#------------------------------------------------------------------------------
+# 当たり判定の配置情報
+#------------------------------------------------------------------------------
+COLLISIONSET
+	POS = 48.0 0.0 -339.0		# 位置
+	SIZE = 135.1 119.2 518.7		# 大きさ
+END_COLLISIONSET
+
+COLLISIONSET
+	POS = -368.0 0.0 -463.0		# 位置
+	SIZE = 135.1 121.1 179.0		# 大きさ
+END_COLLISIONSET
+
+COLLISIONSET
+	POS = -368.0 0.0 203.0		# 位置
+	SIZE = 135.1 121.1 179.0		# 大きさ
+END_COLLISIONSET
+
+COLLISIONSET
+	POS = 381.0 0.0 203.0		# 位置
+	SIZE = 135.1 121.1 179.0		# 大きさ
+END_COLLISIONSET
+
+COLLISIONSET
+	POS = 547.0 0.0 -604.0		# 位置
+	SIZE = 91.8 121.1 1139.9		# 大きさ
+END_COLLISIONSET
+
+COLLISIONSET
+	POS = -615.0 0.0 -604.0		# 位置
+	SIZE = 91.8 121.1 1139.9		# 大きさ
+END_COLLISIONSET
+
+COLLISIONSET
+	POS = -600.0 0.0 -666.0		# 位置
+	SIZE = 1258.6 121.1 90.9		# 大きさ
+END_COLLISIONSET
+
+COLLISIONSET
+	POS = -600.0 0.0 494.0		# 位置
+	SIZE = 1258.6 121.1 90.9		# 大きさ
+END_COLLISIONSET
+
+
+END_SCRIPT		＃ 絶対に消さない！
