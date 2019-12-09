@@ -23,11 +23,9 @@
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define	LOAD_FILENAME			("data/TEXT/NODE_DATA/NodeData.txt")	// 読み込むファイルのパス
-#define CURSOR_TEXTURE			("data/TEXTURE/reticle.png")	// カーソルのテクスチャ
-#define MASSAGE_DISPLAY_TIME	(180)							// メッセージの表示時間
-#define MOUSE_WIDTH				(30.0f)
-#define MOUSE_HEIGHT			(30.0f)
+#define	LOAD_FILENAME	("data/TEXT/NODE_DATA/NodeData.txt")	// 読み込むファイルのパス
+#define MOUSE_WIDTH		(30.0f)		// マウステクスチャの幅
+#define MOUSE_HEIGHT	(30.0f)		// マウステクスチャの高さ
 
 //=============================================================================
 // 静的メンバ変数
@@ -36,6 +34,10 @@ CCamera *CMouseCursor::m_pCamera = NULL;
 CNodePointer *CMouseCursor::m_pNodePointer[NODEPOINT_MAX] = {};
 D3DXVECTOR3 CMouseCursor2D::m_pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 
+/*==============================================================*/
+/*					3Dマウスカーソルのクラス					*/
+/*                  Author : Komatsu Keisuke                    */
+/*==============================================================*/
 //=============================================================================
 // 生成処理
 //=============================================================================
@@ -80,7 +82,7 @@ HRESULT CMouseCursor::Init()
 	m_pCamera = CManager::GetCamera();
 	m_pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_setpos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	m_size = D3DXVECTOR3(MOUSE_WIDTH, 0.0f, MOUSE_WIDTH);
+	m_size = D3DXVECTOR3(MOUSE_WIDTH, 0.0f, MOUSE_HEIGHT) * 3.0f;
 	m_nNodeCounter = 0;
 
 	// マウスカーソルの設定
@@ -114,18 +116,20 @@ void CMouseCursor::Uninit(void)
 void CMouseCursor::Update(void)
 {
 	//CDebugProc::Print("=====マウス用3Dポリゴン======\n");
-	CDebugProc::Print("3Dマップ上のマウスの座標：%.2f %.2f", m_setpos.x, m_setpos.z);
+	//CDebugProc::Print("3Dマップ上のマウスの座標：%.2f %.2f", m_pos.x, m_pos.z);
 	//CDebugProc::Print("スクリーン上のマウス座標：%.2f %.2f", (float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y);
-
+	//CDebugProc::Print("エディター上のマウスの座標：%.2f %.2f", m_setpos.x, m_setpos.z);
 
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
 
-	// 移動処理
-	CMouseCursor::Move(pMouse);
+	// ゲーム内マウス処理
+	CMouseCursor::Mouse(pMouse);
 
-	// 入力処理
-	CMouseCursor::Input(pKeyboard, pMouse);
+#ifdef _DEBUG
+	// ファイル関係処理
+	CMouseCursor::File(pKeyboard);
+#endif
 }
 
 //=============================================================================
@@ -146,69 +150,78 @@ void CMouseCursor::Draw(void)
 }
 
 //=============================================================================
-// 移動処理
+// ゲーム内マウス処理
 //=============================================================================
-void CMouseCursor::Move(CInputMouse *pMouse)
+void CMouseCursor::Mouse(CInputMouse *pMouse)
 {
-	LPDIRECT3DDEVICE9 pDevice = CManager::GetRenderer()->GetDevice();	// デバイスの取得
+	D3DXVECTOR3 MousePos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	D3DVIEWPORT9 viewport;
 	D3DXMATRIX matrix, proj, view;
 
 	if (m_pCamera != NULL)
 	{// カメラがNullじゃない
-	 // スクリーン座標をワールド座標へ変換
-		D3DXVECTOR3 MousePos((float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y, 1);
-		viewport = CManager::GetCamera()->GetViewport(1);
+		// スクリーン座標をワールド座標へ変換
+		MousePos = D3DXVECTOR3((float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y, 0.0f);
+		viewport = m_pCamera->GetViewport(1);
 		D3DXMatrixIdentity(&matrix);
-		CManager::GetCamera()->GetInfo(&viewport, &proj, &view);
+		m_pCamera->GetInfo(&viewport, &proj, &view);
 		D3DXVec3Unproject(&MousePos, &MousePos, &viewport, &proj, &view, &matrix);
 
-		// ズーム倍率に応じたカーソルのサイズ変更
+		// カーソル位置の設定
+		m_pos.x = MousePos.x * (PARALLEL_PROJECTION_SIZE / m_pCamera->GetZoom());
+		m_pos.y = 0.0f;
+		m_pos.z = MousePos.z * (PARALLEL_PROJECTION_SIZE / m_pCamera->GetZoom());
+
 		switch ((int)m_pCamera->GetZoom())
 		{
-		case 3:
-			// カーソル位置の設定
-			m_pos.x = MousePos.x * 0.6666f;
-			m_pos.y = 0.0f;
-			m_pos.z = MousePos.z * 0.6666f;
-
+		case 1:
+			m_pos.x -= m_pCamera->GetPosR().x * 5.0f;
+			m_pos.z -= m_pCamera->GetPosR().z * 5.0f;
 			break;
 		case 2:
-			// カーソル位置の設定
-			m_pos.x = MousePos.x;
-			m_pos.y = 0.0f;
-			m_pos.z = MousePos.z;
-
+			m_pos.x -= m_pCamera->GetPosR().x * 2.0f;
+			m_pos.z -= m_pCamera->GetPosR().z * 2.0f;
 			break;
-		case 1:
-			// カーソル位置の設定
-			m_pos.x = MousePos.x * 2.0f;
-			m_pos.y = 0.0f;
-			m_pos.z = MousePos.z * 2.0f;
-
+		case 3:
+			m_pos.x -= m_pCamera->GetPosR().x;
+			m_pos.z -= m_pCamera->GetPosR().z;
 			break;
 		}
+
+		// 位置・サイズの設定
+		CScene3D::SetMousePos(m_pos);
+		CScene3D::SetSize((m_size / m_pCamera->GetZoom()));
 	}
 
-	// 位置・サイズの設定
-	CScene3D::SetMousePos(m_pos);
-	CScene3D::SetSize(m_size / m_pCamera->GetZoom());
+	if (CManager::GetGame()->GetPart() == CGame::PART_STRATEGY)
+	{// ストラテジーパート時のみポジションを設定
+		m_setpos = D3DXVECTOR3(((int)(m_pos.x / 38)) * 38.0f, 0.0f, ((int)(m_pos.z / 36)) * 36.0f);
+	}
 }
 
 //=============================================================================
-// 入力処理
+// ファイル関係処理
 //=============================================================================
-void CMouseCursor::Input(CInputKeyboard *pKeyboard, CInputMouse *pMouse)
+void CMouseCursor::File(CInputKeyboard *pKeyboard)
 {
 	bool bSet = false;
 
-	if (CManager::GetGame()->GetPart() == CGame::PART_STRATEGY)
-	{// ストラテジーパート時に左クリックでAIの目的地を設定
-		m_setpos = D3DXVECTOR3(((int)(m_pos.x / 38)) * 38.0f, 0.0f, ((int)(m_pos.z / 36)) * 36.0f);
-	}
-
 	if (pKeyboard->GetTrigger(DIK_F11) == true)
 	{// F11キーでファイルをロード
+		// 前回のデータの削除
+		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+		{// 全ノード数分回る
+			if (m_pNodePointer[nCntNode] != NULL)
+			{// データが入っている場合
+				m_nNodeCounter = 0;
+				m_pNodePointer[nCntNode]->GetNodeMax() = 0;
+				m_pNodePointer[nCntNode]->GetConnectMax() = 0;
+				m_pNodePointer[nCntNode]->Uninit();
+				m_pNodePointer[nCntNode] = NULL;
+			}
+		}
+
+		// ファイルロ―ド
 		CMouseCursor::FileLoad(LOAD_FILENAME);
 
 		// ロードしたデータをもとにノードを配置
@@ -230,10 +243,22 @@ void CMouseCursor::Input(CInputKeyboard *pKeyboard, CInputMouse *pMouse)
 			}
 		}
 	}
+
+	if (pKeyboard->GetTrigger(DIK_F9) == true)
+	{// 9キーで	可視化用ポリゴンを破棄
+		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+		{// 全ノード数分回る
+			if (m_pNodePointer[nCntNode] != NULL)
+			{// 可視化用ポリゴンがNULLじゃない
+				m_pNodePointer[nCntNode]->Uninit();
+				m_pNodePointer[nCntNode] = NULL;
+			}
+		}
+	}
 }
 
 //=============================================================================
-// ルート探索用ファイルの読み込み
+// ファイルの読み込み
 //=============================================================================
 void CMouseCursor::FileLoad(char* pFileName)
 {
@@ -343,6 +368,7 @@ void CMouseCursor::FileLoad(char* pFileName)
 
 /****************************************************************/
 /*					2Dマウスカーソルのクラス					*/
+/*                  Author : Takuto Ishida                      */
 /****************************************************************/
 //=============================================================================
 // 生成処理
@@ -424,8 +450,8 @@ void CMouseCursor2D::Move(CInputMouse *pMouse)
 	GetWindowRect(CManager::GetRenderer()->GetHWnd(), &rect);
 
 	// さらにサイズ変更を考慮して、現在のサイズで補正（枠サイズ等あるので厳密ではない）
-	m_pos.x = float(pMouse->GetPoint().x - rect.left);
-	m_pos.y = float(pMouse->GetPoint().y - rect.top);
+	m_pos.x = float(pMouse->GetPoint().x - rect.left) - (MOUSE_WIDTH / 2.0f);
+	m_pos.y = float(pMouse->GetPoint().y - rect.top) - (MOUSE_HEIGHT / 2.0f);
 
 	// 位置の設定
 	CScene2D::SetPos(m_pos);

@@ -170,6 +170,78 @@ void CShadow::Draw(void)
 	// ワールドマトリックスの設定
 	pDevice->SetTransform(D3DTS_WORLD, &m_mtxWorld);
 
+#if 0
+	// 深度バッファに書き込みはしない
+	pDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+
+	// レンダリングターゲットに書き込みはしない
+	pDevice->SetRenderState(D3DRS_COLORWRITEENABLE, FALSE);
+
+	// 両面描く
+	pDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+
+	// 両面ステンシルを使用する
+	pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
+	pDevice->SetRenderState(D3DRS_TWOSIDEDSTENCILMODE, TRUE);
+
+	// ステンシルテストは常に合格する（＝テストしない）
+	pDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
+	pDevice->SetRenderState(D3DRS_CCW_STENCILFUNC, D3DCMP_ALWAYS);
+
+	// ステンシルバッファの増減を1に設定する
+	pDevice->SetRenderState(D3DRS_STENCILREF, 0x1);
+	pDevice->SetRenderState(D3DRS_STENCILMASK, 0xffffffff);
+	pDevice->SetRenderState(D3DRS_STENCILWRITEMASK, 0xffffffff);
+
+	// 表面は深度テストに合格したらステンシルバッファの内容を+1する
+	pDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_INCR);
+	pDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
+	pDevice->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
+
+	// 裏面は深度テストに合格したらステンシルバッファの内容を-1する
+	pDevice->SetRenderState(D3DRS_CCW_STENCILPASS, D3DSTENCILOP_DECR);
+	pDevice->SetRenderState(D3DRS_CCW_STENCILZFAIL, D3DSTENCILOP_KEEP);
+	pDevice->SetRenderState(D3DRS_CCW_STENCILFAIL, D3DSTENCILOP_KEEP);
+
+	for (int nCntMat = 0; nCntMat < (int)m_nNumMat; nCntMat++)
+	{// モデルの描画
+		m_pMesh->DrawSubset(nCntMat);
+	}
+
+	// 状態を元に戻す
+	//pDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+	pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+	pDevice->SetRenderState(D3DRS_COLORWRITEENABLE, 0xf);
+	pDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+	pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	pDevice->SetRenderState(D3DRS_TWOSIDEDSTENCILMODE, FALSE);
+
+	// 深度テストはしない
+	pDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+
+	// ステンシルテストはする
+	pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
+
+	// アルファブレンディングは線形に掛ける
+	pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+	pDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+	pDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+
+	// ステンシルバッファの値が１以上のときに書き込む
+	pDevice->SetRenderState(D3DRS_STENCILREF, 0x1);
+	pDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL);
+	pDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
+
+	// 画面を黒く塗りつぶす
+	m_pBigScreen->Draw();
+
+	// 状態を元に戻す
+	pDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+	pDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+	pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+#endif
+
+#if 1
 	// ステンシルバッファテストの設定
 	pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);						// ステンシルバッファを有効にする
 	pDevice->SetRenderState(D3DRS_COLORWRITEENABLE, 0x00000000);			// 描画をしないようにする
@@ -192,15 +264,15 @@ void CShadow::Draw(void)
 	// ステンシルバッファテストの設定
 	pDevice->SetRenderState(D3DRS_STENCILREF, 0x01);						// 対象とする数値
 	pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);						// ステンシルバッファを有効にする
-	pDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_LESSEQUAL);			// ステンシルバッファテストを通す条件
+	pDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);				// ステンシルバッファテストを常に通す
 	pDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_INCR);			// ステンシルテスト、Zテスト共に合格した場合
 	pDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_ZERO);			// ステンシルテストに合格、Zテストに不合格した場合
-	pDevice->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);			// ステンシルテストに不合格した場合
+	pDevice->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_ZERO);			// ステンシルテストに不合格した場合
 
 	// ステンシルバッファテストの設定
 	pDevice->SetRenderState(D3DRS_STENCILREF, 0x01);						// 対象とする数値
 	pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);						// ステンシルバッファを有効にする
-	pDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS);				// ステンシルバッファテストを常に通す
+	pDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_LESSEQUAL);			// ステンシルバッファテストを通す条件
 	pDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_INCR);			// ステンシルテスト、Zテスト共に合格した場合
 	pDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_ZERO);			// ステンシルテストに合格、Zテストに不合格した場合
 	pDevice->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_ZERO);			// ステンシルテストに不合格した場合
@@ -214,18 +286,18 @@ void CShadow::Draw(void)
 
 	pDevice->SetRenderState(D3DRS_COLORWRITEENABLE, 0x0000000f);			// 元に戻す
 
-	//// ステンシルバッファテストの設定
-	//pDevice->SetRenderState(D3DRS_STENCILREF, 0x01);						// 対象とする数値
-	//pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);						// ステンシルバッファを有効にする
-	//pDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL);				// ステンシルバッファテストが同じときに通す
-	//pDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);			// ステンシルテスト、Zテスト共に合格した場合
-	//pDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);			// ステンシルテストに合格、Zテストに不合格した場合
-	//pDevice->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);			// ステンシルテストに不合格した場合
-	//pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);						// Zバッファに書き込めるようにする
-	//pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+	// ステンシルバッファテストの設定
+	pDevice->SetRenderState(D3DRS_STENCILREF, 0x01);						// 対象とする数値
+	pDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);						// ステンシルバッファを有効にする
+	pDevice->SetRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL);				// ステンシルバッファテストが同じときに通す
+	pDevice->SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);			// ステンシルテスト、Zテスト共に合格した場合
+	pDevice->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);			// ステンシルテストに合格、Zテストに不合格した場合
+	pDevice->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);			// ステンシルテストに不合格した場合
+	pDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);						// Zバッファに書き込めるようにする
+	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
 
-	//// 画面を黒く塗りつぶす
-	//m_pBigScreen->Draw();
+	// 画面を黒く塗りつぶす
+	m_pBigScreen->Draw();
 
 	// ステンシルバッファテストの設定
 	pDevice->SetRenderState(D3DRS_STENCILREF, 0x02);						// 対象とする数値
@@ -242,4 +314,5 @@ void CShadow::Draw(void)
 
 	// ステンシルバッファテストの設定
 	pDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);					// ステンシルバッファ無効にする
+#endif
 }

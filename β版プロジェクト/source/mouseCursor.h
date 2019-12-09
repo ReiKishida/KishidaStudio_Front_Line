@@ -22,7 +22,8 @@ class CNodePointer;
 #define MOUSE_PRIORITY		(7)		// 処理の優先番号
 
 //=============================================================================
-// クラス定義
+// 3Dマウスカーソルのクラス
+// Author : Komatsu Keisuke
 //=============================================================================
 class CMouseCursor : public CScene3D
 {
@@ -55,16 +56,15 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	void Input(CInputKeyboard *pKeyboard, CInputMouse *pMouse);
-	void Move(CInputMouse *pMouse);
-
+	void Mouse(CInputMouse *pMouse);
+	void File(CInputKeyboard *pKeyboard);
 	void FileLoad(char* pFileName);
 
 	D3DXVECTOR3 GetPos(void) { return m_pos; }
 	D3DXVECTOR3 &Getsetpos(void) { return m_setpos; }
 
 private:
-	NODE_LOAD_STATE m_LoadNodeData;		// ロードしたマップ情報
+	NODE_LOAD_STATE m_LoadNodeData;	// ロードしたマップ情報
 	LPDIRECT3DTEXTURE9 m_pTexture;	// テクスチャへのポインタ
 	D3DXVECTOR3	m_pos;				// 位置
 	D3DXVECTOR3	m_setpos;			// 地点登録用位置
@@ -77,6 +77,7 @@ private:
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // 2Dマウスカーソルのクラス
+// Author : Takuto Ishida
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 class CMouseCursor2D : public CScene2D
 {

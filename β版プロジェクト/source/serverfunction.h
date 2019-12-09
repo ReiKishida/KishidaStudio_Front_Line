@@ -40,6 +40,10 @@
 #define SERVER_MODE_GAME			"MODE_GAME"					//ゲームモード
 #define SERVER_MODE_RESULT			"MODE_RESULT"				//リザルトモード
 #define SERVER_PLAYER_DATA			"PLAYER_DATA = "			//プレイヤー情報
+#define SERVER_AI_PLAYER_DATA		"AI_PLAYER_DATA = "			//AIプレイヤー情報
+#define SERVER_FADE_OUT				"FADE_OUT"					//フェードアウトしている状態
+#define SERVER_FADE_NONE			"FADE_NONE"					//フェードしていない状態
+
 //*****************************************************************************
 // クラスの定義
 //*****************************************************************************

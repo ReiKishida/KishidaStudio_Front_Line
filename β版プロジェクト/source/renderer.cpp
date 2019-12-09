@@ -205,11 +205,13 @@ void CRenderer::Draw(void)
 				pCamera->Set(0);	// カメラのセット
 
 				CManager::GetGame()->GetMouse()->SetDisp(false);
+				CManager::GetGame()->GetField()->SetDisp(false);
 
 				// 全てのオブジェクトの描画
 				CScene::DrawAll();
 
 				CManager::GetGame()->GetMouse()->SetDisp(true);
+				CManager::GetGame()->GetField()->SetDisp(true);
 
 				pCamera->Set(1);
 

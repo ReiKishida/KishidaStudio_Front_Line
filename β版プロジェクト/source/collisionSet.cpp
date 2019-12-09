@@ -16,7 +16,8 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define COLLISION_FILENAME		"data/TEXT/FIELD/collision.txt"
+#define COLLISION_FILENAME_GAME			"data/TEXT/FIELD/collision_game.txt"
+#define COLLISION_FILENAME_TUTORIAL		"data/TEXT/FIELD/collision_tutorial.txt"
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -27,7 +28,7 @@
 //=============================================================================
 void CCollision::Load(void)
 {
-	D3DXVECTOR3 pos, size;
+	D3DXVECTOR3 pos, size, offset;
 
 	// モデルオブジェクトを探す
 	CScene *pScene = CScene::GetSceneTop(COLLISION_PRIORITY);
@@ -48,7 +49,17 @@ void CCollision::Load(void)
 	}
 
 	// ファイルを開く
-	FILE *pFile = fopen(COLLISION_FILENAME, "r");
+	FILE *pFile = NULL;
+	if (CManager::GetMode() == CManager::MODE_GAME)
+	{// ゲームのマップ
+		pFile = fopen(COLLISION_FILENAME_GAME, "r");
+		offset = D3DXVECTOR3(-13.0f, 0.0f, 13.0f);		// 位置の調整
+	}
+	else
+	{// チュートリアルのマップ
+		pFile = fopen(COLLISION_FILENAME_TUTORIAL, "r");
+		offset = D3DXVECTOR3(0.0f, 0.0f, 0.0f);			// 位置の調整
+	}
 
 	if (NULL != pFile)
 	{// ファイルがあった
@@ -80,7 +91,7 @@ void CCollision::Load(void)
 						}
 
 						// 当たり判定の生成
-						CCollision::Create(pos, size.x, size.y, size.z);
+						CCollision::Create(pos + offset, size.x, size.y, size.z);
 					}
 				}
 				break;
@@ -90,7 +101,7 @@ void CCollision::Load(void)
 	}
 	else
 	{// ファイルがないとき
-		MessageBox(0, "テキストファイルがありません。", "ENEMY/model.txt", MB_YESNO);
+		MessageBox(0, "テキストファイルがありません。", "コリジョンテキスト", MB_YESNO);
 	}
 }
 
