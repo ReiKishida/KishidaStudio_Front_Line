@@ -190,7 +190,7 @@ void CMechaSelect::Update(void)
 	else { m_apUI[2]->SetDisp(true); }
 
 	// ‘I‚Î‚ê‚Ä‚¢‚é‹@‘Ì‚ÉAà–¾‰æ‘œŠ„‚è“–‚Ä
-	m_apUI[2]->SetTex(nSelect + 1, 1, TEX_MECHA_TYPE);
+	m_apUI[2]->SetTex(nSelect, 1, TEX_MECHA_TYPE);
 
 	if (bButtonSwitch)
 	{// ‰æ–Ê‘JˆÚ

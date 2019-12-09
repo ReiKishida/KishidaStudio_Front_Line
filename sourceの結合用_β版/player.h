@@ -192,6 +192,7 @@ public:
 	void SetChat(bool bChat) { m_bChat = bChat; };											//チャット情報の設置処理
 	bool GetChat(void) { return m_bChat; }																// チャット情報の取得
 	void SetAllyChat(bool bAllyChat) { m_bAllyChat = bAllyChat; }							// 味方のチャットが使用しているかどうかの設定
+	bool GetAllyChat(void) { return m_bAllyChat; };
 	void SetAllyRadioChat(RADIOCHAT allyRadioChat) { m_allyRadiochat = allyRadioChat; }		// 味方のチャット情報の設定
 	bool GetChatBotton(void) { return m_bChatBotton; }
 
@@ -313,7 +314,7 @@ private:
 	bool						m_bChatBotton;														// チャットボタン生成中かどうか
 	int						m_moveSpeed;														// テクスチャ動くスピード
 	int						m_nTexTimer;															// テクスチャ表示タイマー
-
+	int						m_nAllyTimer;
 	// =============================================================
 	// AI関係
 	// =============================================================

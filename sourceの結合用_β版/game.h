@@ -33,6 +33,7 @@ class CGauge2D;
 class CModel;
 class CScene3D;
 class CMouseCursor;
+class CDamageDirection;
 
 //*****************************************************************************
 // クラス定義
@@ -97,6 +98,8 @@ public:
 	static void SetMechaType(int nPlayerIdx, CMechaSelect::MECHATYPE type) { m_aMechaType[nPlayerIdx] = type; };
 	static CMechaSelect::MECHATYPE GetMechaType(int nPlayerIdx) { return m_aMechaType[nPlayerIdx]; };
 
+	static CDamageDirection *GetDamageDirection(void) { return m_pDamageDirection; };
+
 private:
 	void LoadRespawnPos(void);
 
@@ -142,6 +145,8 @@ private:
 	bool m_bAIDeath[2][MAX_PLAYER_CONNECT];
 
 	static CMechaSelect::MECHATYPE m_aMechaType[MAX_PLAYER_CONNECT];
+
+	static CDamageDirection *m_pDamageDirection;	// 攻撃を受けた方向表示
 };
 
 #endif

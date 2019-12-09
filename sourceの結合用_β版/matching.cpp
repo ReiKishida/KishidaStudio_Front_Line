@@ -78,7 +78,7 @@ HRESULT CMatching::Init(void)
 
 	if (CMenu::GetMode() == CMenu::MODE_MULTI)
 	{//マルチプレイの場合
-		//クライアントの生成
+	 //クライアントの生成
 		CManager::CreateClient();
 	}
 
@@ -243,9 +243,9 @@ void CMatching::ScrollUI(void)
 	m_pUITex[1]->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f));
 	m_pUITex[1]->SetBgMove(0, m_nCntBgMove, 0.0025f);				// 上
 
-	//****************************************
-	//  REDチーム：色とスクロール処理
-	//****************************************
+																	//****************************************
+																	//  REDチーム：色とスクロール処理
+																	//****************************************
 	m_pUITex[2]->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
 	m_pUITex[2]->SetBgMove(0, -m_nCntBgMove, 0.0020f);			// 下
 
@@ -281,14 +281,14 @@ void CMatching::PrintData(void)
 				switch (m_bFade)
 				{
 				case true:
-					pClient->Printf("1");
+					pClient->Printf(SERVER_FADE_OUT);
 					break;
 				case false:
-					pClient->Printf("0");
+					pClient->Printf(SERVER_FADE_NONE);
 					break;
 				}
+				pClient->Printf(" ");
 			}
-			pClient->Printf(" ");
 
 			CDebugProc::Print("プレイヤー番号%d", pClient->GetPlayerIdx());
 		}
@@ -357,26 +357,39 @@ void CMatching::ReadMessage(void)
 					nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 					pStr += nWord;										//頭出し
 
-					//メカの種類を代入												//番号を代入
+																		//メカの種類を代入												//番号を代入
 					nMechatype = CServerFunction::ReadInt(pStr, "");
 					nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 					pStr += nWord;										//頭出し
 
 					if (nPlayerIdx == 0)
 					{
-						//フェード情報を代入
-						nFade = CServerFunction::ReadInt(pStr, "");
-						nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
-						pStr += nWord;										//頭出し
+						if (CServerFunction::Memcmp(pStr, SERVER_FADE_NONE) == 0)
+						{
+							m_bFade = false;
+							pStr += strlen(SERVER_FADE_NONE);
+							pStr += strlen(" ");
+						}
+						if (CServerFunction::Memcmp(pStr, SERVER_FADE_OUT) == 0)
+						{
+							m_bFade = true;
+							pStr += strlen(SERVER_FADE_OUT);
+							pStr += strlen(" ");
+
+						}
+						////フェード情報を代入
+						//nFade = CServerFunction::ReadInt(pStr, "");
+						//nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
+						//pStr += nWord;										//頭出し
 					}
 
 					//
-					if (nFade == 1)
-					{
-						m_bFade = true;
-					}
+					//if (nFade == 1)
+					//{
+					//	m_bFade = true;
+					//}
 
-					if (CFade::GetFade() == CFade::FADE_NONE  || CFade::GetFade() == CFade::FADE_IN)
+					if (CFade::GetFade() == CFade::FADE_NONE || CFade::GetFade() == CFade::FADE_IN)
 					{
 						if (CGame::GetMechaType(nPlayerIdx) == CMechaSelect::MECHATYPE_EMPTY)
 						{
@@ -428,31 +441,31 @@ void CMatching::CheckFade(void)
 
 	if (pClient != NULL)
 	{
-		//if (pClient->GetNumConnect() >= 2 /*MAX_CONNECT*/ &&
-		//	m_bFade == false)
-		//if(m_nNumBlue >= 1 && m_nNumRed >= 1 && m_bFade == false)
-		//{//接続されている総数が一定数以上の場合かつフェードをしていない場合
-		//	//if (pKeyboard->GetAnyKey() || pXInput->GetAnyButton(0))
-		//	if(pKeyboard->GetTrigger(DIK_RETURN) ==true)
-		//	{//ボタンを押された場合
-		//		m_bFade = true;	//フェードをする状態にする
+		if (pClient->GetNumConnect() >= 2 /*MAX_CONNECT*/ &&
+			m_bFade == false)
+			if (m_nNumBlue >= 1 && m_nNumRed >= 1 && m_bFade == false)
+			{//接続されている総数が一定数以上の場合かつフェードをしていない場合
+			 //if (pKeyboard->GetAnyKey() || pXInput->GetAnyButton(0))
+				if (pKeyboard->GetTrigger(DIK_RETURN) == true)
+				{//ボタンを押された場合
+					m_bFade = true;	//フェードをする状態にする
+				}
+			}
+
+		//if (m_nNumBlue == 2 && m_nNumRed == 2 && m_bFade == false)
+		//{
+		//	if (pClient->GetPlayerIdx() == 0)
+		//	{
+		//		m_bFade = true;
 		//	}
 		//}
 
-		if (m_nNumBlue == 2 && m_nNumRed == 2 && m_bFade == false)
-		{
-			if (pClient->GetPlayerIdx() == 0)
-			{
-				m_bFade = true;
-			}
-		}
-
 		/*if (pClient->GetNumConnect() == 2)
 		{
-			if (pClient->GetPlayerIdx() == 0)
-			{
-				m_bFade = true;
-			}
+		if (pClient->GetPlayerIdx() == 0)
+		{
+		m_bFade = true;
+		}
 		}*/
 	}
 	if (m_bFade == true)

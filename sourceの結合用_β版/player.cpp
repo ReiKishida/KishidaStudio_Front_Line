@@ -36,6 +36,8 @@
 #include "AI.h"
 #include "particle.h"
 #include "search.h"
+#include "damageDirection.h"
+
 //==================================
 // マクロ定義
 //==================================
@@ -52,6 +54,8 @@
 #define PLAYER_DAMAGE_TIME		(60)		// ダメージを受けた時の無敵時間
 #define PLAYER_DAMAGE_MOVE		(40)		// ダメージを受けてから動けるようになるまでの時間
 #define PLAYER_RETICLE_LENGTH	(2500.0f)	// レティクルの距離
+
+#define NODE_MAX	(256)		// ノードの最大数
 
 // =============================================================
 // UI関係
@@ -157,6 +161,8 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_bReload = false;
 	m_nRespawnTimer = 0;
 	m_bAllyCol = false;
+	m_nTexTimer = 0;
+	m_nAllyTimer = 0;
 
 	//AI戦闘系の変数
 	m_pSearch = NULL;
@@ -760,6 +766,23 @@ void CPlayer::Update(void)
 						// 弾を撃つ
 						Shoot();
 
+						if (m_bChat == false)
+						{//チャットを使用していない場合
+						 //ラジオチャットボタンの生成
+							ChatBotton();
+						}
+						if (m_bChat == true)
+						{//チャットを使用している場合
+						 //チャットのメッセージ表示処理
+							ChatMess(m_bChat);
+						}
+
+						if (m_bAllyChat == true)
+						{//仲間のチャットが使用されている場合
+						 //仲間のメッセージを表示する処理
+							AllyChatMess();
+						}
+
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -947,7 +970,15 @@ void CPlayer::Movement(void)
 	if (pKeyboard->GetTrigger(DIK_7))
 	{
 		Damage(m_nLifeMax);
+		CParticle::Create(m_pModel[0]->GetWorldPos(), 4);
+		CParticle::Create(m_pModel[0]->GetWorldPos(), 5);
+
+		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+		{
+			m_pModel[nCntModel]->SetDisp(false);
+		}
 	}
+
 	CDirectInput *pDirectInput = CManager::GetDirectInput();	//DirectInputの取得
 	CDirectInput::GamePad *DirectInputStick = pDirectInput->GetgamePadStick();
 
@@ -1011,29 +1042,32 @@ void CPlayer::Movement(void)
 
 	if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
 	{// モーションクラスが使われている
-		float fDiffX = (float)CManager::GetInputMouse()->GetDiffPointX();
-		if (bKey)
-		{// 移動モーション
-			if (fDirMove >= D3DX_PI * 0.75f || fDirMove <= D3DX_PI * -0.75f)
-			{// バックラン
-				m_pUpperMotion->SetMotion(CMotionManager::TYPE_BACK);
-				m_pLowerMotion->SetMotion(CMotionManager::TYPE_BACK);
+		if (m_pUpperMotion->GetMotion() != CMotionManager::TYPE_DAMAGE_FRONT && m_pUpperMotion->GetMotion() != CMotionManager::TYPE_DAMAGE_BACK)
+		{
+			float fDiffX = (float)CManager::GetInputMouse()->GetDiffPointX();
+			if (bKey)
+			{// 移動モーション
+				if (fDirMove >= D3DX_PI * 0.75f || fDirMove <= D3DX_PI * -0.75f)
+				{// バックラン
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_BACK);
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_BACK);
+				}
+				else
+				{// 通常移動
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
+				}
 			}
-			else
-			{// 通常移動
+			else if (fDiffX == 0.0f)
+			{// ニュートラルモーション
+				m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+				m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+			}
+			else if ((fDiffX < 10.0f || fDiffX > -10.0f) && !m_bChatBotton)
+			{// 移動モーション
 				m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
 				m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
 			}
-		}
-		else if (fDiffX == 0.0f)
-		{// ニュートラルモーション
-			m_pUpperMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-			m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-		}
-		else if ((fDiffX < 10.0f || fDiffX > -10.0f) && !m_bChatBotton)
-		{// 移動モーション
-			m_pUpperMotion->SetMotion(CMotionManager::TYPE_WALK);
-			m_pLowerMotion->SetMotion(CMotionManager::TYPE_WALK);
 		}
 	}
 
@@ -1113,6 +1147,16 @@ void CPlayer::Shoot(void)
 
 				m_bShoot = true;
 			}
+
+			//float rot = D3DX_PI;
+
+			//// 差分の調節
+			//if (rot > D3DX_PI) { rot -= D3DX_PI * 2.0f; }
+			//if (rot < -D3DX_PI) { rot += D3DX_PI * 2.0f; }
+
+			//	D3DXVECTOR3 pos = D3DXVECTOR3(sinf(rot) * 100.0f, 25.0f, cosf(rot) * 100.0f) + m_pos;
+			//	CBulletPlayer::Create(pos, atan2f(m_pos.x - pos.x, m_pos.z - pos.z), D3DX_PI * 0.5f, m_nAttack, (m_nTeam + 1) % 2);
+			//	m_bShoot = true;
 
 			m_nRemBullet--;
 			m_bShootButton = true;
@@ -1250,13 +1294,7 @@ void CPlayer::Angle(void)
 //=========================================
 void CPlayer::SetParticle(void)
 {
-	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
-
-	if (pKeyboard->GetTrigger(DIK_R))
-	{
-		CParData::Unload();
-		CParData::Load();
-	}
+	if (m_bDeath) { return; }
 
 	if (m_nLife < m_nLifeMax / 4)
 	{// 耐久力が４分の１になった
@@ -1298,35 +1336,49 @@ void CPlayer::Damage(int nDamage)
 	{
 		if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
 		{// モーションクラスが使われている
-			if (m_pUpperMotion->GetType() != CMotionManager::TYPE_DAMAGE && m_pLowerMotion->GetType() != CMotionManager::TYPE_DAMAGE)
-			{// ライフクラスが使われている
-				if (m_nLife > 0 && m_bDeath == false)
+			// ライフクラスが使われている
+			if (m_nLife > 0 && m_bDeath == false)
+			{
+				if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_FRONT))
 				{
-					m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
-					m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
-
-					m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
-
-					m_nLife -= nDamage;
-
-					if (0 >= m_nLife)
-					{
-						m_nLife = 0;
-						m_bDeath = true;
-
-						switch (m_nTeam)
-						{
-						case 0:
-							CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 30);
-							break;
-						case 1:
-							CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 30);
-							break;
-						}
-					}
-					//CSound *pSound = CManager::GetSound();				// サウンドの取得
-					//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
 				}
+				else if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_BACK))
+				{
+					m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+					m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+				}
+
+				m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+
+				m_nLife -= nDamage;
+
+				if (0 >= m_nLife)
+				{
+					m_nLife = 0;
+					m_bDeath = true;
+
+					CParticle::Create(m_pModel[0]->GetWorldPos(), 4);
+					CParticle::Create(m_pModel[0]->GetWorldPos(), 5);
+
+					for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+					{
+						m_pModel[nCntModel]->SetDisp(false);
+					}
+
+					switch (m_nTeam)
+					{
+					case 0:
+						CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 30);
+						break;
+					case 1:
+						CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 30);
+						break;
+					}
+				}
+				//CSound *pSound = CManager::GetSound();				// サウンドの取得
+				//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
 			}
 		}
 	}
@@ -1338,12 +1390,19 @@ void CPlayer::Damage(int nDamage)
 			{
 				if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
 				{// モーションクラスが使われている
-					if (m_pUpperMotion->GetType() != CMotionManager::TYPE_DAMAGE && m_pLowerMotion->GetType() != CMotionManager::TYPE_DAMAGE)
 					{// ライフクラスが使われている
 						if (m_nLife > 0 && m_bDeath == false)
 						{
-							m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
-							m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE);	// ダメージモーションを再生
+							if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_FRONT))
+							{
+								m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
+								m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
+							}
+							else if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_BACK))
+							{
+								m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+								m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+							}
 
 							m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
 
@@ -1620,6 +1679,12 @@ void CPlayer::SelectRespawn(void)
 			//死亡していないようにする
 			m_bDeath = false;
 
+			// 描画する
+			for (int nCntParts = 0; nCntParts < m_nNumParts; nCntParts++)
+			{
+				m_pModel[nCntParts]->SetDisp(true);
+			}
+
 			// リスポーン地点が決定したら破棄する
 			for (int nCnt = 0; nCnt < SELECTRESPAWN_BOTTON; nCnt++)
 			{
@@ -1817,8 +1882,14 @@ void CPlayer::ChatMess(bool bChat)
 //=============================================================================
 void CPlayer::AllyChatMess(void)
 {
+	if (m_pUITexAllyRadio == NULL)
+	{//NULLの場合
+		m_pUITexAllyRadio = CUI_TEXTURE::Create(D3DXVECTOR3(1280.0f, 550.0f, 0.0f), RADIOCHAT_MESS_WIDTH, RADIOCHAT_MESS_HEIGHT, CUI_TEXTURE::UIFLAME_RADIOCHAT_MESS);
+		m_pUITexAllyRadio->SetTex(m_allyRadiochat, 1, RADIOCHAT_BOTTON_PATTERN);
+	}
+
 	if (m_pUITexAllyRadio != NULL)
-	{
+	{//NULLではない場合
 		bool bMove = false;		// 止まったかどうか
 		D3DXVECTOR3 texPos = m_pUITexAllyRadio->GetPos();		// 現在の位置を取得
 		D3DXCOLOR texCol = m_pUITexAllyRadio->GetColor();		// 現在の色を取得
@@ -1834,10 +1905,10 @@ void CPlayer::AllyChatMess(void)
 
 		if (bMove == true && texCol.a >= 1.0f)
 		{	// 止まった && 透明度が1.0以上の時
-			m_nTexTimer++;		// カウンター加算
-			if (m_nTexTimer % RADIOCHAT_DISPLAY_TIME == 0)
+			m_nAllyTimer++;		// カウンター加算
+			if (m_nAllyTimer % RADIOCHAT_DISPLAY_TIME == 0)
 			{	// 5秒経ったら
-				m_nTexTimer = 0;
+				m_nAllyTimer = 0;
 				m_bAllyCol = true;
 			}
 		}
@@ -1860,7 +1931,6 @@ void CPlayer::AllyChatMess(void)
 			m_bAllyChat = false;					// チャットしていない
 			bMove = false;
 			m_bAllyCol = false;
-			m_bAllyChat = false;
 		}
 	}
 }
@@ -2050,33 +2120,33 @@ bool CPlayer::Distance(void)
 //=============================================================================
 void CPlayer::Battle(void)
 {
-	CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
-	CScene *pSceneNext = NULL;
-	D3DXVECTOR3 dispertion;								// ブレ
+	//CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
+	//CScene *pSceneNext = NULL;
+	//D3DXVECTOR3 dispertion;								// ブレ
 
-	while (pScene != NULL)
-	{// NULLになるまでループ
-		pSceneNext = pScene->GetSceneNext();
-		CScene::OBJTYPE objType = pScene->GetObjType();
+	//while (pScene != NULL)
+	//{// NULLになるまでループ
+	//	pSceneNext = pScene->GetSceneNext();
+	//	CScene::OBJTYPE objType = pScene->GetObjType();
 
-		if (CScene::OBJTYPE_PLAYER == objType)
-		{//プレイヤーオブジェクトのとき
-			CPlayer *pPlayer = (CPlayer*)pScene;
-			int nTeam = pPlayer->GetTeam();
-			if (m_nTeam != nTeam)
-			{//チームが違うとき
+	//	if (CScene::OBJTYPE_PLAYER == objType)
+	//	{//プレイヤーオブジェクトのとき
+	//		CPlayer *pPlayer = (CPlayer*)pScene;
+	//		int nTeam = pPlayer->GetTeam();
+	//		if (m_nTeam != nTeam)
+	//		{//チームが違うとき
 
-				if (rand() % 20 == 0)
-				{
-					//弾撃ち
-					CpuShoot();
-				}
+	//			if (rand() % 20 == 0)
+	//			{
+	//				//弾撃ち
+	//				CpuShoot();
+	//			}
 
-			}//チームが違うとき
-		}//プレイヤーオブジェクトのとき
-		 // 次のオブジェクトを見る
-		pScene = pSceneNext;
-	}
+	//		}//チームが違うとき
+	//	}//プレイヤーオブジェクトのとき
+	//	 // 次のオブジェクトを見る
+	//	pScene = pSceneNext;
+	//}
 }
 
 //=============================================================================
