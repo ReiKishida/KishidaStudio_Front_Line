@@ -19,11 +19,13 @@
 #include "texture.h"
 #include "AI.h"
 #include "menu.h"
+#include "nodeDataFiler.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
 #define	LOAD_FILENAME	("data/TEXT/NODE_DATA/NodeData.txt")	// 読み込むファイルのパス
+//#define	LOAD_FILENAME	("data/TEXT/NODE_DATA/NodeDataTutorial.txt")	// 読み込むファイルのパス
 #define MOUSE_WIDTH		(30.0f)		// マウステクスチャの幅
 #define MOUSE_HEIGHT	(30.0f)		// マウステクスチャの高さ
 
@@ -50,7 +52,7 @@ CMouseCursor  *CMouseCursor::Create()
 		pMouseCursor = new CMouseCursor;
 
 		if (pMouseCursor != NULL)
-		{
+		{// メモリ確保成功
 			pMouseCursor->Init();
 		}
 	}
@@ -75,8 +77,8 @@ HRESULT CMouseCursor::Init()
 {
 	CScene3D::Init();
 
-	// マップ情報の初期化
-	m_LoadNodeData = {};
+	// マップ情報の取得
+	m_pNodeData = CGame::GetNodeFiler();
 
 	// 情報の初期化
 	m_pCamera = CManager::GetCamera();
@@ -98,7 +100,7 @@ HRESULT CMouseCursor::Init()
 //=============================================================================
 void CMouseCursor::Uninit(void)
 {
-	for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// 全ノード数分回る
 		if (m_pNodePointer[nCntNode] != NULL)
 		{// 可視化用ポリゴンがNULLじゃない
@@ -182,10 +184,6 @@ void CMouseCursor::Mouse(CInputMouse *pMouse)
 			m_pos.x -= m_pCamera->GetPosR().x * 2.0f;
 			m_pos.z -= m_pCamera->GetPosR().z * 2.0f;
 			break;
-		case 3:
-			m_pos.x -= m_pCamera->GetPosR().x;
-			m_pos.z -= m_pCamera->GetPosR().z;
-			break;
 		}
 
 		// 位置・サイズの設定
@@ -209,7 +207,7 @@ void CMouseCursor::File(CInputKeyboard *pKeyboard)
 	if (pKeyboard->GetTrigger(DIK_F11) == true)
 	{// F11キーでファイルをロード
 		// 前回のデータの削除
-		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// 全ノード数分回る
 			if (m_pNodePointer[nCntNode] != NULL)
 			{// データが入っている場合
@@ -222,21 +220,21 @@ void CMouseCursor::File(CInputKeyboard *pKeyboard)
 		}
 
 		// ファイルロ―ド
-		CMouseCursor::FileLoad(LOAD_FILENAME);
+		m_pNodeData->FileLoad(LOAD_FILENAME);
 
 		// ロードしたデータをもとにノードを配置
-		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// 全ノード数分回る
 			if (m_pNodePointer[nCntNode] == NULL)
 			{// ノード可視化用ポリゴンがNULLじゃない
-				m_pNodePointer[nCntNode] = m_pNodePointer[nCntNode]->Create(m_LoadNodeData.pos[nCntNode]);
+				m_pNodePointer[nCntNode] = m_pNodePointer[nCntNode]->Create(m_pNodeData->GetLoadData().pos[nCntNode]);
 				m_pNodePointer[nCntNode]->GetNodeMax()++;
-				m_LoadNodeData.index[nCntNode] = m_pNodePointer[nCntNode]->GetMyNumber();
+				m_pNodeData->GetLoadData().index[nCntNode] = m_pNodePointer[nCntNode]->GetMyNumber();
 
-				for (int nCntConnectNode = 0; nCntConnectNode < m_LoadNodeData.connectNum[nCntNode]; nCntConnectNode++)
+				for (int nCntConnectNode = 0; nCntConnectNode < m_pNodeData->GetLoadData().connectNum[nCntNode]; nCntConnectNode++)
 				{// 接続ノード数分回る
 					m_pNodePointer[nCntNode]->GetConnectMax()++;
-					m_pNodePointer[nCntNode]->GetConnect(nCntConnectNode) = m_LoadNodeData.connectIndex[nCntNode][nCntConnectNode];
+					m_pNodePointer[nCntNode]->GetConnect(nCntConnectNode) = m_pNodeData->GetLoadData().connectIndex[nCntNode][nCntConnectNode];
 				}
 
 				m_nNodeCounter = m_pNodePointer[nCntNode]->GetNodeMax();
@@ -246,7 +244,7 @@ void CMouseCursor::File(CInputKeyboard *pKeyboard)
 
 	if (pKeyboard->GetTrigger(DIK_F9) == true)
 	{// 9キーで	可視化用ポリゴンを破棄
-		for (int nCntNode = 0; nCntNode < m_LoadNodeData.nodeMax; nCntNode++)
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// 全ノード数分回る
 			if (m_pNodePointer[nCntNode] != NULL)
 			{// 可視化用ポリゴンがNULLじゃない
@@ -255,115 +253,6 @@ void CMouseCursor::File(CInputKeyboard *pKeyboard)
 			}
 		}
 	}
-}
-
-//=============================================================================
-// ファイルの読み込み
-//=============================================================================
-void CMouseCursor::FileLoad(char* pFileName)
-{
-	FILE* pFile = NULL;		// ファイルポインタ
-	char ReadText[256];		// 読み込んだ文字列を入れておく
-	char HeadText[256];		// 比較用
-	char DustBox[256];		// 使用しないものを入れておく
-	int nCount = 0;
-	int nCntIndex = 0;
-
-	// 一時データベース
-	std::vector<NODE_LOAD_STATE> LoadState; LoadState.clear();
-
-	// 初期化
-	NODE_LOAD_STATE OneState = {};
-
-	// ファイルオープン
-	pFile = fopen(pFileName, "r");
-
-	if (pFile != NULL)
-	{// ファイルが開かれていれば
-		while (strcmp(HeadText, "START_LOAD") != 0)
-		{// "START_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-			fgets(ReadText, sizeof(ReadText), pFile);
-			sscanf(ReadText, "%s", &HeadText);
-		}
-		if (strcmp(HeadText, "START_LOAD") == 0)
-		{// "START_LOAD" が読み取れた場合、処理開始
-			while (strcmp(HeadText, "END_LOAD") != 0)
-			{// "END_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-				fgets(ReadText, sizeof(ReadText), pFile);
-				sscanf(ReadText, "%s", &HeadText);
-
-				if (strcmp(HeadText, "\n") == 0)
-				{// 文字列の先頭が [\n](改行) の場合処理しない
-
-				}
-				else if (strcmp(HeadText, "START_DATA") == 0)
-				{// "START_DATA" が読み取れた場合
-					nCount = 0;
-					while (strcmp(HeadText, "END_DATA") != 0)
-					{// "END_DATA" が読み込まれるまで繰り返し文字列を読み取る
-						fgets(ReadText, sizeof(ReadText), pFile);
-						sscanf(ReadText, "%s", &HeadText);
-
-						if (strcmp(HeadText, "\n") == 0)
-						{// 文字列の先頭が [\n](改行) の場合処理しない
-
-						}
-						else if (strcmp(HeadText, "NODESET") == 0)
-						{// "NODESET" が読み取れた場合
-							while (strcmp(HeadText, "END_NODESET") != 0)
-							{// "END_NODESET" が読み込まれるまで繰り返し文字列を読み取る
-								fgets(ReadText, sizeof(ReadText), pFile);
-								sscanf(ReadText, "%s", &HeadText);
-
-								if (strcmp(HeadText, "\n") == 0)
-								{// 文字列の先頭が [\n](改行) の場合処理しない
-
-								}
-								else if (strcmp(HeadText, "NODE_POS") == 0)	// ノードの位置
-								{
-									sscanf(ReadText, "%s %c %f %f %f",
-										&DustBox, &DustBox,
-										&OneState.pos[nCount].x,
-										&OneState.pos[nCount].y,
-										&OneState.pos[nCount].z);
-								}
-								else if (strcmp(HeadText, "CONNECT_NUM") == 0)	// 接続ノードの数
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectNum[nCount]);
-								}
-								else if (strcmp(HeadText, "CONNECT_INDEX") == 0)	// 接続ノードの番号
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectIndex[nCount][nCntIndex]);
-									nCntIndex++;
-								}
-							}
-
-							OneState.index[nCount] = nCount;
-							nCntIndex = 0;
-							nCount++;
-						}
-					}
-					OneState.nodeMax = nCount; // ノードの総数
-
-											   // 一つのデータを読み込んだ後,一時データベースに格納
-					LoadState.emplace_back(OneState);
-				}
-			}
-		}
-
-		// ファイルクローズ
-		if (pFile != NULL)
-		{
-			fclose(pFile);
-			pFile = NULL;
-		}
-	}
-
-	m_LoadNodeData = OneState;	// データの代入
 }
 
 /****************************************************************/

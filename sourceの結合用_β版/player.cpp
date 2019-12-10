@@ -37,6 +37,7 @@
 #include "particle.h"
 #include "search.h"
 #include "damageDirection.h"
+#include "nodeDataFiler.h"
 
 //==================================
 // マクロ定義
@@ -45,6 +46,7 @@
 #define LIGHT_FILE				"data/TEXT/PLAYER/light/model_light.txt"
 #define HEAVY_FILE				"data/TEXT/PLAYER/heavy/model_heavy.txt"
 #define SNIPE_FILE				"data/TEXT/PLAYER/snipe/model_snipe.txt"
+
 //戦闘用
 #define ASSULT_BATTLE_FILE		"data/TEXT/PLAYER/assult/battle_assult.txt"
 #define LIGHT_BATTLE_FILE		"data/TEXT/PLAYER/light/battle_light.txt"
@@ -54,8 +56,6 @@
 #define PLAYER_DAMAGE_TIME		(60)		// ダメージを受けた時の無敵時間
 #define PLAYER_DAMAGE_MOVE		(40)		// ダメージを受けてから動けるようになるまでの時間
 #define PLAYER_RETICLE_LENGTH	(2500.0f)	// レティクルの距離
-
-#define NODE_MAX	(256)		// ノードの最大数
 
 // =============================================================
 // UI関係
@@ -68,14 +68,15 @@
 #define PLAYER_UI_HEIGHT		(630.0f)
 
 // ラジオチャット
-#define RADIOCHAT_MESS_SPEED		(10)			// ラジオチャットメッセージの速さ
+#define RADIOCHAT_MESS_SPEED	(10)		// ラジオチャットメッセージの速さ
 #define RADIOCHAT_DISPLAY_TIME	(60 * 2)	// メッセージ表示時間
-#define RADIOCHAT_COL						(0.05f)		// 透明度の減算
+#define RADIOCHAT_COL			(0.05f)		// 透明度の減算
 
 // =============================================================
 // AI関係
 // =============================================================
 #define	LOAD_FILENAME		("data/TEXT/NODE_DATA/NodeData.txt")	// マップデータを読み込むファイルの名前
+//#define	LOAD_FILENAME	("data/TEXT/NODE_DATA/NodeDataTutorial.txt")	// 読み込むファイルのパス
 #define MOVE_ACCEPTABLE		(50.0f)		// 移動時の誤差の許容範囲
 #define POS_ACCEPTABLE		(30.0f)		// 検索時の誤差の許容範囲
 #define MOUSE_ACCEPTABLE	(20.0f)		// マウスの誤差の許容範囲
@@ -85,8 +86,8 @@
 #define PLAYER_FINALPOINT_BREAKTIME	(120)	// 最終地点の休憩時間(フレーム)
 
 #define MAX_CHAR (254)					//読み取る文字数
-#define MAX_SEARCH (4)	//センサー数
-#define FIND_FIND_CHARACTER_PRIORITY (4)				//探すプレイヤーの優先順位
+#define MAX_SEARCH (4)					//センサー数
+#define FIND_FIND_CHARACTER_PRIORITY (4)//探すプレイヤーの優先順位
 
 //==================================
 // 静的メンバ変数宣言
@@ -174,7 +175,6 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_fRange = 0.0f;
 	m_fRotDestUpper = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_bFind = false;
-
 
 	for (int nCnt = 0; nCnt < AI_MAX; nCnt++)
 	{
@@ -549,6 +549,7 @@ HRESULT CPlayer::Init(void)
 	}
 
 	// 数値の初期化==============================================================================
+	m_pNodeData = CGame::GetNodeFiler();	// ファイル情報の取得
 	m_posDest = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_nPoint = 0;
 	m_nCountPoint = 0;
@@ -569,7 +570,7 @@ HRESULT CPlayer::Init(void)
 		}
 	}
 
-	for (int nCntNode = 0; nCntNode < NODE_MAX; nCntNode++)
+	for (int nCntNode = 0; nCntNode < NODEPOINT_MAX; nCntNode++)
 	{// ノードの最大値分回る
 		m_waypoint[nCntNode] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	}
@@ -580,16 +581,16 @@ HRESULT CPlayer::Init(void)
 		m_fRotDestUpper = D3DXVECTOR3(D3DX_PI * 0.5f, D3DX_PI, 0.0f);
 
 		// マップ関係==============================================================================
-		CPlayer::FileLoad(LOAD_FILENAME);
+		m_pNodeData->FileLoad(LOAD_FILENAME);
 
 		// 開始時点のノードの初期化
 		float fMinLength = 100000, fLength = 100000;	// 差分系
 
 		// 開始時点のノードの初期化
-		for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// ノードの数だけ回る
 			// 差分を求める
-			fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
+			fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) * (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) + (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) * (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -845,9 +846,6 @@ void CPlayer::Update(void)
 
 						// 弾を撃つ
 						Shoot();
-
-						// 重力
-						//m_move.y -= GRAVITY;
 
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
@@ -1431,6 +1429,19 @@ void CPlayer::Damage(int nDamage)
 			}
 		}
 	}
+}
+
+//=========================================
+// ひるみ状態の取得
+//=========================================
+bool CPlayer::GetWince(void)
+{
+	if (m_pUpperMotion->GetMotion() != CMotionManager::TYPE_DAMAGE_FRONT && m_pUpperMotion->GetMotion() != CMotionManager::TYPE_DAMAGE_BACK)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 //=========================================
@@ -2404,19 +2415,19 @@ void CPlayer::AutoMove()
 		bMove = false;
 		m_move = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 停止する
 
-		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[m_nStartNode]; nCntConnect++)
+		for (int nCntConnect = 0; nCntConnect < m_pNodeData->GetLoadData().connectNum[m_nStartNode]; nCntConnect++)
 		{// 繋がってるノードの数だけ回る
-			VigilanceRot[nCntConnect] = atan2f(m_NodeData.pos[m_NodeData.connectIndex[m_nStartNode][nCntConnect]].x - m_pos.x, m_NodeData.pos[m_NodeData.connectIndex[m_nStartNode][nCntConnect]].z - m_pos.z) + D3DX_PI;
+			VigilanceRot[nCntConnect] = atan2f(m_pNodeData->GetLoadData().pos[m_pNodeData->GetLoadData().connectIndex[m_nStartNode][nCntConnect]].x - m_pos.x, m_pNodeData->GetLoadData().pos[m_pNodeData->GetLoadData().connectIndex[m_nStartNode][nCntConnect]].z - m_pos.z) + D3DX_PI;
 		}
 
-		if (m_nBreaktime == PLAYER_FINALPOINT_BREAKTIME - 1 || m_nBreaktime % (PLAYER_FINALPOINT_BREAKTIME / m_NodeData.connectNum[m_nStartNode]) == 0)
+		if (m_nBreaktime == PLAYER_FINALPOINT_BREAKTIME - 1 || m_nBreaktime % (PLAYER_FINALPOINT_BREAKTIME / m_pNodeData->GetLoadData().connectNum[m_nStartNode]) == 0)
 		{// 繋がってるノードの方向すべてを見る
 			//m_rot.y = VigilanceRot[m_nVigilanceCount];
 			m_fRotDestUpper.y = VigilanceRot[m_nVigilanceCount] + D3DX_PI;
 
 			m_nVigilanceCount++;
 
-			if (m_nVigilanceCount >= m_NodeData.connectNum[m_nStartNode])
+			if (m_nVigilanceCount >= m_pNodeData->GetLoadData().connectNum[m_nStartNode])
 			{// 上限まで行ったら初期化
 				m_nVigilanceCount = 0;
 			}
@@ -2463,25 +2474,25 @@ void CPlayer::NodeSearch()
 	} while (m_nNewEndNode == nMovePoint);
 	m_nNewEndNode = nMovePoint;
 
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		if (m_NodeData.pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
-			&& m_NodeData.pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
-			&& m_NodeData.pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
-			&& m_NodeData.pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
+		if (m_pNodeData->GetLoadData().pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
+			&& m_pNodeData->GetLoadData().pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
+			&& m_pNodeData->GetLoadData().pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
+			&& m_pNodeData->GetLoadData().pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
 		{// プレイヤーの位置が許容範囲内
 			m_nStartNode = m_nEndNode;	// 前回の目的地を開始地点として登録
 		}
 	}
 
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		if (m_NodeData.pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
-			&& m_NodeData.pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
-			&& m_NodeData.pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
-			&& m_NodeData.pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
+		if (m_pNodeData->GetLoadData().pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
+			&& m_pNodeData->GetLoadData().pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
+			&& m_pNodeData->GetLoadData().pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
+			&& m_pNodeData->GetLoadData().pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
 		{// プレイヤーの位置が目的地の許容範囲内
-			if (m_NodeData.pos[nCntNode] != m_NodeData.pos[m_nNewEndNode])
+			if (m_pNodeData->GetLoadData().pos[nCntNode] != m_pNodeData->GetLoadData().pos[m_nNewEndNode])
 			{// 新規目的地が前回の目的地と同じじゃない場合
 				m_nEndNode = m_nNewEndNode;	// 目的地を登録
 			}
@@ -2500,22 +2511,22 @@ void CPlayer::RootSearch()
 	std::vector<int> path;			// 最短経路の情報を保持するvector
 
 	//======= エッジコストの算出 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++, nCntWeight++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
-		weight[nCntWeight] = sqrt((m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) * (m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) + (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z) * (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z));
+		weight[nCntWeight] = sqrt((m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) * (m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) + (m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z) * (m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
 	}
 
 	//======= エッジ追加 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[nCntNode]; nCntConnect++)
+		for (int nCntConnect = 0; nCntConnect < m_pNodeData->GetLoadData().connectNum[nCntNode]; nCntConnect++)
 		{// 繋がってるノードの数だけ回る
-			CPlayer::AddEdge(nCntNode, m_NodeData.connectIndex[nCntNode][nCntConnect], weight[nCntNode], node);
+			CPlayer::AddEdge(nCntNode, m_pNodeData->GetLoadData().connectIndex[nCntNode][nCntConnect], weight[nCntNode], node);
 		}
 	}
 
 	//======= 最短経路を調べる =========================================================================
-	CPlayer::Dijkstra(m_NodeData.nodeMax, m_nStartNode, m_nEndNode, node);
+	CPlayer::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nStartNode, m_nEndNode, node);
 
 	for (int nCntNode = m_nEndNode; nCntNode != m_nStartNode; nCntNode = node[nCntNode].from)
 	{// 最短経路をゴールから順にスタートまでたどる
@@ -2534,11 +2545,11 @@ void CPlayer::RootSearch()
 	}
 
 	//======= 目標地点の設定 =========================================================================
-	for (int nCntNodeMax = 0; nCntNodeMax < m_NodeData.nodeMax; )
+	for (int nCntNodeMax = 0; nCntNodeMax < m_pNodeData->GetLoadData().nodeMax; )
 	{// ノードの数だけ回る
 		for (int nCntNode = path.size() - 1; nCntNode >= 0; nCntNode--, nCntNodeMax++)
 		{
-			m_waypoint[nCntNodeMax] = m_NodeData.pos[path[nCntNode]];
+			m_waypoint[nCntNodeMax] = m_pNodeData->GetLoadData().pos[path[nCntNode]];
 		}
 	}
 }
@@ -2612,115 +2623,6 @@ void CPlayer::Dijkstra(int nodeMax, int start, int end, Node *node)
 			}
 		}
 	}
-}
-
-//=============================================================================
-// ルート探索用ファイルの読み込み
-//=============================================================================
-void CPlayer::FileLoad(char* pFileName)
-{
-	FILE* pFile = NULL;		// ファイルポインタ
-	char ReadText[256];		// 読み込んだ文字列を入れておく
-	char HeadText[256];		// 比較用
-	char DustBox[256];		// 使用しないものを入れておく
-	int nCount = 0;
-	int nCntIndex = 0;
-
-	// 一時データベース
-	std::vector<NodeState> LoadState; LoadState.clear();
-
-	// 初期化
-	NodeState OneState = {};
-
-	// ファイルオープン
-	pFile = fopen(pFileName, "r");
-
-	if (pFile != NULL)
-	{// ファイルが開かれていれば
-		while (strcmp(HeadText, "START_LOAD") != 0)
-		{// "START_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-			fgets(ReadText, sizeof(ReadText), pFile);
-			sscanf(ReadText, "%s", &HeadText);
-		}
-		if (strcmp(HeadText, "START_LOAD") == 0)
-		{// "START_LOAD" が読み取れた場合、処理開始
-			while (strcmp(HeadText, "END_LOAD") != 0)
-			{// "END_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-				fgets(ReadText, sizeof(ReadText), pFile);
-				sscanf(ReadText, "%s", &HeadText);
-
-				if (strcmp(HeadText, "\n") == 0)
-				{// 文字列の先頭が [\n](改行) の場合処理しない
-
-				}
-				else if (strcmp(HeadText, "START_DATA") == 0)
-				{// "START_DATA" が読み取れた場合
-					nCount = 0;
-					while (strcmp(HeadText, "END_DATA") != 0)
-					{// "END_DATA" が読み込まれるまで繰り返し文字列を読み取る
-						fgets(ReadText, sizeof(ReadText), pFile);
-						sscanf(ReadText, "%s", &HeadText);
-
-						if (strcmp(HeadText, "\n") == 0)
-						{// 文字列の先頭が [\n](改行) の場合処理しない
-
-						}
-						else if (strcmp(HeadText, "NODESET") == 0)
-						{// "NODESET" が読み取れた場合
-							while (strcmp(HeadText, "END_NODESET") != 0)
-							{// "END_NODESET" が読み込まれるまで繰り返し文字列を読み取る
-								fgets(ReadText, sizeof(ReadText), pFile);
-								sscanf(ReadText, "%s", &HeadText);
-
-								if (strcmp(HeadText, "\n") == 0)
-								{// 文字列の先頭が [\n](改行) の場合処理しない
-
-								}
-								else if (strcmp(HeadText, "NODE_POS") == 0)	// ノードの位置
-								{
-									sscanf(ReadText, "%s %c %f %f %f",
-										&DustBox, &DustBox,
-										&OneState.pos[nCount].x,
-										&OneState.pos[nCount].y,
-										&OneState.pos[nCount].z);
-								}
-								else if (strcmp(HeadText, "CONNECT_NUM") == 0)	// 接続ノードの数
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectNum[nCount]);
-								}
-								else if (strcmp(HeadText, "CONNECT_INDEX") == 0)	// 接続ノードの番号
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectIndex[nCount][nCntIndex]);
-									nCntIndex++;
-								}
-							}
-
-							OneState.index[nCount] = nCount;
-							nCntIndex = 0;
-							nCount++;
-						}
-					}
-					OneState.nodeMax = nCount; // ノードの総数
-
-											   // 一つのデータを読み込んだ後,一時データベースに格納
-					LoadState.emplace_back(OneState);
-				}
-			}
-		}
-
-		// ファイルクローズ
-		if (pFile != NULL)
-		{
-			fclose(pFile);
-			pFile = NULL;
-		}
-	}
-
-	m_NodeData = OneState;	// データの代入
 }
 
 //=============================================================================
