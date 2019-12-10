@@ -31,25 +31,20 @@
 #include "UI_Number.h"
 #include "UI_Texture.h"
 #include "texture.h"
-#include <stdio.h>
-
 #include "model.h"
 #include "gauge.h"
-
 #include "server.h"
 #include "serverfunction.h"
-
 #include "collisionSet.h"
 #include "scene3D.h"
 #include "menu.h"
-
 #include "shadow.h"
-
 #include "particle.h"
-
 #include "AI.h"
-
 #include "damageDirection.h"
+#include "nodeDataFiler.h"
+
+#include <stdio.h>
 
 //*****************************************************************************
 // マクロ定義
@@ -79,6 +74,7 @@ int CGame::m_nCurStage = 0;
 CPlayer *CGame::m_pPlayer[MAX_PLAYER_CONNECT] = {};
 CMechaSelect::MECHATYPE CGame::m_aMechaType[MAX_PLAYER_CONNECT] = { CMechaSelect::MECHATYPE_EMPTY,CMechaSelect::MECHATYPE_EMPTY ,CMechaSelect::MECHATYPE_EMPTY ,CMechaSelect::MECHATYPE_EMPTY };
 CDamageDirection *CGame::m_pDamageDirection = NULL;
+CNodeDataFiler *CGame::m_pNodeFiler = NULL;			// マップデータクラスのポインタ変数
 
 //=============================================================================
 // コンストラクタ
@@ -147,6 +143,14 @@ HRESULT CGame::Init(void)
 
 	//m_pSky = CModel::Create();
 	//m_pSky->SetModel(SKY_MODEL_NAME);
+
+	//=====================================================================================
+	// マップデータファイラーの生成
+	//=====================================================================================
+	if (m_pNodeFiler == NULL)
+	{// NULLチェック
+		m_pNodeFiler = CNodeDataFiler::Create();
+	}
 
 	// プレイヤーの生成
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
@@ -314,6 +318,12 @@ void CGame::Uninit(void)
 	{// 攻撃を受けた方向表示の破棄
 		m_pDamageDirection->Uninit();
 		m_pDamageDirection = NULL;
+	}
+
+	if (m_pNodeFiler != NULL)
+	{// マップデータファイラーの破棄
+		m_pNodeFiler->Uninit();
+		m_pNodeFiler = NULL;
 	}
 
 	// オブジェクトを破棄
