@@ -68,6 +68,7 @@ public:
 		OBJTYPE_LINE,				// ライン
 		OBJTYPE_EFFECT,				// エフェクト
 		OBJTYPE_DAMAGEDIRECTION,	// ダメージを受けた方向表示
+		OBJTYPE_FILE,				// マップデータファイル
 		OBJTYPE_MAX					// オブジェクトの種類の最大数
 	}OBJTYPE;
 

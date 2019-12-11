@@ -201,7 +201,7 @@ void CMenu::Update(void)
 				break;
 
 			case MODE_TUTORIAL:
-				CFade::Create(CManager::MODE_TUTORIAL);
+				CFade::Create(CManager::MODE_TUTORIALMENU);
 				break;
 
 			case MODE_QUIT:

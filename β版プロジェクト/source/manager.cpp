@@ -15,6 +15,7 @@
 #include "title.h"
 #include "menu.h"
 #include "tutorial.h"
+#include "tutorialmenu.h"
 #include "game.h"
 #include "result.h"
 #include "pause.h"
@@ -49,10 +50,11 @@ CMenu				*CManager::m_pMenu = NULL;				// メニュークラスのポインタ変数
 CMechaSelect		*CManager::m_pMechaSelect = NULL;
 CMatching			*CManager::m_pMatching = NULL;			// マッチングクラスのポインタ情報
 CTutorial			*CManager::m_pTutorial = NULL;			// チュートリアルクラスのポインタ変数
+CTutorialMenu		*CManager::m_pTutorialMenu = NULL;
 CGame				*CManager::m_pGame = NULL;				// ゲームクラスのポインタ変数
 CResult				*CManager::m_pResult = NULL;			// リザルトクラスのポインタ変数
 CRanking			*CManager::m_pRanking = NULL;			// ランキングクラスのポインタ変数
-CManager::MODE		CManager::m_mode = CManager::MODE_MECHASELECT;
+CManager::MODE		CManager::m_mode = CManager::MODE_MENU;
 
 int  CManager::m_nNumStage = 0;
 
@@ -523,6 +525,14 @@ const void CManager::SetMode(MODE mode)
 		}
 		break;
 
+	case MODE_TUTORIALMENU:
+		if (m_pTutorialMenu != NULL)
+		{// チュートリアル
+			m_pSound->StopSound(CSound::SOUND_LABEL_MENU);
+			m_pTutorialMenu = NULL;
+		}
+		break;
+
 	case MODE_GAME:
 		if (m_pGame != NULL)
 		{// ゲーム
@@ -583,6 +593,14 @@ const void CManager::SetMode(MODE mode)
 		{// タイトル
 			m_pTutorial = new CTutorial;
 			m_pTutorial->Init();
+		}
+		break;
+
+	case MODE_TUTORIALMENU:
+		if (m_pTutorial == NULL)
+		{// チュートリアル
+			m_pTutorialMenu = new CTutorialMenu;
+			m_pTutorialMenu->Init();
 		}
 		break;
 

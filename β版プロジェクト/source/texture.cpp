@@ -117,6 +117,22 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/option/option_frame.png" },						// オプションフレーム
 		{ "data/TEXTURE/option/batsu.png" },									// バツボタン
 		{ "data/TEXTURE/option/toggle.png" },									// トグルスイッチ
+
+		// tutorialmenu
+		{ "data/TEXTURE/tutorialmenu/tutorial_frame.png" },			// チュートリアルメニュー
+		{ "data/TEXTURE/tutorialmenu/tutorialmenu_inst.png" },		// チュートリアルメニューの説明文
+
+		//tutorial
+		{ "data/TEXTURE/tutorial/tutorial_logo.png" },						//チュートリアルの現在の項目
+		{ "data/TEXTURE/tutorial/tutorial_step.png" },						//チュートリアルの項目数
+		{ "data/TEXTURE/tutorial/tutorial_mission_basic.png" },				//チュートリアルの課題(基本操作)
+		{ "data/TEXTURE/tutorial/tutorial_mission_Action.png" },			//チュートリアルの課題(アクションパート)
+		{ "data/TEXTURE/tutorial/tutorial_mission_Strategy.png" },			//チュートリアルの課題(ストラテジーパート)
+		{ "data/TEXTURE/tutorial/basic_move.png" },							//操作の方法(基本操作)
+		{ "data/TEXTURE/tutorial/action_part.png" },						//操作の方法(アクションパート)
+		{ "data/TEXTURE/tutorial/strategy_part.png" },						//操作の方法(ストラテジーパート)
+		{ "data/TEXTURE/tutorial/Success.png" },							//チュートリアル成功！
+
 	};
 
 	for (int nCntTexture = 0; nCntTexture < TEXTURE_MAX; nCntTexture++)

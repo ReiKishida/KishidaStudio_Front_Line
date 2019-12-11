@@ -19,7 +19,7 @@
 //=========================================
 // 静的メンバ変数
 //=========================================
-LPD3DXFONT CDebugProc::m_pFont[MAX_FONT] = {};		// フォントの種類
+LPD3DXFONT CDebugProc::m_pFont = {};		// フォントの種類
 char CDebugProc::m_aStr[MAX_DEBUG_TEXT] = {};		// 表示する文字列
 bool CDebugProc::m_bDisp = true;					// 表示するかどうか
 
@@ -64,7 +64,7 @@ void CDebugProc::Draw(void)
 
 	if (m_bDisp)
 	{// 表示する
-		m_pFont[0]->DrawText(					// 影をつける
+		m_pFont->DrawText(					// 影をつける
 			NULL,
 			&m_aStr[0],							// 表示する文字列
 			-1,									//表示サイズ(-1で全部)
@@ -76,7 +76,7 @@ void CDebugProc::Draw(void)
 		rect.right -= 1;
 		rect.left -= 1;
 
-		m_pFont[0]->DrawText(					// 文字の表示
+		m_pFont->DrawText(					// 文字の表示
 			NULL,
 			&m_aStr[0],							// 表示する文字列
 			-1,									//表示サイズ(-1で全部)
@@ -133,7 +133,7 @@ void CDebugProc::Init(void)
 		PROOF_QUALITY,
 		FIXED_PITCH | FF_MODERN,
 		"JKゴシックM",               //フォントの種類"JKゴシックM"
-		&m_pFont[0]);
+		&m_pFont);
 }
 
 //=============================================================================
@@ -141,12 +141,9 @@ void CDebugProc::Init(void)
 //=============================================================================
 void CDebugProc::Uninit(void)
 {
-	for (int nCntFont = 0; nCntFont < MAX_FONT; nCntFont++)
-	{
-		if (NULL != m_pFont[nCntFont])
-		{// フォントの開放
-			m_pFont[nCntFont]->Release();
-			m_pFont[nCntFont] = NULL;
-		}
+	if (NULL != m_pFont)
+	{// フォントの開放
+		m_pFont->Release();
+		m_pFont = NULL;
 	}
 }

@@ -83,7 +83,31 @@ public:
 		UI_FLAME_RESPAWNPOS,			//リスポーン位置
 
 		// メニュー
-		UIFLAME_MENU_MESS,			// メニューメッセージ
+		UIFLAME_MENU_MESS,					// メニューメッセージ
+		UIFLAME_TUTORIALMENU_MESS,			// メニューチュートリアルメッセージ
+
+		// チュートリアル(お題)
+		UIFLAME_TUTORIAL_TITLE_BASIC,			// 現在のチュートリアル内容(基本操作)
+		UIFLAME_TUTORIAL_TITLE_ACTION,			// 現在のチュートリアル内容(アクションパート)
+		UIFLAME_TUTORIAL_TITLE_STRATEGY,		// 現在のチュートリアル内容(ストラテジーパート)
+
+		UIFLAME_TUTORIAL_NUMBER,				// 現在のチュートリアル進行度
+
+		// チュートリアル(BASIC_MOVEMENT)
+		UIFLAME_TUTORIAL_INST_BASICMOVEMENT,	// カメラチュートリアルの操作方法（画面右）
+		UIFLAME_TUTORIAL_LESSON_BASICMOVEMENT,	// カメラチュートリアルの実践（真ん中↓）
+
+		// チュートリアル(ACTION_PART)
+		UIFLAME_TUTORIAL_INST_ACTION,	// アクションパートの操作方法
+		UIFLAME_TUTORIAL_LESSON_ACTION,	// アクションパートの実践
+
+		// チュートリアル(ACTION_PART)
+		UIFLAME_TUTORIAL_INST_STRATEGY,		// ストラテジーパートの操作方法
+		UIFLAME_TUTORIAL_LESSON_STRATEGY,	// ストラテジーパートの実践
+
+		// チュートリアル(SUCCESS)
+		UIFLAME_TUTORIAL_SUCCESS,		//チュートリアルの成功！
+
 		UIFLAME_MAX							// タイプの最大数
 	} UI_TEXTYPE;
 

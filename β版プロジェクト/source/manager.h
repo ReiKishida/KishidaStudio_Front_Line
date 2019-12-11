@@ -27,6 +27,7 @@ class CTitle;
 class CMenu;
 class CMechaSelect;
 class CMatching;
+class CTutorialMenu;
 class CTutorial;
 class CGame;
 class CResult;
@@ -47,6 +48,7 @@ public:
 		MODE_MENU,
 		MODE_MECHASELECT,
 		MODE_MATCHING,
+		MODE_TUTORIALMENU,
 		MODE_TUTORIAL,
 		MODE_GAME,
 		MODE_RESULT,
@@ -74,7 +76,7 @@ public:
 	static CDebugProc *GetDebugProc(void) { return m_pDebugProc; };					// デバッグ文字の取得
 
 	static CGame *GetGame(void) { return m_pGame; };
-
+	static CTutorial *GetTutorial(void) { return m_pTutorial; };
 	static int GetNumStage(void) { return m_nNumStage; };
 
 	static CClient *GetClient(void) { return m_pClient; };							// クライアントの取得
@@ -97,6 +99,7 @@ private:
 	static CMechaSelect		*m_pMechaSelect;		// メニュークラスのポインタ変数
 	static CMatching		*m_pMatching;			// マッチングクラスのポインタ情報
 	static CTutorial		*m_pTutorial;			// チュートリアルクラスのポインタ変数
+	static CTutorialMenu    *m_pTutorialMenu;		// チュートリアルメニューポインタ変数
 	static CGame			*m_pGame;				// ゲームクラスのポインタ変数
 	static CResult			*m_pResult;				// リザルトクラスのポインタ変数
 	static CRanking			*m_pRanking;			// ランキングクラスのポインタ変数
