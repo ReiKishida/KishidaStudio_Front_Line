@@ -34,6 +34,7 @@ class CModel;
 class CScene3D;
 class CMouseCursor;
 class CDamageDirection;
+class CNodeDataFiler;
 
 //*****************************************************************************
 // クラス定義
@@ -99,6 +100,7 @@ public:
 	static CMechaSelect::MECHATYPE GetMechaType(int nPlayerIdx) { return m_aMechaType[nPlayerIdx]; };
 
 	static CDamageDirection *GetDamageDirection(void) { return m_pDamageDirection; };
+	static CNodeDataFiler *GetNodeFiler(void) { return m_pNodeFiler; }				// マップデータの取得
 
 private:
 	void LoadRespawnPos(void);
@@ -147,6 +149,9 @@ private:
 	static CMechaSelect::MECHATYPE m_aMechaType[MAX_PLAYER_CONNECT];
 
 	static CDamageDirection *m_pDamageDirection;	// 攻撃を受けた方向表示
+
+	static CNodeDataFiler	*m_pNodeFiler;		// マップデータのファイル管理ポインタ
+
 };
 
 #endif

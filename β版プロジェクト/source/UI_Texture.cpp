@@ -322,6 +322,83 @@ HRESULT CUI_TEXTURE::Init(void)
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_MENU_INST));
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
+
+		//****************************************
+		// チュートリアルメニュー
+		//****************************************
+	case UIFLAME_TUTORIALMENU_MESS:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIALMENU_INST));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		break;
+
+		//****************************************
+		// チュートリアル
+		//****************************************
+	case UIFLAME_TUTORIAL_TITLE_BASIC:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_TITLE));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(0, 1, 3);
+		break;
+
+	case UIFLAME_TUTORIAL_TITLE_ACTION:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_TITLE));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(1, 1, 3);
+		break;
+
+	case UIFLAME_TUTORIAL_TITLE_STRATEGY:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_TITLE));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(2, 1, 3);
+		break;
+
+	case UIFLAME_TUTORIAL_NUMBER:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_NUMBER));
+		CScene2D::SetColor(D3DXCOLOR(0.4f, 0.4f, 0.4f, 1.0f));
+		CScene2D::SetTex(0, 10, 1);
+		break;
+
+
+	case UIFLAME_TUTORIAL_INST_BASICMOVEMENT:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_INST_BASIC));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(0, 1, 2);
+		break;
+
+	case UIFLAME_TUTORIAL_INST_ACTION:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_INST_ACTION));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(0, 1, 2);
+		break;
+
+	case UIFLAME_TUTORIAL_INST_STRATEGY:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_INST_ACTION));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(0, 1, 2);
+		break;
+
+	case UIFLAME_TUTORIAL_LESSON_BASICMOVEMENT:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_MISSION_BASIC));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(0, 1, 3);
+		break;
+
+	case UIFLAME_TUTORIAL_LESSON_ACTION:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_MISSION_ACTION));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(0, 1, 3);
+		break;
+	case UIFLAME_TUTORIAL_LESSON_STRATEGY:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_MISSION_ACTION));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		CScene2D::SetTex(0, 1, 3);
+		break;
+
+	case UIFLAME_TUTORIAL_SUCCESS:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_TUTORIAL_SUCCESS));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		break;
+
 	}
 
 	return S_OK;

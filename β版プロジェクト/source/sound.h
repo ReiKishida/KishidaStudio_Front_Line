@@ -28,8 +28,10 @@ public:
 	//*************************************
 	typedef enum
 	{
-		SOUND_LABEL_TITLE_MENU = 0,		// タイトル
+		SOUND_LABEL_TITLE = 0,		// タイトル
+		SOUND_LABEL_MENU ,		// メニュー
 		SOUND_LABEL_MATCHING,			// マッチング
+		SOUND_LABEL_TUTORIAL,			// マッチング
 		SOUND_LABEL_GAME,				// ゲーム
 		//SOUND_LABEL_RESULT,				// リザルト
 		SOUND_LABEL_DECIDE,				// 決定音
@@ -37,6 +39,8 @@ public:
 		SOUND_LABEL_RIFLE,				// ライフル
 		SOUND_LABEL_SHOTGUN,			// ショットガン
 		SOUND_LABEL_SNIPE,				// スナイパーライフル
+		SOUND_LABEL_SUCCESS,				// 成功
+		SOUND_LABEL_STEPCLEAR,				// 成功
 		SOUND_LABEL_MAX,
 	}SOUND_LABEL;
 
@@ -67,11 +71,13 @@ private:
 	BYTE *m_apDataAudio[SOUND_LABEL_MAX];					// オーディオデータへのポインタ
 	DWORD m_aSizeAudio[SOUND_LABEL_MAX];					// オーディオデータサイズ
 
-																// 各音素材のパラメータ
+															// 各音素材のパラメータ
 	SOUNDPARAM m_aSoundParam[SOUND_LABEL_MAX] =
 	{
-		{ "data/BGM/title_menu.wav", -1 },		// タイトル、メニュー
+		{ "data/BGM/title.wav", -1 },		// タイトル
+		{ "data/BGM/menu.wav", -1 },		// メニュー
 		{ "data/BGM/matching.wav", -1 },		// マッチング
+		{ "data/BGM/tutorial.wav", -1 },		//
 		{ "data/BGM/game.wav", -1 },			// ゲーム
 		//{ "data/BGM/result.wav", -1 },			// リザルト
 		{ "data/SE/decide.wav", 0 },			// 決定
@@ -79,6 +85,8 @@ private:
 		{ "data/SE/rifle.wav", 0 },				// ライフル
 		{ "data/SE/shotgun.wav", 0 },			// ショットガン
 		{ "data/SE/snipe.wav", 0 },				// スナイパーライフル
+		{ "data/SE/success.wav", 0 },				// success
+		{ "data/SE/stepclear.wav", 0 },				// ステップクリア
 	};
 };
 

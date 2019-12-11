@@ -11,10 +11,14 @@
 #include "scene3D.h"
 #include "scene2D.h"
 
+//=============================================================================
+// 前方宣言
+//=============================================================================
 class CInputKeyboard;
 class CInputMouse;
 class CCamera;
 class CNodePointer;
+class CNodeDataFiler;
 
 //=============================================================================
 // マクロ定義
@@ -28,24 +32,6 @@ class CNodePointer;
 class CMouseCursor : public CScene3D
 {
 public:
-	typedef struct
-	{
-		int nodeMax;									// ノードの総数
-		int	index[NODEPOINT_MAX];						// 自分のノード番号
-		int connectNum[NODEPOINT_MAX];					// 接続ノード数
-		int connectIndex[NODEPOINT_MAX][CONNECT_MAX];	// 接続ノード番号
-		D3DXVECTOR3 pos[NODEPOINT_MAX];					// 各ノードの位置
-	}NODE_LOAD_STATE;
-
-	typedef struct
-	{
-		int nodeMax;			// ノードの総数
-		int	index;				// 自分のノード番号
-		int connectNum;			// 接続ノード数
-		int *connectIndex;		// 接続ノード番号
-		D3DXVECTOR3 pos;		// 各ノードの位置
-	}NODE_SAVE_STATE;
-
 	CMouseCursor(int nPriority = MOUSE_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_MOUSE);
 	~CMouseCursor();
 
@@ -56,15 +42,14 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	void Mouse(CInputMouse *pMouse);
-	void File(CInputKeyboard *pKeyboard);
-	void FileLoad(char* pFileName);
-
 	D3DXVECTOR3 GetPos(void) { return m_pos; }
 	D3DXVECTOR3 &Getsetpos(void) { return m_setpos; }
 
 private:
-	NODE_LOAD_STATE m_LoadNodeData;	// ロードしたマップ情報
+	void Mouse(CInputMouse *pMouse);
+	void File(CInputKeyboard *pKeyboard);
+
+	CNodeDataFiler *m_pNodeData;	// マップ情報へのポインタ
 	LPDIRECT3DTEXTURE9 m_pTexture;	// テクスチャへのポインタ
 	D3DXVECTOR3	m_pos;				// 位置
 	D3DXVECTOR3	m_setpos;			// 地点登録用位置

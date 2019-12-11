@@ -11,6 +11,7 @@
 #include "debugProc.h"
 #include "player.h"
 #include "game.h"
+#include "tutorial.h"
 #include "server.h"
 #include "menu.h"
 
@@ -40,6 +41,7 @@ CCamera::CCamera()
 	m_viewport.X = 0;
 	m_viewport.Y = 0;
 	m_fZoom = 0.0f;
+	m_fCameraSpeed = 0.0f;
 }
 
 //=============================================================================
@@ -61,6 +63,7 @@ HRESULT CCamera::Init(void)
 	m_fLength = m_posV.z;
 	m_fLookHeight = 25.0f;
 	m_fZoom = 1.0f;
+	m_fCameraSpeed = 0.0042f;		// カメラの初期速度設定
 
 	return S_OK;
 }
@@ -106,16 +109,154 @@ void CCamera::Update(void)
 			D3DXVECTOR3 pos = pPlayer->GetPos();
 			float fModelHeight = pPlayer->GetVtxMax().y;
 			bool bChat = pPlayer->GetChatBotton();
+			bool bOption = pPlayer->GetOption();							// オプション中
+			int nSelectButton = pPlayer->GetSelectOption();			// カメラ速度の取得
 
-			if (pPlayer->GetRespawn() == CPlayer::RESPAWN_NONE && bChat == false && !pPlayer->GetWince())
+			switch (nSelectButton)
+			{
+			case 0:		// 最低速
+				m_fCameraSpeed = 0.0021f;
+				break;
+
+			case 1:		// 低速
+				m_fCameraSpeed = 0.0032f;
+				break;
+
+			case 2:		// 普通
+				m_fCameraSpeed = 0.0042f;
+				break;
+
+			case 3:		// 高速
+				m_fCameraSpeed = 0.0052f;
+				break;
+
+			case 4:		// 最高速
+				m_fCameraSpeed = 0.0062f;
+				break;
+			}
+
+			if (pPlayer->GetRespawn() == CPlayer::RESPAWN_NONE && bChat == false && bOption == false && !pPlayer->GetWince())
 			{
 				// マウス座標の前回との差分を求める
 				float fDiffX = (float)pInputMouse->GetDiffPointX();
 				float fDiffY = (float)pInputMouse->GetDiffPointY();
 
 				// 向きを変える
-				m_rot.y += fDiffX * 0.0062f;	// 横方向
-				m_rot.x += fDiffY * 0.0062f;	// 縦方向
+				m_rot.y += fDiffX * m_fCameraSpeed;	// 横方向
+				m_rot.x += fDiffY * m_fCameraSpeed;	// 縦方向
+			}
+
+			// 差分の調節
+			if (m_rot.y > D3DX_PI) { m_rot.y -= D3DX_PI * 2.0f; }
+			if (m_rot.y < -D3DX_PI) { m_rot.y += D3DX_PI * 2.0f; }
+
+			// 差分の調節
+			if (m_rot.x > D3DX_PI) { m_rot.x -= D3DX_PI * 2.0f; }
+			if (m_rot.x < -D3DX_PI) { m_rot.x += D3DX_PI * 2.0f; }
+
+			// x軸の回転の制御
+			if (D3DX_PI * 0.3f > m_rot.x)
+			{// 上側
+				m_rot.x = D3DX_PI * 0.3f;
+			}
+			else if (D3DX_PI * 0.55f < m_rot.x)
+			{// 下側
+				m_rot.x = D3DX_PI * 0.55f;
+			}
+
+			// 注視点
+			m_posR.x = pos.x - sinf(m_rot.y) * m_fLength;
+			m_posR.z = pos.z - cosf(m_rot.y) * m_fLength;
+			m_posR.y = pos.y - cosf(m_rot.x) * m_fLength + fModelHeight + m_fLookHeight;
+
+			// 視点
+			m_posV.x = pos.x + sinf(m_rot.y) * m_fLength;
+			m_posV.z = pos.z + cosf(m_rot.y) * m_fLength;
+			m_posV.y = pos.y + cosf(m_rot.x) * m_fLength + fModelHeight + m_fLookHeight;
+		}
+		else
+		{// ストラテジーパート
+			float moveX = (float)pInputMouse->GetDiffPointX();
+			float moveY = (float)pInputMouse->GetDiffPointY();
+
+			// マップのスクロール
+			if (pInputMouse->GetPress(CInputMouse::DIMS_BUTTON_1))
+			{// 左CTRLと左クリックでスクロール
+				m_posVDest.x -= (moveX / m_fZoom) * 2.0f;
+				m_posVDest.z += (moveY / m_fZoom) * 2.0f;
+
+				m_posRDest.x -= (moveX / m_fZoom) * 2.0f;
+				m_posRDest.z += (moveY / m_fZoom) * 2.0f;
+			}
+
+			// ホイールで拡大・縮小
+			if (pInputMouse->GetMouseAxisZ() >= 120.0f && m_fZoom < 3.0f)
+			{// 拡大
+				m_fZoom++;
+			}
+			else if (pInputMouse->GetMouseAxisZ() <= -120.0f && m_fZoom > 1.0f)
+			{// 縮小
+				m_fZoom--;
+			}
+
+			// 注視点の更新
+			m_posR.x = m_posRDest.x - sinf(D3DX_PI) * 0.1f;
+			m_posR.y = m_posRDest.y + 100.0f;
+			m_posR.z = m_posRDest.z - cosf(D3DX_PI) * 0.1f;
+
+			// 視点の更新
+			m_posV.x = m_posVDest.x + sinf(D3DX_PI) * -0.01f;
+			m_posV.y = m_posVDest.y + 500.0f;
+			m_posV.z = m_posVDest.z + cosf(D3DX_PI) * -0.01f;
+		}
+	}
+	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
+	{
+		if (CManager::GetTutorial()->GetPart() == CTutorial::PART_ACTION)
+		{// アクションパート
+			CPlayer *pPlayer = NULL;
+
+			// プレイヤーの取得
+			pPlayer = CManager::GetTutorial()->GetPlayer(0);
+
+			D3DXVECTOR3 pos = pPlayer->GetPos();
+			float fModelHeight = pPlayer->GetVtxMax().y;
+			bool bChat = pPlayer->GetChatBotton();
+			bool bOption = pPlayer->GetOption();							// オプション中
+			int nSelectButton = pPlayer->GetSelectOption();			// カメラ速度の取得
+
+			switch (nSelectButton)
+			{
+			case 0:		// 最低速
+				m_fCameraSpeed = 0.0021f;
+				break;
+
+			case 1:		// 低速
+				m_fCameraSpeed = 0.0032f;
+				break;
+
+			case 2:		// 普通
+				m_fCameraSpeed = 0.0042f;
+				break;
+
+			case 3:		// 高速
+				m_fCameraSpeed = 0.0052f;
+				break;
+
+			case 4:		// 最高速
+				m_fCameraSpeed = 0.0062f;
+				break;
+			}
+
+			if (pPlayer->GetRespawn() == CPlayer::RESPAWN_NONE && bChat == false && bOption == false && !pPlayer->GetWince())
+			{
+				// マウス座標の前回との差分を求める
+				float fDiffX = (float)pInputMouse->GetDiffPointX();
+				float fDiffY = (float)pInputMouse->GetDiffPointY();
+
+				// 向きを変える
+				m_rot.y += fDiffX * m_fCameraSpeed;	// 横方向
+				m_rot.x += fDiffY * m_fCameraSpeed;	// 縦方向
 			}
 
 			// 差分の調節

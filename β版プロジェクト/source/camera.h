@@ -67,6 +67,7 @@ private:
 	float			m_fLookHeight;		// カメラの高さ
 	float			m_fZoom;			// ズームの倍率
 	D3DVIEWPORT9	m_viewport;			// ビューポート
+	float						m_fCameraSpeed;
 };
 
 #endif

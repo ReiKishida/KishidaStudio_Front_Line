@@ -50,6 +50,7 @@
 #include "AI.h"
 
 #include "damageDirection.h"
+#include "nodeDataFiler.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -79,6 +80,7 @@ int CGame::m_nCurStage = 0;
 CPlayer *CGame::m_pPlayer[MAX_PLAYER_CONNECT] = {};
 CMechaSelect::MECHATYPE CGame::m_aMechaType[MAX_PLAYER_CONNECT] = { CMechaSelect::MECHATYPE_EMPTY,CMechaSelect::MECHATYPE_EMPTY ,CMechaSelect::MECHATYPE_EMPTY ,CMechaSelect::MECHATYPE_EMPTY };
 CDamageDirection *CGame::m_pDamageDirection = NULL;
+CNodeDataFiler *CGame::m_pNodeFiler = NULL;			// マップデータクラスのポインタ変数
 
 //=============================================================================
 // コンストラクタ
@@ -94,7 +96,7 @@ CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType
 	m_part = PART_ACTION;
 	m_pSky = NULL;
 	m_pMouse = NULL;
-
+	m_pField = NULL;
 	m_nBlueLinkEnergy = 0;
 	m_nRedLinkEnergy = 0;
 
@@ -141,12 +143,20 @@ HRESULT CGame::Init(void)
 	// 読み込み
 	CMotionManager::Load();
 
-	m_pField = CModel::Create();
-	m_pField->SetModel(FIELD_MODEL_NAME);
-	m_pField->SetPos(D3DXVECTOR3(-15.0f, 0.0f, 30.0f));
+	//m_pField = CModel::Create();
+	//m_pField->SetModel(FIELD_MODEL_NAME);
+	//m_pField->SetPos(D3DXVECTOR3(-15.0f, 0.0f, 30.0f));
 
 	//m_pSky = CModel::Create();
 	//m_pSky->SetModel(SKY_MODEL_NAME);
+
+	//=====================================================================================
+	// マップデータファイラーの生成
+	//=====================================================================================
+	if (m_pNodeFiler == NULL)
+	{// NULLチェック
+		m_pNodeFiler = CNodeDataFiler::Create();
+	}
 
 	// プレイヤーの生成
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
@@ -208,10 +218,12 @@ HRESULT CGame::Init(void)
 			}
 		}
 	}
-	for (int nCntShadow = 0; nCntShadow < 16; nCntShadow++)
-	{
-		CShadow::Create(D3DXVECTOR3(-15.0f, -1.0f, 30.0f), 6, nCntShadow);
-	}
+	//for (int nCntShadow = 0; nCntShadow < 16; nCntShadow++)
+	//{
+	//	CShadow::Create(D3DXVECTOR3(-15.0f, -1.0f, 30.0f), 6, nCntShadow);
+	//}
+
+	CShadow::Create();
 
 	// 弾の当たり判定クラスの生成
 	CBulletCollision::Create();
@@ -314,6 +326,12 @@ void CGame::Uninit(void)
 	{// 攻撃を受けた方向表示の破棄
 		m_pDamageDirection->Uninit();
 		m_pDamageDirection = NULL;
+	}
+
+	if (m_pNodeFiler != NULL)
+	{// マップデータファイラーの破棄
+		m_pNodeFiler->Uninit();
+		m_pNodeFiler = NULL;
 	}
 
 	// オブジェクトを破棄

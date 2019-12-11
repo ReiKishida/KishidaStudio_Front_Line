@@ -13,7 +13,6 @@
 // マクロ定義
 //*****************************************************************************
 #define MAX_DEBUG_TEXT	(2048)		// デバッグ情報の最大文字数
-#define MAX_FONT		(2)			// フォントの最大数
 
 //*****************************************************************************
 // クラス定義
@@ -32,7 +31,7 @@ public:
 	static bool GetDisp(void) { return m_bDisp; };
 
 private:
-	static LPD3DXFONT m_pFont[MAX_FONT];	// 文字を表示するのに必要
+	static LPD3DXFONT m_pFont;	// 文字を表示するのに必要
 	static char m_aStr[MAX_DEBUG_TEXT];		// 表示できる文字数
 	static bool m_bDisp;					// 表示するかどうか
 };

@@ -102,6 +102,22 @@ public:
 		TEXTURE_OPTION_BATSU,			// バツボタン
 		TEXTURE_OPTION_TOGGlE,			// トグルスイッチ
 
+		// TutorialMenu
+		TEXTURE_TUTORIALMENU_FRAME,			// フレーム
+		TEXTURE_TUTORIALMENU_INST,			// 項目説明文
+
+		// Tutorial
+		TEXTURE_TUTORIAL_TITLE,					//チュートリアルの現在の項目
+		TEXTURE_TUTORIAL_NUMBER,				//チュートリアルの項目数
+		TEXTURE_TUTORIAL_MISSION_BASIC,			//チュートリアルの課題(基本操作)
+		TEXTURE_TUTORIAL_MISSION_ACTION,		//チュートリアルの課題(アクションパート)
+		TEXTURE_TUTORIAL_MISSION_STRATEGY,		//チュートリアルの課題(ストラテジーパート)
+		TEXTURE_TUTORIAL_INST_BASIC,			//操作の方法(基本操作)
+		TEXTURE_TUTORIAL_INST_ACTION,			//チュートリアルの課題(アクションパート)
+		TEXTURE_TUTORIAL_INST_STRATEGY,			//チュートリアルの課題(ストラテジーパート)
+
+		TEXTURE_TUTORIAL_SUCCESS,			//チュートリアル成功！
+
 		TEXTURE_SHADOW,
 
 		TEXTURE_MAX
