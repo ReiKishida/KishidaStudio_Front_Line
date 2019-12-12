@@ -322,6 +322,22 @@ HRESULT CUI_TEXTURE::Init(void)
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_MENU_INST));
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
+
+	case UIFLAME_KILL_LOG_BG:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_KILLLOG_BG));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		break;
+
+	case UIFLAME_KILL_LOG_PLAYERICON:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_KILLLOG_ICON));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		break;
+
+	case UIFLAME_KILL_LOG_PLAYERIDX:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_KILLLOG_PLAYER));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+		break;
+
 	}
 
 	return S_OK;
