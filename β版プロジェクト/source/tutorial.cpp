@@ -204,7 +204,7 @@ HRESULT CTutorial::Init(void)
 
 	m_pField = CModel::Create();
 	m_pField->SetModel(FIELD_MODEL_NAME);
-	m_pField->SetPos(D3DXVECTOR3(-2.0f, 0.0f, 17.0f));
+	m_pField->SetPos(D3DXVECTOR3(-10.0f, 0.0f, 40.0f));
 
 	//m_pSky = CModel::Create();
 	//m_pSky->SetModel(SKY_MODEL_NAME);
@@ -1388,10 +1388,10 @@ void CTutorial::CreatePlayerBullet(int nPlayerIdx, int nNumShoot, int nAttack, D
 		// ’e‚Ì¶¬
 		D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
 		D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam());
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), this);
 		mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
 		posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam());
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), this);
 
 		//’e‚ð”­ŽË‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©‚ÌÝ’uˆ—
 		m_pPlayer[nPlayerIdx]->SetShoot(false);
@@ -1446,10 +1446,10 @@ void CTutorial::CreateCPUBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DX
 		// ’e‚Ì¶¬
 		D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
 		D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam());
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), this);
 		mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
 		posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam());
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), this);
 
 		//’e‚ð”­ŽË‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©‚ÌÝ’uˆ—
 		m_pPlayer[nPlayerIdx]->SetShoot(false);

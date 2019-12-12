@@ -118,6 +118,11 @@ public:
 
 		TEXTURE_TUTORIAL_SUCCESS,			//チュートリアル成功！
 
+		// killlog
+		TEXTURE_KILLLOG_BG,				// キルログの背景
+		TEXTURE_KILLLOG_ICON,			// キルログのアイコン
+		TEXTURE_KILLLOG_PLAYER,			// キルログのプレイヤー番号
+
 		TEXTURE_SHADOW,
 
 		TEXTURE_MAX

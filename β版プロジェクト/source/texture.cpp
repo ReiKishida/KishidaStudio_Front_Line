@@ -133,6 +133,11 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/tutorial/strategy_part.png" },						//操作の方法(ストラテジーパート)
 		{ "data/TEXTURE/tutorial/Success.png" },							//チュートリアル成功！
 
+		// killlog
+		{ "data/TEXTURE/UI/KillLog_bg_2.png" },						// オプションアイコン
+		{ "data/TEXTURE/UI/killLog_player_icon.png" },				// オプションフレーム
+		{ "data/TEXTURE/UI/KillLog_player.png" },					// バツボタン
+
 	};
 
 	for (int nCntTexture = 0; nCntTexture < TEXTURE_MAX; nCntTexture++)

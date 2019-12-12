@@ -34,16 +34,16 @@ CZTexCreator::~CZTexCreator()
 
 
 // 初期化メソッド
-bool CZTexCreator::Init(Com_ptr<IDirect3DDevice9> &cpDev, UINT ZTexWidth, UINT ZTexHeight, D3DFORMAT ZTexFormat)
+bool CZTexCreator::Init(LPDIRECT3DDEVICE9 &cpDev, UINT ZTexWidth, UINT ZTexHeight, D3DFORMAT ZTexFormat)
 {
-	if (cpDev.GetPtr() == NULL) return false;
+	if (cpDev == NULL) return false;
 	if (ZTexWidth == 0 || ZTexHeight == 0) return false;
 
 	HRESULT hr;
 
 	// リソースにあるZ値プロットシェーダプログラムを読み込む
 	if (FAILED(D3DXCreateEffectFromResource(
-		cpDev.GetPtr(),
+		cpDev,
 		NULL,
 		MAKEINTRESOURCE(FXID_ZVALUEPLOT),
 		NULL,
@@ -67,7 +67,7 @@ bool CZTexCreator::Init(Com_ptr<IDirect3DDevice9> &cpDev, UINT ZTexWidth, UINT Z
 
 	// 指定のZ値テクスチャを生成
 	hr = D3DXCreateTexture(
-		cpDev.GetPtr(),
+		cpDev,
 		ZTexWidth, ZTexHeight,
 		1,
 		D3DUSAGE_RENDERTARGET,
@@ -142,7 +142,7 @@ HRESULT CZTexCreator::Begin()
 	m_cpDev->SetDepthStencilSurface( m_cpDepthBuff.GetPtr() );
 
 	// 各サーフェイスを初期化
-	m_cpDev->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255,255,255,255), 1.0f, 0 );
+	m_cpDev->Clear(0, NULL, (D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 1.0f, 0);
 
 	// プログラマブルシェーダのテクニックを設定
 	m_cpEffect->SetTechnique( m_hTechnique );

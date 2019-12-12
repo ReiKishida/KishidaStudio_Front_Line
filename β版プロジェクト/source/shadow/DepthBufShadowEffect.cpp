@@ -23,19 +23,15 @@ CDepthBufShadowEffect::~CDepthBufShadowEffect()
 
 
 // 初期化メソッド
-bool CDepthBufShadowEffect::Init( Com_ptr<IDirect3DDevice9> &cpDev )
+bool CDepthBufShadowEffect::Init(LPDIRECT3DDEVICE9 &cpDev )
 {
 	// デバイスの登録とエフェクトハンドルの取得
-	if (cpDev == NULL)
-	{
-		MessageBox(0, "デバイスがNULL", "CDepthBufShadowEffect::Init", MB_OK);
-		return false;
-	}
+	if( cpDev == NULL ) return false;
 
 	// リソースにある深度バッファシャドウシェーダプログラムを読み込む
 #if _DEBUG
 	if (FAILED(D3DXCreateEffectFromFile(
-		cpDev.GetPtr(),
+		cpDev,
 		_T("source/shadow/DepthBufShadowEffect.fx"),
 		NULL,
 		NULL,
@@ -44,7 +40,7 @@ bool CDepthBufShadowEffect::Init( Com_ptr<IDirect3DDevice9> &cpDev )
 		m_cpEffect.ToCreator(),
 		NULL)))
 	{
-		MessageBox(0, "fxファイルのパスが違います", "CDepthBufShadowEffect::Init", MB_OK);
+		MessageBox(0, "ファイルの読み込みに失敗しました", "DepthBufShadowEffect.fx", MB_OK);
 		return false;
 	}
 #else
@@ -67,10 +63,11 @@ bool CDepthBufShadowEffect::Init( Com_ptr<IDirect3DDevice9> &cpDev )
 	m_hLightViewMat  = m_cpEffect->GetParameterByName( NULL, "matLightView" );
 	m_hLightProjMat  = m_cpEffect->GetParameterByName( NULL, "matLightProj" );
 	m_hShadowMapTex  = m_cpEffect->GetParameterByName( NULL, "texShadowMap" );
+	m_hCol = m_cpEffect->GetParameterByName(NULL, "g_Color");
 	m_hTechnique = m_cpEffect->GetTechniqueByName( "DepthBufShadowTec" );
 
 	if( !m_hWorldMat || !m_hCameraViewMat || !m_hCameraProjMat
-		|| !m_hLightViewMat || !m_hLightProjMat || !m_hShadowMapTex || !m_hTechnique )
+		|| !m_hLightViewMat || !m_hLightProjMat || !m_hShadowMapTex || !m_hTechnique)
 		return false;
 
 	m_cpDev = cpDev;
@@ -122,12 +119,11 @@ void CDepthBufShadowEffect::SetLightProjMatrix( D3DXMATRIX *pMat )
 	m_matLightProj = *pMat;
 }
 
-
 // 描画の開始を宣言する
 HRESULT CDepthBufShadowEffect::Begin()
 {
 	// 各サーフェイスを初期化
-	m_cpDev->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255,255,255,255), 1.0f, 0 );
+	m_cpDev->Clear( 0, NULL, (D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 1.0f, 0);
 
 	// プログラマブルシェーダに切り替え
 	m_cpEffect->SetTechnique( m_hTechnique );
@@ -177,6 +173,8 @@ bool CDepthBufShadowEffect::SetParamToEffect()
 	m_cpEffect->SetMatrix( m_hCameraProjMat, &m_matCameraProj );
 	m_cpEffect->SetMatrix( m_hLightViewMat, &m_matLightView );
 	m_cpEffect->SetMatrix( m_hLightProjMat, &m_matLightProj );
+	m_cpEffect->SetVector(m_hCol, &m_col);
+
 	HRESULT hr = m_cpEffect->SetTexture( m_hShadowMapTex, m_cpShadowMapTex.GetPtr() );
 
 	return true;

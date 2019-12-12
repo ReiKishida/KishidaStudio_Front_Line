@@ -171,6 +171,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_nSelectOption = 2;
 	m_pUIButtonOption = NULL;
 	m_nRadioChat = 0;
+	m_nKillPlayerIdx = 0;
 
 	//AI戦闘系の変数
 	m_pSearch = NULL;
@@ -587,12 +588,9 @@ HRESULT CPlayer::Init(void)
 	m_bPartSwitch = false;
 	m_bCollectSwitch = false;
 
-	for (int nCntEnemy = 0; nCntEnemy < ENEMY_PLAYER_MAX; nCntEnemy++)
-	{// エネミーの最大値分回る
-		for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
-		{// 収集データの最大値分回る
-			m_collectionPos[nCntEnemy][nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-		}
+	for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+	{// 収集データの最大値分回る
+		m_collectionPos[nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	}
 
 	for (int nCntNode = 0; nCntNode < NODEPOINT_MAX; nCntNode++)
@@ -1085,7 +1083,7 @@ void CPlayer::Movement(void)
 	float fDirMove;
 	if (pKeyboard->GetTrigger(DIK_7))
 	{
-		Damage(m_nLifeMax);
+		Damage(m_nLifeMax, this);
 		CParticle::Create(m_pModel[0]->GetWorldPos(), 4);
 		CParticle::Create(m_pModel[0]->GetWorldPos(), 5);
 
@@ -1237,7 +1235,7 @@ void CPlayer::Shoot(void)
 				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam);
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this);
 				CParticle::Create(posCanon, 2);
 
 				// レティクル（目的の位置）の取得
@@ -1258,7 +1256,7 @@ void CPlayer::Shoot(void)
 				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam);
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this);
 				CParticle::Create(posCanon, 2);
 
 				m_bShoot = true;
@@ -1446,15 +1444,15 @@ void CPlayer::SetParticle(void)
 //=========================================
 // ダメージを受けたときの処理
 //=========================================
-void CPlayer::Damage(int nDamage)
+void CPlayer::Damage(int nDamage, CScene *pScene)
 {
 	if (CMenu::GetMode() == CMenu::MODE_SINGLE)
-	{
+	{//シングルプレイの場合
 		if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
 		{// モーションクラスが使われている
-			// ライフクラスが使われている
 			if (m_nLife > 0 && m_bDeath == false)
-			{
+			{//体力が０より大きく且つ死亡していない場合
+
 				if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_FRONT))
 				{
 					m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
@@ -1468,21 +1466,70 @@ void CPlayer::Damage(int nDamage)
 
 				m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
 
-				m_nLife -= nDamage;
+				m_nLife -= nDamage;									//体力の減算
 
 				if (0 >= m_nLife)
-				{
-					m_nLife = 0;
-					m_bDeath = true;
+				{//体力が０以下の場合
+					m_nLife = 0;		//体力を０にする
+					m_bDeath = true;	//死亡状態にする
 
+					if (m_bDeath == true && CManager::GetMode() == CManager::MODE_GAME)
+					{//死亡している場合
+						for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
+						{
+							//キルログの表示処理
+							if (CManager::GetGame()->GetLog(nCntKill) == false)
+							{//ログが使用されていない場合
+								if (pScene->GetObjType() == CScene::OBJTYPE_PLAYER)
+								{//オブジェクトの種類がプレイヤーの場合
+									CPlayer *pPlayer = (CPlayer*)pScene;
+									if (pPlayer != NULL)
+									{//NULLではない場合
+										m_nKillPlayerIdx = pPlayer->GetPlayerIdx();								//キルプレイヤーの番号を設置処理
+										CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());		//キルプレイヤーの番号を設置処理
+										CManager::GetGame()->SetDeathIdx(nCntKill, m_nPlayerIdx);				//デスプレイヤーの番号を設置処理
+										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);				//プレイヤーの種類を設置処理
+										CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);				//プレイヤーの種類を設置処理
+										CManager::GetGame()->SetLog(nCntKill, true);							//ログの設置処理
+									}
+								}
+								else if (pScene->GetObjType() == CScene::OBJTYPE_AI)
+								{//オブジェクトの種類がＡＩの場合
+									CAIMecha *pAIMecha = (CAIMecha*)pScene;
+									if (pAIMecha != NULL)
+									{//NULLの場合
+										m_nKillPlayerIdx = pAIMecha->GetPlayer()->GetPlayerIdx();							//キルプレイヤーの番号を設置処理
+										CManager::GetGame()->SetKillIdx(nCntKill, pAIMecha->GetPlayer()->GetPlayerIdx());	//キルプレイヤーの番号を設置処理
+										CManager::GetGame()->SetDeathIdx(nCntKill, m_nPlayerIdx);							//デスプレイヤーの番号を設置処理
+										if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
+										{//オブジェクトの種類がドローンの場合
+											CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
+											CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);						//プレイヤーの種類を設置処理
+											CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
+										}
+										else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WALKER)
+										{//オブジェクトの種類がワーカーの場合
+											CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WALKER);						//プレイヤーの種類を設置処理
+											CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);						//プレイヤーの種類を設置処理
+											CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
+										}
+									}
+								}
+								break;
+							}
+						}
+					}
+
+					//パーティクルを生成
 					CParticle::Create(m_pModel[0]->GetWorldPos(), 4);
 					CParticle::Create(m_pModel[0]->GetWorldPos(), 5);
 
 					for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-					{
+					{//表示しない
 						m_pModel[nCntModel]->SetDisp(false);
 					}
 
+					//チーム別で処理分け
 					switch (m_nTeam)
 					{
 					case 0:
@@ -1493,54 +1540,106 @@ void CPlayer::Damage(int nDamage)
 						break;
 					}
 				}
-				//CSound *pSound = CManager::GetSound();				// サウンドの取得
-				//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
 			}
 		}
 	}
 	else
-	{
+	{//マルチプレイの場合
 		if (CManager::GetClient() != NULL)
-		{
+		{//NULLではない場合
 			if (CManager::GetClient()->GetPlayerIdx() == m_nPlayerIdx)
-			{
+			{//プレイヤー番号とクライアント番号が同じ場合
 				if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
 				{// モーションクラスが使われている
-					{// ライフクラスが使われている
-						if (m_nLife > 0 && m_bDeath == false)
+					if (m_nLife > 0 && m_bDeath == false)
+					{//体力が０より大きく且つ死亡していない場合
+						if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_FRONT))
 						{
-							if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_FRONT))
-							{
-								m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
-								m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
-							}
-							else if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_BACK))
-							{
-								m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
-								m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
-							}
+							m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
+							m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
+						}
+						else if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_BACK))
+						{
+							m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+							m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+						}
 
-							m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+						m_state = STATE_DAMAGE;				// ダメージを受けている状態にする
 
-							m_nLife -= nDamage;
+						m_nLife -= nDamage;					// 体力の減算
 
-							if (0 >= m_nLife)
-							{
-								m_nLife = 0;
-								m_bDeath = true;
+						if (0 >= m_nLife)
+						{//体力が０以下の場合
+							m_nLife = 0;		//体力を０にする
+							m_bDeath = true;	//死亡状態にする
 
-								switch (m_nTeam)
+							if (m_bDeath == true && CManager::GetMode() == CManager::MODE_GAME)
+							{//死亡している場合
+								for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
 								{
-								case 0:
-									CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 30);
-									break;
-								case 1:
-									CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 30);
-									break;
+									//キルログの表示処理
+									if (CManager::GetGame()->GetLog(nCntKill) == false)
+									{//ログが使用されていない場合
+										if (pScene->GetObjType() == CScene::OBJTYPE_PLAYER)
+										{//オブジェクトの種類がプレイヤーの場合
+											CPlayer *pPlayer = (CPlayer*)pScene;
+											if (pPlayer != NULL)
+											{//NULLではない場合
+												m_nKillPlayerIdx = pPlayer->GetPlayerIdx();								//キルプレイヤーの番号を設置処理
+												CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());		//キルプレイヤーの番号を設置処理
+												CManager::GetGame()->SetDeathIdx(nCntKill, m_nPlayerIdx);				//デスプレイヤーの番号を設置処理
+												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);				//プレイヤーの種類を設置処理
+												CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);				//プレイヤーの種類を設置処理
+												CManager::GetGame()->SetLog(nCntKill, true);							//ログの設置処理
+											}
+										}
+										else if (pScene->GetObjType() == CScene::OBJTYPE_AI)
+										{//オブジェクトの種類がAIの場合
+											CAIMecha *pAIMecha = (CAIMecha*)pScene;
+											if (pAIMecha != NULL)
+											{//NULLではない場合
+												m_nKillPlayerIdx = pAIMecha->GetPlayer()->GetPlayerIdx();							//キルプレイヤーの番号を設置処理
+												CManager::GetGame()->SetKillIdx(nCntKill, pAIMecha->GetPlayer()->GetPlayerIdx());	//キルプレイヤーの番号を設置処理
+												CManager::GetGame()->SetDeathIdx(nCntKill, m_nPlayerIdx);							//デスプレイヤーの番号を設置処理
+												if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
+												{//オブジェクトの種類がドローンの場合
+													CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
+													CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);						//プレイヤーの種類を設置処理
+													CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
+												}
+												else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WALKER)
+												{//オブジェクトの種類がワーカーの場合
+													CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WALKER);						//プレイヤーの種類を設置処理
+													CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);						//プレイヤーの種類を設置処理
+													CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
+												}
+											}
+										}
+										break;
+									}
 								}
 							}
-							//CSound *pSound = CManager::GetSound();				// サウンドの取得
-							//pSound->PlaySound(CSound::SOUND_LABEL_DAMAGE);		// ダメージ音を再生
+
+							//パーティクルを生成
+							CParticle::Create(m_pModel[0]->GetWorldPos(), 4);
+							CParticle::Create(m_pModel[0]->GetWorldPos(), 5);
+
+							for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+							{
+								//表示をしない処理
+								m_pModel[nCntModel]->SetDisp(false);
+							}
+
+							//チーム別で処理分け
+							switch (m_nTeam)
+							{
+							case 0:
+								CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 30);
+								break;
+							case 1:
+								CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 30);
+								break;
+							}
 						}
 					}
 				}
@@ -1798,6 +1897,32 @@ void CPlayer::SelectRespawn(void)
 			}
 
 			m_pos = CManager::GetGame()->GetRespawnPos(m_nTeam, m_point);
+
+			if (m_bConnect == false)
+			{
+				// 開始時点のノードの初期化
+				float fMinLength = 100000, fLength = 100000;	// 差分系
+
+				// 開始時点のノードの初期化
+				for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+				{// ノードの数だけ回る
+				 // 差分を求める
+					fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) *
+						(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) +
+						(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) *
+						(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
+
+					if (fMinLength > fLength)
+					{// 差分の最小値を求める
+						fMinLength = fLength;
+						m_nStartNode = nCntNode;
+						m_nEndNode = nCntNode;
+					}
+				}
+
+				// 経路探索
+				CPlayer::RootSearch();
+			}
 
 			// 通常状態に戻る
 			m_Respawn = RESPAWN_NONE;
@@ -2567,7 +2692,7 @@ void CPlayer::CpuShoot(void)
 				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam);
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this);
 
 				// レティクル（目的の位置）の取得
 				posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
@@ -2587,7 +2712,7 @@ void CPlayer::CpuShoot(void)
 				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam);
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this);
 
 				m_bShoot = true;
 			}
@@ -2625,8 +2750,40 @@ void CPlayer::AIUpdate(void)
 		m_pSearch[nCntSearch]->Update();
 	}
 
+	// 前回の発見状態の取得
+	m_bFindOld = m_bFind;
 
 	m_bFind = Distance();
+
+	if (m_bFindOld != m_bFind)
+	{// 敵を見失った場合　または　敵を発見した場合
+		float fMinLength = 100000, fLength = 100000;	// 差分系
+		int nNearNode = 0;
+
+		// 自分の位置に最も近いノードを検索する
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+		{// ノードの数だけ回る
+		 // 差分を求める
+			if (m_pPlayer != NULL)
+			{// プレイヤーのNULLチェック
+				fLength =
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) +
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
+
+				if (fMinLength > fLength)
+				{// 差分の最小値を求める
+					fMinLength = fLength;
+					nNearNode = nCntNode;
+				}
+			}
+		}
+
+		// 現在地を開始ノードに設定する
+		m_nStartNode = nNearNode;
+	}
+
 	if (m_bFind == true)
 	{
 		//戦闘時の移動処理
@@ -2642,6 +2799,53 @@ void CPlayer::AIUpdate(void)
 	}
 	//CDebugProc::Print("m_bFind: %d", m_bFind);
 
+	//==================//
+	//  収集データ参照  //
+	//==================//
+	float fMinLength = 100000, fLength = 100000;	// 差分系
+	D3DXVECTOR3 total = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 収集したデータの合計値
+
+	if (!m_bCollectSwitch)
+	{// 1週目
+		for (int nCntCollect = 0; nCntCollect < m_nCountCollect + 1; nCntCollect++)
+		{// 収集したデータの数だけ回る
+			total += m_collectionPos[nCntCollect];	// 収集データを合計する
+		}
+	}
+	else
+	{// 2週目以降
+		for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+		{// 収集できるデータの最大数だけ回る
+			total += m_collectionPos[nCntCollect];	// 収集データを合計する
+		}
+	}
+
+	// 収集データの平均値を取る
+	if (!m_bCollectSwitch)
+	{// 1週目の場合
+		m_totalCollectPos = total / (float)(m_nCountCollect + 1);
+	}
+	else
+	{// 2週目以降
+		m_totalCollectPos = total / (float)COLLECTIONDATA_MAX;
+	}
+
+	// 平均値に最も近いノードを検索する
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+	{// ノードの数だけ回る
+	 // 差分を求める
+		fLength =
+			(m_pNodeData->GetLoadData().pos[nCntNode].x - m_totalCollectPos.x) *
+			(m_pNodeData->GetLoadData().pos[nCntNode].x - m_totalCollectPos.x) +
+			(m_pNodeData->GetLoadData().pos[nCntNode].z - m_totalCollectPos.z) *
+			(m_pNodeData->GetLoadData().pos[nCntNode].z - m_totalCollectPos.z);
+
+		if (fMinLength > fLength)
+		{// 差分の最小値を求める
+			fMinLength = fLength;
+			m_nNearTotalCollectNumber = nCntNode;
+		}
+	}
 }
 
 //=============================================================================

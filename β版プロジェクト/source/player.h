@@ -142,7 +142,7 @@ public:
 	D3DXVECTOR3 GetVtxMax(void) { return m_vtxMax; }
 	D3DXVECTOR3 GetVtxMin(void) { return m_vtxMin; }
 
-	void Damage(int nDamage);
+	void Damage(int nDamage, CScene *pScene);
 
 	D3DXVECTOR3 CalcScreenToWorld(float fScreenX, float fScreenY);
 
@@ -180,6 +180,7 @@ public:
 	CPlayer *GetPlayer(void) { return m_pPlayer; };
 	static void SetSearchPos(D3DXVECTOR3 pos) { m_searchPos = pos; };
 	CAIMecha *GetMyAI(int nIdx) { return m_pAI[nIdx]; };
+	bool &GetPlayerConnect(void) { return m_bConnect; };
 
 	bool GetReload(void) { return m_bReload; };
 
@@ -198,6 +199,9 @@ public:
 	void SetOption(bool bOption) { m_bOption = bOption; }											// オプション状態の設定
 	int GetSelectOption(void) { return m_nSelectOption; }												// 選択されたカメラ速度取得
 	void SetSelectOption(int nSelectOption) { m_nSelectOption = nSelectOption; }		// 選択されたカメラ速度設定
+
+	int GetKillPlayerIdx(void) { return m_nKillPlayerIdx; };
+	int GetNumParts(void) { return m_nNumParts; };
 
 private:
 	void Movement(void);
@@ -323,11 +327,13 @@ private:
 	CButton2D			*m_pUIButtonSelect[OPTION_SELECT];				// カメラの速度選択
 	int						m_nSelectOption;													//	カメラ速度の項目
 
+	int m_nKillPlayerIdx;					//キルプレイヤーの番号
+
 	// =============================================================
 	// 移動系AIの変数
 	// =============================================================
 	D3DXVECTOR3 m_waypoint[NODEPOINT_MAX];	// 中間地点
-	D3DXVECTOR3 m_collectionPos[ENEMY_PLAYER_MAX][COLLECTIONDATA_MAX];	// 収集したデータ
+	D3DXVECTOR3 m_collectionPos[COLLECTIONDATA_MAX];	// 収集したデータ
 	D3DXVECTOR3	m_posDest;				// 目標位置
 	D3DXVECTOR3	m_rotDest;				// 目標方向
 	D3DXVECTOR3 m_totalCollectPos;		// 収集したデータの合計値
@@ -365,6 +371,7 @@ private:
 	D3DXVECTOR3 m_SearchVec_1;				//認識用ベクトル２
 	D3DXVECTOR3 m_SearchVec_2;				//認識用ベクトル２
 	bool m_bFind;
+	bool m_bFindOld;						// 前回の発見状態
 
 	//攻撃系
 	float	m_fRange;						//範囲

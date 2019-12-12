@@ -22,7 +22,7 @@ namespace IKD
 class CZTexCreator
 {
 protected:
-	Com_ptr<IDirect3DDevice9> m_cpDev;			// 描画デバイス
+	LPDIRECT3DDEVICE9 m_cpDev;					// 描画デバイス
 	Com_ptr<IDirect3DTexture9> m_cpZTex;		// Z値テクスチャ
 	Com_ptr<IDirect3DSurface9> m_cpZTexSurf;	// Z値テクスチャサーフェイス
 	Com_ptr<IDirect3DSurface9> m_cpDepthBuff;	// 深度バッファ
@@ -43,7 +43,7 @@ public:
 
 public:
 	// 初期化メソッド
-	bool Init( Com_ptr<IDirect3DDevice9> &cpDev, UINT ZTexWidth, UINT ZTexHeight, D3DFORMAT ZTexFormat=D3DFMT_A8R8G8B8 );
+	bool Init(LPDIRECT3DDEVICE9 &cpDev, UINT ZTexWidth, UINT ZTexHeight, D3DFORMAT ZTexFormat=D3DFMT_A8R8G8B8 );
 
 	// 描画対象オブジェクトのワールド変換行列を設定
 	void SetWorldMatrix( D3DXMATRIX *pMat );

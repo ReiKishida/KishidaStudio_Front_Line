@@ -108,6 +108,11 @@ public:
 		// チュートリアル(SUCCESS)
 		UIFLAME_TUTORIAL_SUCCESS,		//チュートリアルの成功！
 
+		//キルログ
+		UIFLAME_KILL_LOG_BG,			//キルログの土台
+		UIFLAME_KILL_LOG_PLAYERICON,	//キルログのアイコン
+		UIFLAME_KILL_LOG_PLAYERIDX,		//キルログの番号
+
 		UIFLAME_MAX							// タイプの最大数
 	} UI_TEXTYPE;
 

@@ -14,7 +14,7 @@ namespace IKD
 class CDepthBufShadowEffect
 {
 protected:
-	Com_ptr<IDirect3DDevice9> m_cpDev;			// 描画デバイス
+	LPDIRECT3DDEVICE9 m_cpDev;			// 描画デバイス
 	Com_ptr<IDirect3DTexture9> m_cpShadowMapTex;	// シャドウマップテクスチャ
 	Com_ptr<ID3DXEffect> m_cpEffect;			// 深度バッファシャドウエフェクト
 	D3DXMATRIX m_matWorld;						// ワールド変換行列
@@ -30,6 +30,8 @@ protected:
 	D3DXHANDLE m_hShadowMapTex;					// シャドウマップテクスチャハンドル
 	D3DXHANDLE m_hTechnique;					// テクニックへのハンドル
 
+	D3DXVECTOR4 m_col;
+	D3DXHANDLE	m_hCol;
 
 public:
 	CDepthBufShadowEffect();
@@ -37,7 +39,7 @@ public:
 
 public:
 	// 初期化メソッド
-	bool Init( Com_ptr<IDirect3DDevice9> &cpDev );
+	bool Init(LPDIRECT3DDEVICE9 &cpDev );
 
 	// シャドウマップを設定
 	bool SetShadowMap( Com_ptr<IDirect3DTexture9> &cpShadowMap );
@@ -56,6 +58,9 @@ public:
 
 	// ライトの射影変換行列を設定
 	void SetLightProjMatrix( D3DXMATRIX *pMat );
+
+	// カラーの設定
+	void SetColor(D3DXVECTOR4 col) { m_col = col; };
 
 	// 描画の開始を宣言する
 	HRESULT Begin();

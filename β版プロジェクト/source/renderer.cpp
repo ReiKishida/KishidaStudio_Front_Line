@@ -181,7 +181,7 @@ void CRenderer::Draw(void)
 	m_pD3DDevice->Clear(0,
 		NULL,
 		(D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL),
-		D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 1.0f, 0);
+		D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), 1.0f, 0);
 
 	if (SUCCEEDED(m_pD3DDevice->BeginScene()))
 	{// Direct3D‚É‚æ‚é•`‰æ‚ÌŠJŽn

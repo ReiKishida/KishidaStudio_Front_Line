@@ -431,37 +431,32 @@ CShadow::~CShadow()
 //=============================================================================
 HRESULT CShadow::Init(void)
 {
-	// Direct3Dの初期化
-	LPDIRECT3D9 g_pD3D;
-	LPDIRECT3DDEVICE9 g_pD3DDev;
-	if (!(g_pD3D = Direct3DCreate9(D3D_SDK_VERSION))) return 0;
-	IKD::Com_ptr<IDirect3D9> spD3D(g_pD3D);
-
-	D3DPRESENT_PARAMETERS d3dpp = { 0,0,D3DFMT_UNKNOWN,0,D3DMULTISAMPLE_NONE,0,
-		D3DSWAPEFFECT_DISCARD,NULL,TRUE,TRUE,D3DFMT_D16,0,D3DPRESENT_RATE_DEFAULT,D3DPRESENT_INTERVAL_DEFAULT };
-
-	if (FAILED(g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, CManager::GetRenderer()->GetHWnd(), D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &g_pD3DDev)))
-		if (FAILED(g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, CManager::GetRenderer()->GetHWnd(), D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &g_pD3DDev)))
-			return 0;
-	IKD::Com_ptr<IDirect3DDevice9> cpDev(g_pD3DDev);
+	// デバイスの取得
+	CRenderer *pRenderer = CManager::GetRenderer();
+	LPDIRECT3DDEVICE9 pDevice;
+	pDevice = pRenderer->GetDevice();
 
 	/////////////////////////////////////////////////////
 	// Z値テクスチャ生成オブジェクトの生成と初期化
 	/////////////
 	UINT TexSize = 1024;	// テクスチャサイズ
-	if (!m_ZTexCreator.Init(cpDev, TexSize, TexSize, D3DFMT_A8R8G8B8))	// 通常はこのテクスチャが作成できます
-		if (!m_ZTexCreator.Init(cpDev, TexSize, TexSize, D3DFMT_R5G6B5))		// 万が一は16bitに落とします
+	if (!m_ZTexCreator.Init(pDevice, TexSize, TexSize, D3DFMT_A8R8G8B8))	// 通常はこのテクスチャが作成できます
+		if (!m_ZTexCreator.Init(pDevice, TexSize, TexSize, D3DFMT_R5G6B5))		// 万が一は16bitに落とします
 			return 0;
 	m_ZTexCreator.GetZTex(m_cpShadowMapTex);
 
 	/////////////////////////////////////////////////////
 	// 深度バッファシャドウオブジェクトの生成と初期化
 	/////////////
-	m_DepthBS.Init(cpDev);
+	m_DepthBS.Init(pDevice);
 	m_DepthBS.SetShadowMap(m_cpShadowMapTex);	// シャドウマップテクスチャを登録
 
 	// 影のモデル生成
-	D3DXLoadMeshFromX("data/MODEL/map_UV_bill.x", D3DXMESH_MANAGED, cpDev.GetPtr(), NULL, m_pBuffMat.ToCreator(), NULL, &m_nNumMat, m_pMesh.ToCreator());
+	D3DXLoadMeshFromX("data/MODEL/map_UV_bill.x", D3DXMESH_MANAGED, pDevice, NULL, m_pBuffMat.ToCreator(), NULL, &m_nNumMat, m_pMesh.ToCreator());
+
+	// 色を付ける
+	m_DepthBS.SetColor(D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f));
+
 
 	D3DXMATRIX LightView, LightProj;	// ライトビュー変換・射影変換
 	float LightScale = 1.5f;
@@ -525,9 +520,9 @@ void CShadow::Draw(void)
 
 	///////////////////////////////////////
 	//■パス1 : Z値テクスチャにライト方向から描画
-	m_ZTexCreator.Begin();	// シェーダ開始
+	//m_ZTexCreator.Begin();	// シェーダ開始
 
-	m_ZTexCreator.SetWorldMatrix(&m_mtxWorld);	// 立方体のワールド変換行列を登録
+	m_ZTexCreator.SetWorldMatrix(&m_mtxWorld);	// ワールド変換行列を登録
 
 	for (int nCntMat = 0; nCntMat < (int)m_nNumMat; nCntMat++)
 	{
