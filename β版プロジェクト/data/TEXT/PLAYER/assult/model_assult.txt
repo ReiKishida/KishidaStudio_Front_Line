@@ -37,11 +37,11 @@ CHARACTERSET
 	# ’e‚ÌÝ’è
 	CAPACITY = 3					# ‘•’e”
 	ATTACK = 2						# UŒ‚—Í
-	SHOOTS = 5						# “¯Žž”­ŽË”
+	SHOOTS = 8						# “¯Žž”­ŽË”
 	DISPERTION = 110				# ‚Î‚ç‚Â‚«
 	RELOAD = 100						# ƒŠƒ[ƒhŽžŠÔ
 
-	LIFE = 320						# ‘Ï‹v—Í
+	LIFE = 330						# ‘Ï‹v—Í
 	SPEED = 4.8						# ˆÚ“®—Ê
 
 	FOOT = 4						# ‘«‚ÌŽn‚Ü‚è”Ô†
