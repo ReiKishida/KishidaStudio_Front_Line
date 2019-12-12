@@ -1,0 +1,411 @@
+//====================================================================================
+//																					  
+//	マップノード配置用テキスト														  
+//	Author : Komatsu Keisuke														  
+//																					  
+//====================================================================================
+START_LOAD  // ロード開始
+
+//========================================
+// ノードの情報
+//========================================
+START_DATA
+	NODESET // ポイント[0]
+		NODE_POS = -498.0 0.0 498.0  // 位置
+		CONNECT_NUM = 2  // 接続ノード数
+		CONNECT_INDEX = 1	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 7	// 接続ノード情報 [2個目]
+	END_NODESET
+
+	NODESET // ポイント[1]
+		NODE_POS = -332.0 0.0 498.0  // 位置
+		CONNECT_NUM = 3  // 接続ノード数
+		CONNECT_INDEX = 0	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 2	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 7	// 接続ノード情報 [3個目]
+	END_NODESET
+
+	NODESET // ポイント[2]
+		NODE_POS = -166.0 0.0 498.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 1	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 8	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 9	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 3	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[3]
+		NODE_POS = 0.0 0.0 498.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 2	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 8	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 9	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 10	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 4	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[4]
+		NODE_POS = 166.0 0.0 498.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 3	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 9	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 10	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 5	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[5]
+		NODE_POS = 332.0 0.0 498.0  // 位置
+		CONNECT_NUM = 2  // 接続ノード数
+		CONNECT_INDEX = 4	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 6	// 接続ノード情報 [2個目]
+	END_NODESET
+
+	NODESET // ポイント[6]
+		NODE_POS = 498.0 0.0 498.0  // 位置
+		CONNECT_NUM = 2  // 接続ノード数
+		CONNECT_INDEX = 5	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 12	// 接続ノード情報 [2個目]
+	END_NODESET
+
+	NODESET // ポイント[7]
+		NODE_POS = -498.0 0.0 332.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 0	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 13	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 14	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 1	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[8]
+		NODE_POS = -166.0 0.0 332.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 2	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 3	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 9	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 15	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[9]
+		NODE_POS = 0.0 0.0 332.0  // 位置
+		CONNECT_NUM = 7  // 接続ノード数
+		CONNECT_INDEX = 15	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 8	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 2	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 3	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 4	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 10	// 接続ノード情報 [6個目]
+		CONNECT_INDEX = 11	// 接続ノード情報 [7個目]
+	END_NODESET
+
+	NODESET // ポイント[10]
+		NODE_POS = 166.0 0.0 332.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 4	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 3	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 9	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 11	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[11]
+		NODE_POS = 166.0 0.0 249.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 10	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 9	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 16	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 17	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[12]
+		NODE_POS = 498.0 0.0 332.0  // 位置
+		CONNECT_NUM = 2  // 接続ノード数
+		CONNECT_INDEX = 6	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 18	// 接続ノード情報 [2個目]
+	END_NODESET
+
+	NODESET // ポイント[13]
+		NODE_POS = -498.0 0.0 166.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 7	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 14	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 20	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 19	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[14]
+		NODE_POS = -332.0 0.0 166.0  // 位置
+		CONNECT_NUM = 6  // 接続ノード数
+		CONNECT_INDEX = 7	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 13	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 19	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 20	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 21	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 15	// 接続ノード情報 [6個目]
+	END_NODESET
+
+	NODESET // ポイント[15]
+		NODE_POS = -166.0 0.0 166.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 8	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 9	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 14	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 20	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 21	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[16]
+		NODE_POS = 249.0 0.0 166.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 11	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 10	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 17	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 22	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[17]
+		NODE_POS = 332.0 0.0 166.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 16	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 22	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 23	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 18	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[18]
+		NODE_POS = 498.0 0.0 166.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 12	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 17	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 22	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 23	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[19]
+		NODE_POS = -498.0 0.0 0.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 13	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 14	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 20	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 25	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 24	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[20]
+		NODE_POS = -332.0 0.0 0.0  // 位置
+		CONNECT_NUM = 8  // 接続ノード数
+		CONNECT_INDEX = 13	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 14	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 15	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 21	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 26	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 25	// 接続ノード情報 [6個目]
+		CONNECT_INDEX = 24	// 接続ノード情報 [7個目]
+		CONNECT_INDEX = 19	// 接続ノード情報 [8個目]
+	END_NODESET
+
+	NODESET // ポイント[21]
+		NODE_POS = -166.0 0.0 0.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 15	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 14	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 20	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 25	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 26	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[22]
+		NODE_POS = 332.0 0.0 0.0  // 位置
+		CONNECT_NUM = 6  // 接続ノード数
+		CONNECT_INDEX = 16	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 17	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 18	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 23	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 28	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 27	// 接続ノード情報 [6個目]
+	END_NODESET
+
+	NODESET // ポイント[23]
+		NODE_POS = 498.0 0.0 0.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 18	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 17	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 22	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 27	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 28	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[24]
+		NODE_POS = -498.0 0.0 -166.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 19	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 20	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 25	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 29	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[25]
+		NODE_POS = -332.0 0.0 -166.0  // 位置
+		CONNECT_NUM = 6  // 接続ノード数
+		CONNECT_INDEX = 24	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 19	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 20	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 21	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 26	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 29	// 接続ノード情報 [6個目]
+	END_NODESET
+
+	NODESET // ポイント[26]
+		NODE_POS = -166.0 0.0 -166.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 21	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 20	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 25	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 30	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 31	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[27]
+		NODE_POS = 332.0 0.0 -166.0  // 位置
+		CONNECT_NUM = 6  // 接続ノード数
+		CONNECT_INDEX = 22	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 23	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 28	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 34	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 33	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 32	// 接続ノード情報 [6個目]
+	END_NODESET
+
+	NODESET // ポイント[28]
+		NODE_POS = 498.0 0.0 -166.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 23	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 22	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 27	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 33	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 34	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[29]
+		NODE_POS = -498.0 0.0 -332.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 24	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 25	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 35	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 36	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[30]
+		NODE_POS = -166.0 0.0 -332.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 26	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 31	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 38	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 37	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[31]
+		NODE_POS = 0.0 0.0 -332.0  // 位置
+		CONNECT_NUM = 6  // 接続ノード数
+		CONNECT_INDEX = 26	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 30	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 37	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 38	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 39	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 32	// 接続ノード情報 [6個目]
+	END_NODESET
+
+	NODESET // ポイント[32]
+		NODE_POS = 166.0 0.0 -332.0  // 位置
+		CONNECT_NUM = 6  // 接続ノード数
+		CONNECT_INDEX = 31	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 38	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 39	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 40	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 33	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 27	// 接続ノード情報 [6個目]
+	END_NODESET
+
+	NODESET // ポイント[33]
+		NODE_POS = 332.0 0.0 -332.0  // 位置
+		CONNECT_NUM = 7  // 接続ノード数
+		CONNECT_INDEX = 27	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 28	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 34	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 41	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 40	// 接続ノード情報 [5個目]
+		CONNECT_INDEX = 39	// 接続ノード情報 [6個目]
+		CONNECT_INDEX = 32	// 接続ノード情報 [7個目]
+	END_NODESET
+
+	NODESET // ポイント[34]
+		NODE_POS = 498.0 0.0 -332.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 28	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 27	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 33	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 40	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 41	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[35]
+		NODE_POS = -498.0 0.0 -498.0  // 位置
+		CONNECT_NUM = 2  // 接続ノード数
+		CONNECT_INDEX = 29	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 36	// 接続ノード情報 [2個目]
+	END_NODESET
+
+	NODESET // ポイント[36]
+		NODE_POS = -332.0 0.0 -498.0  // 位置
+		CONNECT_NUM = 3  // 接続ノード数
+		CONNECT_INDEX = 29	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 35	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 37	// 接続ノード情報 [3個目]
+	END_NODESET
+
+	NODESET // ポイント[37]
+		NODE_POS = -166.0 0.0 -498.0  // 位置
+		CONNECT_NUM = 4  // 接続ノード数
+		CONNECT_INDEX = 36	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 30	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 31	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 38	// 接続ノード情報 [4個目]
+	END_NODESET
+
+	NODESET // ポイント[38]
+		NODE_POS = 0.0 0.0 -498.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 37	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 30	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 31	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 32	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 39	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[39]
+		NODE_POS = 166.0 0.0 -498.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 38	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 31	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 32	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 33	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 40	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[40]
+		NODE_POS = 332.0 0.0 -498.0  // 位置
+		CONNECT_NUM = 5  // 接続ノード数
+		CONNECT_INDEX = 39	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 32	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 33	// 接続ノード情報 [3個目]
+		CONNECT_INDEX = 34	// 接続ノード情報 [4個目]
+		CONNECT_INDEX = 41	// 接続ノード情報 [5個目]
+	END_NODESET
+
+	NODESET // ポイント[41]
+		NODE_POS = 498.0 0.0 -498.0  // 位置
+		CONNECT_NUM = 3  // 接続ノード数
+		CONNECT_INDEX = 40	// 接続ノード情報 [1個目]
+		CONNECT_INDEX = 33	// 接続ノード情報 [2個目]
+		CONNECT_INDEX = 34	// 接続ノード情報 [3個目]
+	END_NODESET
+END_DATA
+END_LOAD  // ロード終了
