@@ -482,8 +482,17 @@ void CAIMecha::Update(void)
 		m_pModel[1]->SetRot(rot);
 	}
 
-	// AI関係の更新処理
-	CAIMecha::AIUpdate();
+	if (m_bDeath == false)
+	{
+		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+		{//表示しない
+			m_pModel[nCntModel]->SetDisp(false);
+		}
+
+		// AI関係の更新処理
+		CAIMecha::AIUpdate();
+
+	}
 }
 
 //=============================================================================
@@ -498,7 +507,7 @@ void CAIMecha::Draw(void)
 
 	D3DXMATRIX mtxRot, mtxTrans;	// 計算用マトリックス
 
-	// ワールドマトリックスの初期化
+									// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_mtxWorld);
 
 	// 回転を反映
@@ -766,7 +775,7 @@ void CAIMecha::AIUpdate()
 	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
-	// 前回のパート情報の保存
+																// 前回のパート情報の保存
 	m_bPartSwitchOld = m_bPartSwitch;
 	// 現在のパート情報を取得
 	m_bPartSwitch = CManager::GetGame()->GetPart();
@@ -958,7 +967,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 			}
 			else if (m_AIAction[1] == AI_ACTION_FOLLOW)
 			{// 追従型の場合
-				// 主人に追従する
+			 // 主人に追従する
 				CAIMecha::Follow();
 			}
 		}
@@ -988,7 +997,7 @@ void CAIMecha::Attack()
 		{// プレイヤーオブジェクトのとき
 			CPlayer *pPlayer = (CPlayer*)pScene;
 			int nTeam = pPlayer->GetTeam();
-			
+
 			//if(nCntEnemyPlayer < ENEMY_PLAYER_MAX)
 			if (m_nTeam != nTeam)
 			{// チームが違うとき
@@ -1014,7 +1023,7 @@ void CAIMecha::Attack()
 			if (fAttackLength < ATTACK_AREA)
 			{// 範囲内に敵が入った場合
 
-				// 発見状態にする
+			 // 発見状態にする
 				bFind[nCntPlayer] = true;
 
 				// 見つけた敵の方向を向く
@@ -1027,7 +1036,7 @@ void CAIMecha::Attack()
 				if (rand() % 30 == 0)
 				{// ランダムなタイミングで攻撃
 
-					// 左右攻撃方向の設定
+				 // 左右攻撃方向の設定
 					float fAngle = m_rot.y + D3DX_PI;
 
 					// 上下攻撃方向の設定

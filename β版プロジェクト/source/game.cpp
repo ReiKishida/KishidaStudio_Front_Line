@@ -187,7 +187,7 @@ HRESULT CGame::Init(void)
 	CBulletCollision::Create();
 
 	// マップの当たり判定の読み込み
-	//CCollision::Load();
+	CCollision::Load();
 
 	//****************************************
 	// 2DUI生成（フレーム）
@@ -360,9 +360,15 @@ void CGame::Update(void)
 		{
 			if (CManager::GetClient()->GetPlayerIdx() == 0)
 			{
-				if (m_nBlueLinkEnergy == 0 || m_nRedLinkEnergy == 0)
+				if (m_nBlueLinkEnergy <= 0)
 				{
 					m_state = STATE_END;
+					CResult::SetTeamWin(CResult::TEAM_WIN_RED);
+				}
+				else if (m_nRedLinkEnergy <= 0)
+				{
+					m_state = STATE_END;
+					CResult::SetTeamWin(CResult::TEAM_WIN_BLUE);
 				}
 			}
 		}
@@ -1843,8 +1849,14 @@ void CGame::CreateKillLog(void)
 		 //UIの生成処理
 			m_apKillLogBase[nCntLog] = CUI_TEXTURE::Create(D3DXVECTOR3(1125.0f, 30.0f, 0.0f), 250.0f, 50.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_BG);
 			m_apKillLogBase[nCntLog]->SetObjType(OBJTYPE_KILLLOG);
-			m_apKillLogBase[nCntLog]->SetTex(0, 1, 2);
-
+			if (m_nKillIdx[nCntLog] == 0 || m_nKillIdx[nCntLog] == 1)
+			{
+				m_apKillLogBase[nCntLog]->SetTex(0, 1, 2);
+			}
+			if (m_nKillIdx[nCntLog] == 2 || m_nKillIdx[nCntLog] == 3)
+			{
+				m_apKillLogBase[nCntLog]->SetTex(1, 1, 2);
+			}
 
 			m_apKillLogPlayerIcon[nCntLog][0] = CUI_TEXTURE::Create(D3DXVECTOR3(1035.0f, 30.0f, 0.0f), 45.0f, 45.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERICON);
 			m_apKillLogPlayerIcon[nCntLog][0]->SetObjType(OBJTYPE_KILLLOG);

@@ -267,6 +267,8 @@ void CMatching::PrintData(void)
 			//機体の種類情報を代入
 			pClient->SetMechaType(pClient->GetPlayerIdx(), CMechaSelect::GetMechaType());
 
+			pClient->Printf(SERVER_PLAYER_DATA);
+
 			//プレイヤー番号を書きこむ
 			pClient->Printf("%d", pClient->GetPlayerIdx());
 			pClient->Printf(" ");
@@ -319,26 +321,33 @@ void CMatching::ReadMessage(void)
 			if (CServerFunction::Memcmp(pStr, SERVER_CONNECT_DATA) == 0)
 			{//接続総数を示している場合
 				pStr += strlen(SERVER_CONNECT_DATA);								//頭出し
+
+																					//接続総数を設置処理
 				pClient->SetNumConnect(CServerFunction::ReadInt(pStr, ""));		//総数の設置処理
 				nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 				pStr += nWord;													//頭出し
 
+																				//最小の番号を設置処理
 				pClient->SetMinIdx(CServerFunction::ReadInt(pStr, ""));
 				nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 				pStr += nWord;													//頭出し
 
+																				//最大の番号を設置処理
 				pClient->SetMaxIdx(CServerFunction::ReadInt(pStr, ""));
 				nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 				pStr += nWord;													//頭出し
 
+																				//青チームの総数を代入
 				m_nNumBlue = CServerFunction::ReadInt(pStr, "");
 				nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 				pStr += nWord;													//頭出し
 
+																				//赤チームの総数を代入
 				m_nNumRed = CServerFunction::ReadInt(pStr, "");
 				nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 				pStr += nWord;													//頭出し
 
+																				//接続状況を代入
 				for (int nCntPlayerConnect = 0; nCntPlayerConnect < MAX_PLAYER_CONNECT; nCntPlayerConnect++)
 				{
 					m_bConnect[nCntPlayerConnect] = CServerFunction::ReadBool(pStr, "");
@@ -349,74 +358,72 @@ void CMatching::ReadMessage(void)
 			if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
 			{//プレイヤーの開始を示している場合
 				pStr += strlen(SERVER_PLAYER_START);
+				pStr += strlen(" ");
 
 				for (int nCntClient = pClient->GetMinIdx(); nCntClient < pClient->GetMaxIdx(); nCntClient++)
 				{
-					//番号を代入
-					nPlayerIdx = CServerFunction::ReadInt(pStr, "");
-					nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
-					pStr += nWord;										//頭出し
-
-																		//メカの種類を代入												//番号を代入
-					nMechatype = CServerFunction::ReadInt(pStr, "");
-					nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
-					pStr += nWord;										//頭出し
-
-					if (nPlayerIdx == 0)
+					if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_DATA) == 0)
 					{
-						if (CServerFunction::Memcmp(pStr, SERVER_FADE_NONE) == 0)
-						{
-							m_bFade = false;
-							pStr += strlen(SERVER_FADE_NONE);
-							pStr += strlen(" ");
-						}
-						if (CServerFunction::Memcmp(pStr, SERVER_FADE_OUT) == 0)
-						{
-							m_bFade = true;
-							pStr += strlen(SERVER_FADE_OUT);
-							pStr += strlen(" ");
+						pStr += strlen(SERVER_PLAYER_DATA);
 
-						}
-						////フェード情報を代入
-						//nFade = CServerFunction::ReadInt(pStr, "");
-						//nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
-						//pStr += nWord;										//頭出し
-					}
+						//番号を代入
+						nPlayerIdx = CServerFunction::ReadInt(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
+						pStr += nWord;										//頭出し
 
-					//
-					//if (nFade == 1)
-					//{
-					//	m_bFade = true;
-					//}
+																			//メカの種類を代入
+						nMechatype = CServerFunction::ReadInt(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
+						pStr += nWord;										//頭出し
 
-					if (CFade::GetFade() == CFade::FADE_NONE || CFade::GetFade() == CFade::FADE_IN)
-					{
-						if (CGame::GetMechaType(nPlayerIdx) == CMechaSelect::MECHATYPE_EMPTY)
-						{
-							CGame::SetMechaType(nPlayerIdx, (CMechaSelect::MECHATYPE)nMechatype);
+						if (nPlayerIdx == 0)
+						{//プレイヤー番号が０の場合
+							if (CServerFunction::Memcmp(pStr, SERVER_FADE_NONE) == 0)
+							{//フェードしていない状態の場合
+								m_bFade = false; //フェードしていない状態にする
+								pStr += strlen(SERVER_FADE_NONE);
+								pStr += strlen(" ");
+							}
+							if (CServerFunction::Memcmp(pStr, SERVER_FADE_OUT) == 0)
+							{//フェードアウトをしている場合
+								m_bFade = true;	//フェードしている状態にする
+								pStr += strlen(SERVER_FADE_OUT);
+								pStr += strlen(" ");
+
+							}
 						}
 
-						CGame::SetMechaType(0, (CMechaSelect::MECHATYPE)pClient->GetMechaType(0));
-						if (nPlayerIdx != pClient->GetPlayerIdx())
-						{
-							pClient->SetMechaType(nPlayerIdx, nMechatype);
+						if (CFade::GetFade() == CFade::FADE_NONE || CFade::GetFade() == CFade::FADE_IN)
+						{//フェードしていない場合またはフェードインしている場合
+							if (CGame::GetMechaType(nPlayerIdx) == CMechaSelect::MECHATYPE_EMPTY)
+							{//機体が何も選択されていない場合
+								CGame::SetMechaType(nPlayerIdx, (CMechaSelect::MECHATYPE)nMechatype);
+							}
+
+							CGame::SetMechaType(0, (CMechaSelect::MECHATYPE)pClient->GetMechaType(0));
+
+							if (nPlayerIdx != pClient->GetPlayerIdx())
+							{//プレイヤー番号がクライアントの所持しているプレイヤー番号と同じ場合
+								pClient->SetMechaType(nPlayerIdx, nMechatype);
+							}
 						}
 					}
 				}
 			}
-			//CDebugProc::Print("種類：%d %d %d %d", pClient->GetMechaType(0), pClient->GetMechaType(1), pClient->GetMechaType(2), pClient->GetMechaType(3));
 			CDebugProc::Print("種類：%d %d %d %d", CGame::GetMechaType(0), CGame::GetMechaType(1), CGame::GetMechaType(2), CGame::GetMechaType(3));
 			CDebugProc::Print("最小：%d", pClient->GetMinIdx());
 			CDebugProc::Print("最大：%d", pClient->GetMaxIdx());
 		}
 		for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
-		{//
+		{
 			if (m_bConnect[nCntPlayer] == true)
-			{
+			{//接続されている場合
+			 //選択された機体のテクスチャを設定
 				m_pPlayerUI[nCntPlayer]->SetTex(CGame::GetMechaType(nCntPlayer) + 1/*pClient->GetMechaType(nCntPlayer) + 1*/, 1, 5);
 			}
 			else if (m_bConnect[nCntPlayer] == false)
-			{
+			{//接続されていない場合
+			 //選択されていない画像を設定
 				m_pPlayerUI[nCntPlayer]->SetTex(0, 1, 5);
 			}
 		}
@@ -440,17 +447,15 @@ void CMatching::CheckFade(void)
 	CSound *pSound = CManager::GetSound();
 
 	if (pClient != NULL)
-	{
-		if (pClient->GetNumConnect() >= 2 /*MAX_CONNECT*/ &&
-			m_bFade == false)
-			if (m_nNumBlue >= 1 && m_nNumRed >= 1 && m_bFade == false)
-			{//接続されている総数が一定数以上の場合かつフェードをしていない場合
-			 //if (pKeyboard->GetAnyKey() || pXInput->GetAnyButton(0))
-				if (pKeyboard->GetTrigger(DIK_RETURN) == true)
-				{//ボタンを押された場合
-					m_bFade = true;	//フェードをする状態にする
-				}
+	{//NULLではない場合
+		if (m_nNumBlue >= 1 && m_nNumRed >= 1 && m_bFade == false)
+		{//接続されている総数が一定数以上の場合かつフェードをしていない場合
+		 //if (pKeyboard->GetAnyKey() || pXInput->GetAnyButton(0))
+			if (pKeyboard->GetTrigger(DIK_RETURN) == true)
+			{//ボタンを押された場合
+				m_bFade = true;	//フェードをする状態にする
 			}
+		}
 
 		//if (m_nNumBlue == 2 && m_nNumRed == 2 && m_bFade == false)
 		//{
@@ -469,12 +474,12 @@ void CMatching::CheckFade(void)
 		}*/
 	}
 	if (m_bFade == true)
-	{
-		m_nCntFade++;
+	{//フェードされている場合
+		m_nCntFade++;	//フェードまでのカウンターを加算
 	}
 
 	if (m_nCntFade >= 200)
-	{
+	{//フェードカウンターが200以上の場合
 		if (CFade::GetFade() == CFade::FADE_NONE)
 		{// フェードがないとき
 			CFade::Create(CManager::MODE_GAME);

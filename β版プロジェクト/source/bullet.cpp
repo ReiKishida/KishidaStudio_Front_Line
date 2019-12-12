@@ -263,7 +263,7 @@ bool CBulletPlayer::BulletCollision(void)
 			int nTeam = pPlayer->GetTeam();
 			if (m_nTeam != nTeam)
 			{
-				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f))
+				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f) && pPlayer->GetDeath() ==false)
 				{// 接触している
 					if (CMenu::GetMode() == CMenu::MODE_SINGLE)
 					{//シングルプレイの場合
@@ -276,7 +276,7 @@ bool CBulletPlayer::BulletCollision(void)
 					}
 					else if (CMenu::GetMode() == CMenu::MODE_MULTI)
 					{//マルチプレイの場合
-						if (CManager::GetClient()->GetPlayerIdx() == pPlayer->GetPlayerIdx())
+						if (CManager::GetClient()->GetPlayerIdx() == pPlayer->GetPlayerIdx() && pPlayer->GetDeath() == false)
 						{//プレイヤー番号が一致する場合　
 							float fAngle = CManager::GetCamera()->GetRot().y;
 							D3DXVECTOR3 dir = D3DXVECTOR3(sinf(fAngle), 0.0f, cosf(fAngle));
@@ -300,7 +300,7 @@ bool CBulletPlayer::BulletCollision(void)
 			int nTeam = pAI->GetTeam();
 			if (m_nTeam != nTeam)
 			{
-				if (CScene3DBill::Collision(pAI->GetPos(), 50.0f))
+				if (CScene3DBill::Collision(pAI->GetPos(), 50.0f) && pAI->GetDeath() == false)
 				{// 接触している
 					pAI->Damage(CBullet::GetDamage(), m_pScene);
 					//pAI->Damage(CBullet::GetDamage(),m_pPlayer->GetPlayerIdx());

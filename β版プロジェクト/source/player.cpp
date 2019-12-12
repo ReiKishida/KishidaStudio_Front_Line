@@ -1925,6 +1925,12 @@ void CPlayer::SelectRespawn(void)
 			//Ž€–S‚µ‚Ä‚¢‚È‚¢‚æ‚¤‚É‚·‚é
 			m_bDeath = false;
 
+			//AI‚Ì‰Šú‰»ˆ—
+			//m_pAI[0]->Init();
+			m_pAI[0]->SetPos(m_pos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+			m_pAI[0]->SetLife(210);
+			m_pAI[0]->SetDeath(false);
+			//m_pAI[0]->SetPos(m_pos);
 			// •`‰æ‚·‚é
 			for (int nCntParts = 0; nCntParts < m_nNumParts; nCntParts++)
 			{
@@ -2862,7 +2868,7 @@ void CPlayer::AutoMove()
 		bMove = true;
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
-		
+
 		if (!m_bFind)
 		{// “G–¢”­Œ©Žž
 			m_rotDest.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z);
@@ -2976,7 +2982,8 @@ void CPlayer::NodeSearch()
 		} while (m_nNewEndNode == nMovePoint);
 		m_nNewEndNode = nMovePoint;
 	}
-	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ƒm[ƒh‚Ì”‚¾‚¯‰ñ‚é
 		if (m_pNodeData->GetLoadData().pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
 			&& m_pNodeData->GetLoadData().pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x

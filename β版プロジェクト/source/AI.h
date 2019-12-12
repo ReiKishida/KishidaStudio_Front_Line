@@ -40,7 +40,7 @@ public:
 		std::vector<int> to;		// どのノードとつながっているか
 		std::vector<float> cost;	// エッジのコスト
 
-		// ダイクストラ法のために必要な情報
+									// ダイクストラ法のために必要な情報
 		bool done;		// 確定ノードかどうか
 		float minCost;	// スタートノードからの最小コスト
 		int from;		// どのノードから来たか
@@ -79,8 +79,8 @@ public:
 
 	typedef enum
 	{// 機体の種類
-		MECHATYPE_WALKER = 0,
-		MECHATYPE_DRONE,
+		MECHATYPE_DRONE = 0,
+		MECHATYPE_WALKER,
 		MECHATYPE_MAX
 	}MECHATYPE;
 
@@ -115,12 +115,17 @@ public:
 	MECHATYPE GetMechaType(void) { return m_mechaType; }
 
 	int GetTeam(void) { return m_nTeam; };
+
 	void SetDeath(bool bDeath) { m_bDeath = bDeath; };
 	bool GetDeath(void) { return m_bDeath; };
+
 	CPlayer *GetPlayer(void) { return m_pPlayer; };
+
 	int GetKillPlayerIdx(void) { return m_nKillPlayerIdx; };
+
 	int GetNumParts(void) { return m_nNumParts; };
 
+	void SetLife(int nLife) { m_nLife = nLife; };
 private:
 	// =============================================================
 	// 移動系AIの関数
@@ -176,28 +181,28 @@ private:
 	// =============================================================
 	CNodeDataFiler *m_pNodeData;							// マップ情報へのポインタ
 
-	// パート関係
+															// パート関係
 	CGame::PART		m_bPartSwitch;							// パート情報
 	CGame::PART		m_bPartSwitchOld;						// 前回のパート情報
 
-	// ノード関係
+															// ノード関係
 	int				m_nStartNode;							// 開始ノード番号
 	int				m_nEndNode;								// 終了ノード番号
 	int				m_nNodeOld;								// 前回のノード番号
 
-	// ラリー関係
+															// ラリー関係
 	Node			m_node[NODEPOINT_MAX][NODEPOINT_MAX];	// ラリー時のノードの情報
 	int				m_nRallyEndNode[NODEPOINT_MAX];			// ラリー時の終了ノード番号
 	int				m_nRallyCount;							// クリック数
 	int				m_nRallyCountOld;						// 前回のクリック数
 
-	// パトロール関係
+															// パトロール関係
 	bool			m_bPatrol;								// 往復移動状態か
 	int				m_nPatrolStartNode;						// パトロール時の開始ノード番号
 	D3DXVECTOR3		m_patrolWaypoint[NODEPOINT_MAX];		// パトロール時の中間地点
 	int				m_nCountPatrolPoint;					// パトロール時の目標までの移動回数
 
-	// 自動移動関係
+															// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
 	D3DXVECTOR3		m_posDest;								// 目標位置
 	D3DXVECTOR3		m_rotDest;								// 目標位置
@@ -206,7 +211,7 @@ private:
 	int				m_nPoint;								// 現在の移動回数
 	bool			m_bGoal;								// 目的地に到着したか
 
-	// ロジックツリー関係の情報
+															// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
 
