@@ -44,6 +44,8 @@ public:
 		TEXTURE_LINK_BLUE,					// BLUEリンクゲージ
 		TEXTURE_LINK_RED,						// REDリンクゲージ
 		TEXTURE_LINK_FLAME,				// リンクゲージフレーム
+		TEXTURE_HIT_UPPER,					// 当たった方向の上下
+		TEXTURE_HIT_SIDE,					// 当たった方向の左右
 
 		// TEXTURE
 		TEXTURE_PRESS_BUTTON,			// 入力待ち
@@ -99,6 +101,11 @@ public:
 		TEXTURE_OPTION_FLAME,			// オプションフレーム
 		TEXTURE_OPTION_BATSU,			// バツボタン
 		TEXTURE_OPTION_TOGGlE,			// トグルスイッチ
+
+		// killlog
+		TEXTURE_KILLLOG_BG,				// キルログの背景
+		TEXTURE_KILLLOG_ICON,			// キルログのアイコン
+		TEXTURE_KILLLOG_PLAYER,			// キルログのプレイヤー番号
 
 		TEXTURE_SHADOW,
 

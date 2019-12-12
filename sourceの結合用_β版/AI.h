@@ -1,7 +1,7 @@
 //=============================================================================
 //
 // AI処理 [AI.h]
-// Author : Komatsu Keisuek
+// Author : Takuto Ishida
 //
 //=============================================================================
 #ifndef _AI_H_
@@ -10,41 +10,49 @@
 #include "main.h"
 #include "scene.h"
 #include "game.h"
-#include "player.h"
 
-//=============================================================================
+//*****************************************************************************
 // マクロ定義
-//=============================================================================
+//*****************************************************************************
 #define AI_PRIORITY		(4)		// 処理の優先番号
 #define RALLYPOINT_MAX	(4)		// ラリーポイントの最大設置数
 
-//=============================================================================
+//*****************************************************************************
 // 前方宣言
-//=============================================================================
-class CInputMouse;
+//*****************************************************************************
 class CModel;
 class CMotion;
 class CPlayer;
 class CButtonManagerStrategy;
-class CNodeDataFiler;
-class CSearch;
 
-//=============================================================================
+//*****************************************************************************
 // クラス定義
-//=============================================================================
+//*****************************************************************************
 class CAIMecha : public CScene
 {
 public:
+	// =============================================================
+	// ダイクストラ法によるルート探索
+	// =============================================================
 	typedef struct
-	{// ルート探索用
+	{
 		std::vector<int> to;		// どのノードとつながっているか
 		std::vector<float> cost;	// エッジのコスト
 
-		// ダイクストラ法のために必要な情報
+									// ダイクストラ法のために必要な情報
 		bool done;		// 確定ノードかどうか
 		float minCost;	// スタートノードからの最小コスト
 		int from;		// どのノードから来たか
 	}Node;
+
+	typedef struct
+	{
+		int nodeMax;								// ノードの総数
+		int	index[NODEPOINT_MAX];					// 自分のノード番号
+		int connectNum[NODEPOINT_MAX];				// 接続ノード数
+		int connectIndex[NODEPOINT_MAX][CONNECT_MAX];	// 接続ノード番号
+		D3DXVECTOR3 pos[NODEPOINT_MAX];				// 各ノードの位置
+	}NodeState;
 
 	typedef enum
 	{
@@ -67,6 +75,7 @@ public:
 		AI_ACTION_WITHDRAWAL,	// 撤退
 		AI_ACTION_MAX,			// 最大値
 	}AI_ACTION;
+	// =============================================================
 
 	typedef enum
 	{// 状態
@@ -108,43 +117,38 @@ public:
 	D3DXVECTOR3 GetVtxMax(void) { return m_vtxMax; }
 	D3DXVECTOR3 GetVtxMin(void) { return m_vtxMin; }
 
-	void Damage(int nDamage);
-
+	//void Damage(int nDamage,int nPlayerIdx);
+	void Damage(int nDamage, CScene *pScene);
 	CModel *GetModel(int nIdx) { return m_pModel[nIdx]; };
 
 	MECHATYPE GetMechaType(void) { return m_mechaType; }
 
 	int GetTeam(void) { return m_nTeam; };
 	void SetDeath(bool bDeath) { m_bDeath = bDeath; };
-	bool GetDeath(void) { return m_bDeath; };									
+	bool GetDeath(void) { return m_bDeath; };
+	CPlayer *GetPlayer(void) { return m_pPlayer; };
+	int GetKillPlayerIdx(void) { return m_nKillPlayerIdx; };
+	int GetNumParts(void) { return m_nNumParts; };
 
-private:
 	// =============================================================
-	// 移動系AIの関数
+	// ダイクストラ法によるルート探索
 	// =============================================================
-	void AIUpdate(void);					// AIの更新
-	void AIActionSet(CInputMouse *pMouse);	// AI行動の設定
-	void Attack(void);						// 攻撃関係処理
-	void AutoMove(void);					// 自動移動
-	void Follow(void);						// 追従処理
-	void NodeSearch(bool node);				// マウス座標からノード検索
-	void RootSearch(void);					// 最短経路検索
-	void RallyRootSearch(void);				// ラリーポイントでの最短経路検索
-	void PatrolRootSearch(void);			// 往復用の最短経路検索
-	void Cancel(void);						// 中断
+	void AIUpdate(void);			// AIの更新
+	void Follow(void);				// 追従処理
+	void NodeSearch(bool node);		// マウス座標からノード検索
+	void AutoMove(void);			// 自動移動
+	void RootSearch(void);			// 最短経路検索
+	void RallyRootSearch(void);		// ラリーポイントでの最短経路検索
+	void PatrolRootSearch(void);	// 往復用の最短経路検索
+	void Cancel(void);				// 中断
 	void AddEdge(int first, int second, float weight, Node *node);	// エッジの追加
 	void Dijkstra(int nodeMax, int start, int end, Node *node);		// 経路探索
+	void FileLoad(char* pFileName);	// マップデータファイルの読み込み
+									// =============================================================
 
-	// =============================================================
-	// 戦闘系AIの関数
-	// =============================================================
-
-	// =============================================================
-	// 基本系AIの変数
-	// =============================================================
+private:
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置
-	D3DXVECTOR3		m_posOld;			// 前回位置
 	D3DXVECTOR3		m_rot;				// 回転
 	D3DXVECTOR3		m_move;				// 移動量
 	D3DXVECTOR3		m_vtxMax;			// 頂点座標の最大値
@@ -157,7 +161,6 @@ private:
 	STATE			m_state;			// 状態
 	MECHATYPE		m_mechaType;		// 機体の種類
 	CPlayer			*m_pPlayer;			// プレイヤーのポインタ変数
-	CPlayer			*m_pEnemyPlayer[ENEMY_PLAYER_MAX];	// 敵プレイヤーのポインタ変数
 	float			m_fSpeed;			// 移動量
 	int				m_nLife;			// 現在の耐久力
 	int				m_nLifeMax;			// 最大耐久力
@@ -165,35 +168,34 @@ private:
 	int				m_nAttack;			// 攻撃力
 	int				m_nNumShoot;		// 発射数
 	int				m_nTeam;			// チーム
-	bool			m_bDeath;			// 死亡しているかどうか
 
-	// =============================================================
-	// 移動系AIの変数
-	// =============================================================
-	CNodeDataFiler *m_pNodeData;							// マップ情報へのポインタ
+										// =============================================================
+										// ダイクストラ法によるルート探索
+										// =============================================================
+	NodeState		m_NodeData;								// マップ情報
 
-	// パート関係
+															// パート関係
 	CGame::PART		m_bPartSwitch;							// パート情報
 	CGame::PART		m_bPartSwitchOld;						// 前回のパート情報
 
-	// ノード関係
+															// ノード関係
 	int				m_nStartNode;							// 開始ノード番号
 	int				m_nEndNode;								// 終了ノード番号
 	int				m_nNodeOld;								// 前回のノード番号
 
-	// ラリー関係
+															// ラリー関係
 	Node			m_node[NODEPOINT_MAX][NODEPOINT_MAX];	// ラリー時のノードの情報
 	int				m_nRallyEndNode[NODEPOINT_MAX];			// ラリー時の終了ノード番号
 	int				m_nRallyCount;							// クリック数
 	int				m_nRallyCountOld;						// 前回のクリック数
 
-	// パトロール関係
+															// パトロール関係
 	bool			m_bPatrol;								// 往復移動状態か
 	int				m_nPatrolStartNode;						// パトロール時の開始ノード番号
 	D3DXVECTOR3		m_patrolWaypoint[NODEPOINT_MAX];		// パトロール時の中間地点
 	int				m_nCountPatrolPoint;					// パトロール時の目標までの移動回数
 
-	// 自動移動関係
+															// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
 	D3DXVECTOR3		m_posDest;								// 目標位置
 	D3DXVECTOR3		m_rotDest;								// 目標位置
@@ -202,18 +204,12 @@ private:
 	int				m_nPoint;								// 現在の移動回数
 	bool			m_bGoal;								// 目的地に到着したか
 
-	// ロジックツリー関係の情報
+															// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
 
-	// =============================================================
-	// 戦闘系のAI変数
-	// =============================================================
-	// 認識系
-	bool m_bFind;
-
-	// 攻撃系
-	int nAttackDelay;
+	bool			m_bDeath;								//死亡しているかどうか
+	int				m_nKillPlayerIdx;
 };
 
 #endif

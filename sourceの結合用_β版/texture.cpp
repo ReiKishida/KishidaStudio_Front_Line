@@ -60,6 +60,8 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/UI/linkenergy_blue.png" },					// BLUEリンクゲージ
 		{ "data/TEXTURE/UI/linkenergy_red.png" },						// REDリンクゲージ
 		{ "data/TEXTURE/UI/linkenergy_frame.png" },					// リンクゲージフレーム
+		{ "data/TEXTURE/UI/danger_upper.png" },						// 当たった方向上下
+		{ "data/TEXTURE/UI/danger_side.png" },						// 当たった方向左右
 
 		// TEXTURE
 		{ "data/TEXTURE/press_any.png" },									// プレスボタン
@@ -115,6 +117,11 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/option/option_frame.png" },						// オプションフレーム
 		{ "data/TEXTURE/option/batsu.png" },									// バツボタン
 		{ "data/TEXTURE/option/toggle.png" },									// トグルスイッチ
+
+		// killlog
+		{ "data/TEXTURE/UI/KillLog_bg_2.png" },						// オプションアイコン
+		{ "data/TEXTURE/UI/killLog_player_icon.png" },				// オプションフレーム
+		{ "data/TEXTURE/UI/KillLog_player.png" },					// バツボタン
 	};
 
 	for (int nCntTexture = 0; nCntTexture < TEXTURE_MAX; nCntTexture++)
