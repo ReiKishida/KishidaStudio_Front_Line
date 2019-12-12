@@ -26,7 +26,6 @@
 #include "number.h"
 #include "bullet.h"
 #include "button.h"
-#include "enemy.h"
 #include "mouseCursor.h"
 #include "UI_Number.h"
 #include "UI_Texture.h"
@@ -50,6 +49,7 @@
 #include "AI.h"
 
 #include "damageDirection.h"
+#include "nodeDataFiler.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -79,6 +79,7 @@ int CGame::m_nCurStage = 0;
 CPlayer *CGame::m_pPlayer[MAX_PLAYER_CONNECT] = {};
 CMechaSelect::MECHATYPE CGame::m_aMechaType[MAX_PLAYER_CONNECT] = { CMechaSelect::MECHATYPE_EMPTY,CMechaSelect::MECHATYPE_EMPTY ,CMechaSelect::MECHATYPE_EMPTY ,CMechaSelect::MECHATYPE_EMPTY };
 CDamageDirection *CGame::m_pDamageDirection = NULL;
+CNodeDataFiler *CGame::m_pNodeFiler = NULL;			// マップデータクラスのポインタ変数
 
 //=============================================================================
 // コンストラクタ
@@ -94,7 +95,7 @@ CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType
 	m_part = PART_ACTION;
 	m_pSky = NULL;
 	m_pMouse = NULL;
-
+	m_pField = NULL;
 	m_nBlueLinkEnergy = 0;
 	m_nRedLinkEnergy = 0;
 
@@ -139,7 +140,6 @@ CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType
 		m_playerType[nCntPlayer] = TYPE_PLAYER;
 
 	}
-
 }
 
 //=============================================================================
@@ -170,19 +170,24 @@ HRESULT CGame::Init(void)
 	//m_pSky = CModel::Create();
 	//m_pSky->SetModel(SKY_MODEL_NAME);
 
+	//=====================================================================================
+	// マップデータファイラーの生成
+	//=====================================================================================
+	if (m_pNodeFiler == NULL)
+	{// NULLチェック
+		m_pNodeFiler = CNodeDataFiler::Create();
+	}
+
 	// プレイヤーの生成
 	CreatePlayer();
 
-	for (int nCntShadow = 0; nCntShadow < 16; nCntShadow++)
-	{
-		CShadow::Create(D3DXVECTOR3(-15.0f, -1.0f, 30.0f), 6, nCntShadow);
-	}
+	//CShadow::Create();
 
 	// 弾の当たり判定クラスの生成
 	CBulletCollision::Create();
 
 	// マップの当たり判定の読み込み
-	CCollision::Load();
+	//CCollision::Load();
 
 	//****************************************
 	// 2DUI生成（フレーム）
@@ -281,6 +286,12 @@ void CGame::Uninit(void)
 		m_pDamageDirection = NULL;
 	}
 
+	if (m_pNodeFiler != NULL)
+	{// マップデータファイラーの破棄
+		m_pNodeFiler->Uninit();
+		m_pNodeFiler = NULL;
+	}
+
 	// オブジェクトを破棄
 	CScene::Release();
 }
@@ -297,10 +308,6 @@ void CGame::Update(void)
 	CDirectInput *pDirectInput = CManager::GetDirectInput();	//DirectInputの取得
 	CDirectInput::GamePad *DirectInputStick = pDirectInput->GetgamePadStick();
 
-	if (pKeyboard->GetTrigger(DIK_RETURN) == true)
-	{
-		CFade::Create(CManager::MODE_RESULT);
-	}
 	if (CMenu::GetMode() == CMenu::MODE_MULTI)
 	{
 		if (CManager::GetClient() != NULL)
@@ -338,6 +345,14 @@ void CGame::Update(void)
 
 	if (NULL != m_pMouse)
 		CDebugProc::Print("マウスカーソル：%.2f %.2f", m_pMouse->GetPos().x, m_pMouse->GetPos().z);
+
+	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
+	{
+		if (m_pPlayer[nCntPlayer]->GetDeath() == true)
+		{
+			//m_state = STATE_END;
+		}
+	}
 
 	if (CMenu::GetMode() == CMenu::MODE_MULTI)
 	{
@@ -610,9 +625,9 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 600.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 675.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-	//****************************************
-	// UI生成（数字）
-	//****************************************
+																											//****************************************
+																											// UI生成（数字）
+																											//****************************************
 	CUI_NUMBER::Create(D3DXVECTOR3(630.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 1, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(920.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_RED, 2, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 
@@ -659,12 +674,12 @@ void CGame::CreatePlayer(void)
 		{//マルチプレイの場合
 			bool bConnect = false;	//接続しているかどうか
 
-			//クライアントの取得
+									//クライアントの取得
 			CClient *pClient = CManager::GetClient();
 
 			if (m_aMechaType[nCntPlayer] == -1)
 			{//機体番号が-1の場合
-				//ランダムで機体を決める
+			 //ランダムで機体を決める
 				m_aMechaType[nCntPlayer] = (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX);
 				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], m_aRespawnPos[nTeam][nCntPlayer], m_bConnect[nCntPlayer]);
 			}
@@ -796,7 +811,7 @@ void CGame::PrintData(void)
 			//チャットをしているかどうかを書き込む
 			if (m_pPlayer[pClient->GetPlayerIdx()]->GetChat() == true)
 			{//チャットをしている場合
-				//チャットをしていることを書き込む
+			 //チャットをしていることを書き込む
 				pClient->Printf("1");
 				pClient->Printf(" ");
 
@@ -980,7 +995,7 @@ void CGame::ReadMessage(void)
 		{//接続総数を示している場合
 			pStr += strlen(SERVER_CONNECT_DATA);			//頭出し
 
-			//接続情報の読み取り処理
+															//接続情報の読み取り処理
 			pStr = ReadConnectData(pStr);
 		}
 		if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
@@ -1013,7 +1028,7 @@ char *CGame::ReadConnectData(char *pStr)
 		{
 			int nWord = 0;		//文字の頭出し用
 
-			//接続総数の設置処理
+								//接続総数の設置処理
 			pClient->SetNumConnect(CServerFunction::ReadInt(pStr, ""));
 			nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 			pStr += nWord;													//頭出し
@@ -1067,7 +1082,7 @@ char *CGame::ReadPlayerData(char *pStr)
 	TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
 	TYPE AIPlayerType = TYPE_PLAYER;								//AIキルプレイヤーの種類
 
-	//クライアントの取得
+																	//クライアントの取得
 	CClient *pClient = CManager::GetClient();
 	if (pClient != NULL)
 	{
@@ -1078,7 +1093,7 @@ char *CGame::ReadPlayerData(char *pStr)
 			nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 			pStr += nWord;										//頭出し
 
-			//チーム情報の代入
+																//チーム情報の代入
 			nTeam = CServerFunction::ReadInt(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
@@ -1130,7 +1145,7 @@ char *CGame::ReadPlayerData(char *pStr)
 
 			if (bDeath == true)
 			{//死亡していた場合
-				//キルプレイヤーの番号を代入
+			 //キルプレイヤーの番号を代入
 				nKillPlayerIdx = CServerFunction::ReadInt(pStr, "");
 				nWord = CServerFunction::PopString(pStr, "");
 				pStr += nWord;
@@ -1253,7 +1268,7 @@ char *CGame::ReadPlayerData(char *pStr)
 
 					if (m_bPlayerDeath[nPlayerIdx] == true)
 					{//死亡している場合
-						//パーティクルの生成
+					 //パーティクルの生成
 						CParticle::Create(m_pPlayer[nPlayerIdx]->GetModel(0)->GetWorldPos(), 4);
 						CParticle::Create(m_pPlayer[nPlayerIdx]->GetModel(0)->GetWorldPos(), 5);
 
@@ -1310,7 +1325,7 @@ char *CGame::ReadPlayerData(char *pStr)
 					m_bAIDeath[0][nPlayerIdx] = true;
 					if (m_bAIDeath[0][nPlayerIdx] == true)
 					{//
-						//パーティクルを生成
+					 //パーティクルを生成
 						CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(0)->GetWorldPos(), 4);
 						CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(0)->GetWorldPos(), 5);
 						for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetNumParts(); nCntModel++)
@@ -1484,7 +1499,7 @@ char *CGame::ReadCPUData(char *pStr)
 
 				if (bDeath == false)
 				{//死亡していない場合
-					//体力の代入
+				 //体力の代入
 					nLife = CServerFunction::ReadInt(pStr, "");
 					nWord = CServerFunction::PopString(pStr, "");
 					pStr += nWord;
@@ -1497,7 +1512,7 @@ char *CGame::ReadCPUData(char *pStr)
 
 				if (bShoot == true)
 				{//弾を発射している場合
-					//弾の同時発射数を代入
+				 //弾の同時発射数を代入
 					nNumShoot = CServerFunction::ReadInt(pStr, "");
 					nWord = CServerFunction::PopString(pStr, "");
 					pStr += nWord;
@@ -1642,7 +1657,7 @@ void CGame::CreatePlayerBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXV
 		// 弾の生成
 		D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
 		D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(),m_pPlayer[nPlayerIdx]);
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx]);
 		mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
 		posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
 		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx]);
@@ -1729,7 +1744,7 @@ void CGame::LoadRespawnPos(void)
 {
 	FILE *pFile;	//ファイルのポインタ
 
-	//ファイルの読み込み
+					//ファイルの読み込み
 	pFile = fopen(GAME_INI, "r");
 
 	if (pFile == NULL)
@@ -1830,18 +1845,21 @@ void CGame::CreateKillLog(void)
 
 	for (int nCntLog = 0; nCntLog < NUM_KILL_LOG; nCntLog++)
 	{
-		if (m_bLog[nCntLog] == true && m_apKillLogBase[nCntLog] == NULL && m_apKillLogPlayerIcon[nCntLog][0] == NULL && m_apKillLogPlayerIcon[nCntLog][1] ==  NULL && m_apKillLogPlayerIdx[nCntLog][0] == NULL && m_apKillLogPlayerIdx[nCntLog][1] == NULL)
+		if (m_bLog[nCntLog] == true && m_apKillLogBase[nCntLog] == NULL && m_apKillLogPlayerIcon[nCntLog][0] == NULL && m_apKillLogPlayerIcon[nCntLog][1] == NULL && m_apKillLogPlayerIdx[nCntLog][0] == NULL && m_apKillLogPlayerIdx[nCntLog][1] == NULL)
 		{//ログが使用されている且つ対象のＵＩが全てNULLの場合
-			//UIの生成処理
+		 //UIの生成処理
 			m_apKillLogBase[nCntLog] = CUI_TEXTURE::Create(D3DXVECTOR3(1125.0f, 30.0f, 0.0f), 250.0f, 50.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_BG);
+			m_apKillLogBase[nCntLog]->SetObjType(OBJTYPE_KILLLOG);
 			m_apKillLogBase[nCntLog]->SetTex(0, 1, 2);
 
 
 			m_apKillLogPlayerIcon[nCntLog][0] = CUI_TEXTURE::Create(D3DXVECTOR3(1035.0f, 30.0f, 0.0f), 45.0f, 45.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERICON);
+			m_apKillLogPlayerIcon[nCntLog][0]->SetObjType(OBJTYPE_KILLLOG);
 
 			m_apKillLogPlayerIcon[nCntLog][1] = CUI_TEXTURE::Create(D3DXVECTOR3(1215.0f, 30.0f, 0.0f), 45.0f, 45.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERICON);
+			m_apKillLogPlayerIcon[nCntLog][1]->SetObjType(OBJTYPE_KILLLOG);
 
-			if(m_playerType[0] == TYPE_PLAYER)
+			if (m_playerType[0] == TYPE_PLAYER)
 			{
 				m_apKillLogPlayerIcon[nCntLog][0]->SetTex(m_aMechaType[m_nKillIdx[nCntLog]], 1, 6);
 			}
@@ -1860,9 +1878,11 @@ void CGame::CreateKillLog(void)
 			}
 
 			m_apKillLogPlayerIdx[nCntLog][0] = CUI_TEXTURE::Create(D3DXVECTOR3(1070.0f, 40.0f, 0.0f), 35.0f, 35.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERIDX);
+			m_apKillLogPlayerIdx[nCntLog][0]->SetObjType(OBJTYPE_KILLLOG);
 			m_apKillLogPlayerIdx[nCntLog][0]->SetTex(m_nKillIdx[nCntLog], 1, 4);
 
 			m_apKillLogPlayerIdx[nCntLog][1] = CUI_TEXTURE::Create(D3DXVECTOR3(1175.0f, 40.0f, 0.0f), 35.0f, 35.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERIDX);
+			m_apKillLogPlayerIdx[nCntLog][1]->SetObjType(OBJTYPE_KILLLOG);
 			m_apKillLogPlayerIdx[nCntLog][1]->SetTex(m_nDeathIdx[nCntLog], 1, 4);
 
 			//m_apKillLogBase[nCntLog] = CUI_TEXTURE::Create(D3DXVECTOR3(1000.0f, 100.0f, 0.0f), 300.0f, 100.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_BG);
@@ -1873,7 +1893,7 @@ void CGame::CreateKillLog(void)
 				{
 					if (nCntDown != nCntLog)
 					{//ログカウンターとログを下げるカウンターが違う場合
-						//UIを下げる
+					 //UIを下げる
 						m_apKillLogBase[nCntDown]->SetPos(D3DXVECTOR3(m_apKillLogBase[nCntDown]->GetPos().x, m_apKillLogBase[nCntDown]->GetPos().y + 50.0f, m_apKillLogBase[nCntDown]->GetPos().z));
 						m_apKillLogPlayerIcon[nCntDown][0]->SetPos(D3DXVECTOR3(m_apKillLogPlayerIcon[nCntDown][0]->GetPos().x, m_apKillLogPlayerIcon[nCntDown][0]->GetPos().y + 50.0f, m_apKillLogPlayerIcon[nCntDown][0]->GetPos().z));
 						m_apKillLogPlayerIcon[nCntDown][1]->SetPos(D3DXVECTOR3(m_apKillLogPlayerIcon[nCntDown][1]->GetPos().x, m_apKillLogPlayerIcon[nCntDown][1]->GetPos().y + 50.0f, m_apKillLogPlayerIcon[nCntDown][1]->GetPos().z));
@@ -1896,20 +1916,21 @@ void CGame::UpdateKillLog(void)
 	for (int nCntLog = 0; nCntLog < NUM_KILL_LOG; nCntLog++)
 	{
 		if (m_bLog[nCntLog] == true)
-		{//ログを使用されている場合
+		{//ログが使用されている且つ対象のＵＩが全てNULLではない場合
 			m_nCntDrawLog[nCntLog]++;	//ログの描画カウンターを加算
 			if (m_nCntDrawLog[nCntLog] >= 300)
 			{//ログの描画カウンターが300以上の場合
 				//色を取得
+
 				D3DXCOLOR col = m_apKillLogBase[nCntLog]->GetColor();
 				col.a -= 0.05f;	//色の減算
 
 				//UIの色を設置処理
-				m_apKillLogBase[nCntLog]->SetColor(col);
-				m_apKillLogPlayerIcon[nCntLog][0]->SetColor(col);
-				m_apKillLogPlayerIcon[nCntLog][1]->SetColor(col);
-				m_apKillLogPlayerIdx[nCntLog][0]->SetColor(col);
-				m_apKillLogPlayerIdx[nCntLog][1]->SetColor(col);
+				if (m_apKillLogBase[nCntLog] != NULL) { m_apKillLogBase[nCntLog]->SetColor(col); }
+				if (m_apKillLogPlayerIcon[nCntLog][0] != NULL) {m_apKillLogPlayerIcon[nCntLog][0]->SetColor(col);}
+				if (m_apKillLogPlayerIcon[nCntLog][1] != NULL) {m_apKillLogPlayerIcon[nCntLog][1]->SetColor(col);}
+				if(m_apKillLogPlayerIdx[nCntLog][0] != NULL){ m_apKillLogPlayerIdx[nCntLog][0]->SetColor(col); }
+				if(m_apKillLogPlayerIdx[nCntLog][1] != NULL){ m_apKillLogPlayerIdx[nCntLog][1]->SetColor(col); }
 
 				if (col.a <= 0.0f)
 				{//透明度が0以下の場合
