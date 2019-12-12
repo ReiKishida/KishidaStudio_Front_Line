@@ -42,8 +42,8 @@
 #define POS_ACCEPTABLE		(100.0f)	// 位置の誤差の許容範囲
 
 // 戦闘系AI関連
-#define ATTACK_AREA			(100000.0f)		// 攻撃範囲
-#define DRONE_BATTLE_FILE	("data/TEXT/AI/DRONE/battle_drone.txt")
+#define ATTACK_DISPERTION	(50)			// 弾のブレ
+#define ATTACK_AREA			(70000.0f)		// 攻撃範囲
 #define MAX_CHAR			(254)			// 読み取る文字数
 #define MAX_SEARCH			(4)				// センサー数
 #define FIND_FIND_CHARACTER_PRIORITY (4)	// 探すプレイヤーの優先順位
@@ -498,7 +498,7 @@ void CAIMecha::Draw(void)
 
 	D3DXMATRIX mtxRot, mtxTrans;	// 計算用マトリックス
 
-									// ワールドマトリックスの初期化
+	// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_mtxWorld);
 
 	// 回転を反映
@@ -528,9 +528,9 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 	{//シングルプレイの場合
 		if (m_nLife > 0 && m_bDeath == false)
 		{
-			m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+			m_state = STATE_DAMAGE;	// ダメージを受けている状態にする
 
-			m_nLife -= nDamage;									//体力の減算
+			m_nLife -= nDamage;	//体力の減算
 
 			if (0 >= m_nLife)
 			{//体力が０以下の場合
@@ -766,7 +766,7 @@ void CAIMecha::AIUpdate()
 	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
-																// 前回のパート情報の保存
+	// 前回のパート情報の保存
 	m_bPartSwitchOld = m_bPartSwitch;
 	// 現在のパート情報を取得
 	m_bPartSwitch = CManager::GetGame()->GetPart();
@@ -958,7 +958,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 			}
 			else if (m_AIAction[1] == AI_ACTION_FOLLOW)
 			{// 追従型の場合
-			 // 主人に追従する
+				// 主人に追従する
 				CAIMecha::Follow();
 			}
 		}
@@ -988,6 +988,8 @@ void CAIMecha::Attack()
 		{// プレイヤーオブジェクトのとき
 			CPlayer *pPlayer = (CPlayer*)pScene;
 			int nTeam = pPlayer->GetTeam();
+			
+			//if(nCntEnemyPlayer < ENEMY_PLAYER_MAX)
 			if (m_nTeam != nTeam)
 			{// チームが違うとき
 				m_pEnemyPlayer[nCntEnemyPlayer] = pPlayer;
@@ -1012,23 +1014,35 @@ void CAIMecha::Attack()
 			if (fAttackLength < ATTACK_AREA)
 			{// 範囲内に敵が入った場合
 
-			 // 発見状態にする
+				// 発見状態にする
 				bFind[nCntPlayer] = true;
 
 				// 見つけた敵の方向を向く
 				m_rotDest.y = atan2f(m_pEnemyPlayer[nCntPlayer]->GetPos().x - m_pos.x, m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z) + D3DX_PI;
 
-				// 攻撃方向の設定
-				float fAngle =
-					(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) *
-					(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) +
-					(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) *
-					(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y);
+				// 射出口の位置の取得
+				D3DXMATRIX mtxCanon = m_pModel[0]->GetMtxWorld();
+				D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
 
-				if (rand() % 25 == 0)
-				{// ランダムに攻撃
-				 // 弾の生成
-					CBulletPlayer::Create(m_pos, m_rot.y + D3DX_PI, fAngle, m_nAttack, m_nTeam, this);
+				if (rand() % 30 == 0)
+				{// ランダムなタイミングで攻撃
+
+					// 左右攻撃方向の設定
+					float fAngle = m_rot.y + D3DX_PI;
+
+					// 上下攻撃方向の設定
+					float fAngleV =
+						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) *
+						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) +
+						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) *
+						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y);
+
+					// 弾をばらつかせる
+					fAngle += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.005f;
+					fAngleV += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.003f;
+
+					// 弾の生成
+					CBulletPlayer::Create(posCanon, fAngle, fAngleV, m_nAttack, m_nTeam, this);
 				}
 			}
 			else
