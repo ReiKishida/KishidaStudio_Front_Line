@@ -80,7 +80,7 @@ public:
 	typedef enum
 	{// ‹@‘Ì‚ÌŽí—Þ
 		MECHATYPE_DRONE = 0,
-		MECHATYPE_WALKER,
+		MECHATYPE_WORKER,
 		MECHATYPE_MAX
 	}MECHATYPE;
 

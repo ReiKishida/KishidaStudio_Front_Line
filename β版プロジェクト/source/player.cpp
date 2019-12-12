@@ -570,6 +570,10 @@ HRESULT CPlayer::Init(void)
 		{// ドローンタイプのAIの生成
 			m_pAI[0] = m_pAI[0]->Create(this, CAIMecha::MECHATYPE_DRONE, m_pos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
 		}
+		if (m_pAI[1] == NULL)
+		{
+			m_pAI[1] = m_pAI[1]->Create(this, CAIMecha::MECHATYPE_WORKER, m_pos);
+		}
 	}
 
 	// 移動系AI変数の初期化
@@ -1501,9 +1505,9 @@ void CPlayer::Damage(int nDamage, CScene *pScene)
 											CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);						//プレイヤーの種類を設置処理
 											CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 										}
-										else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WALKER)
+										else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 										{//オブジェクトの種類がワーカーの場合
-											CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WALKER);						//プレイヤーの種類を設置処理
+											CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);						//プレイヤーの種類を設置処理
 											CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);						//プレイヤーの種類を設置処理
 											CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 										}
@@ -1601,9 +1605,9 @@ void CPlayer::Damage(int nDamage, CScene *pScene)
 													CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);						//プレイヤーの種類を設置処理
 													CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 												}
-												else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WALKER)
+												else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 												{//オブジェクトの種類がワーカーの場合
-													CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WALKER);						//プレイヤーの種類を設置処理
+													CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);						//プレイヤーの種類を設置処理
 													CManager::GetGame()->SetPlayerType(1, CGame::TYPE_PLAYER);						//プレイヤーの種類を設置処理
 													CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 												}
@@ -1931,6 +1935,11 @@ void CPlayer::SelectRespawn(void)
 			m_pAI[0]->SetLife(210);
 			m_pAI[0]->SetDeath(false);
 			//m_pAI[0]->SetPos(m_pos);
+
+			m_pAI[1]->SetPos(m_pos);
+			m_pAI[1]->SetLife(210);
+			m_pAI[1]->SetDeath(false);
+
 			// 描画する
 			for (int nCntParts = 0; nCntParts < m_nNumParts; nCntParts++)
 			{

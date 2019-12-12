@@ -29,7 +29,7 @@
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define WALKER_FILE	"data/TEXT/AI/walker/model_walker.txt"
+#define WORKER_FILE	"data/TEXT/AI/worker/model_worker.txt"
 #define DRONE_FILE	"data/TEXT/AI/drone/model_drone.txt"
 #define AI_SPEED			(2.7f)		// 移動速度
 
@@ -89,7 +89,7 @@ CAIMecha::CAIMecha(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_nLife = 0;
 	m_fSpeed = 0.0f;
 	m_nAttack = 0;
-	m_mechaType = MECHATYPE_WALKER;
+	m_mechaType = MECHATYPE_WORKER;
 	m_nCapacity = 0;
 	m_nCurMotion = 0;
 	m_nLifeMax = 0;
@@ -126,7 +126,7 @@ HRESULT CAIMecha::Init(void)
 	char **pModelName = NULL;
 	char *pFileName = "";
 
-	if (MECHATYPE_WALKER == m_mechaType) { pFileName = WALKER_FILE; }
+	if (MECHATYPE_WORKER == m_mechaType) { pFileName = WORKER_FILE; }
 	else if (MECHATYPE_DRONE == m_mechaType) { pFileName = DRONE_FILE; }
 
 	// ファイルを開く
@@ -468,12 +468,21 @@ void CAIMecha::Uninit(void)
 //=============================================================================
 void CAIMecha::Update(void)
 {
+	if (NULL != m_pMotion && MECHATYPE_WORKER == m_mechaType)
+	{// モーション
+
+		if (m_pos != m_posOld)
+		{
+			m_pMotion->SetMotion(CMotionManager::TYPE_BACK);
+		}
+		else
+		{
+			m_pMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+		}
+	}
+
 	m_posOld = m_pos;
 
-	if (NULL != m_pMotion && MECHATYPE_WALKER == m_mechaType)
-	{// モーション
-		m_pMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
-	}
 
 	if (MECHATYPE_DRONE == m_mechaType)
 	{// ドローンのプロペラを回す
@@ -580,9 +589,9 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 										CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
 										CManager::GetGame()->SetLog(nCntKill, true);										//ログの設置処理
 									}
-									else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WALKER)
+									else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 									{//オブジェクトの種類がワーカーの場合
-										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WALKER);							//プレイヤーの種類を設置処理
+										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);							//プレイヤーの種類を設置処理
 										CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
 										CManager::GetGame()->SetLog(nCntKill, true);										//ログの設置処理
 									}
@@ -666,9 +675,9 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 												CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
 												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 											}
-											else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WALKER)
+											else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 											{//オブジェクトの種類がワーカーの場合
-												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WALKER);						//プレイヤーの種類を設置処理
+												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);						//プレイヤーの種類を設置処理
 												CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
 												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 											}

@@ -65,7 +65,7 @@ public:
 	{// Ží—Þ
 		TYPE_PLAYER = 0,
 		TYPE_DROWN,
-		TYPE_WALKER,
+		TYPE_WORKER,
 		TYPE_MAX,
 	}TYPE;
 
