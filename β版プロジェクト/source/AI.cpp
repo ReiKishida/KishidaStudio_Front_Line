@@ -42,7 +42,7 @@
 #define POS_ACCEPTABLE		(100.0f)	// 位置の誤差の許容範囲
 
 // 戦闘系AI関連
-#define ATTACK_DISPERTION	(50)			// 弾のブレ
+#define ATTACK_DISPERTION	(100)			// 弾のブレ
 #define ATTACK_AREA			(70000.0f)		// 攻撃範囲
 #define MAX_CHAR			(254)			// 読み取る文字数
 #define MAX_SEARCH			(4)				// センサー数
@@ -485,8 +485,8 @@ void CAIMecha::Update(void)
 	if (m_bDeath == false)
 	{
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-		{//表示しない
-			m_pModel[nCntModel]->SetDisp(false);
+		{//表示する
+			m_pModel[nCntModel]->SetDisp(true);
 		}
 
 		// AI関係の更新処理
@@ -1036,7 +1036,7 @@ void CAIMecha::Attack()
 				if (rand() % 30 == 0)
 				{// ランダムなタイミングで攻撃
 
-				 // 左右攻撃方向の設定
+					// 左右攻撃方向の設定
 					float fAngle = m_rot.y + D3DX_PI;
 
 					// 上下攻撃方向の設定
