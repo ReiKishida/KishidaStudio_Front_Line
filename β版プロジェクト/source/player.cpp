@@ -47,7 +47,7 @@
 #define HEAVY_FILE				"data/TEXT/PLAYER/heavy/model_heavy.txt"
 #define SNIPE_FILE				"data/TEXT/PLAYER/snipe/model_snipe.txt"
 
-//戦闘用
+// 戦闘用
 #define ASSULT_BATTLE_FILE		"data/TEXT/PLAYER/assult/battle_assult.txt"
 #define LIGHT_BATTLE_FILE		"data/TEXT/PLAYER/light/battle_light.txt"
 #define HEAVY_BATTLE_FILE		"data/TEXT/PLAYER/heavy/battle_heavy.txt"
@@ -562,8 +562,6 @@ HRESULT CPlayer::Init(void)
 	}
 
 	// AIの生成
-	//m_pAI = m_pAI->Create(this, CAIMecha::MECHATYPE_DRONE, m_pos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
-
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
 		if (m_pAI[0] == NULL)
@@ -571,7 +569,7 @@ HRESULT CPlayer::Init(void)
 			m_pAI[0] = m_pAI[0]->Create(this, CAIMecha::MECHATYPE_DRONE, m_pos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
 		}
 		if (m_pAI[1] == NULL)
-		{
+		{// ウォーカータイプのAIの生成
 			m_pAI[1] = m_pAI[1]->Create(this, CAIMecha::MECHATYPE_WORKER, m_pos);
 		}
 	}
@@ -730,6 +728,9 @@ void CPlayer::Uninit(void)
 //=========================================
 void CPlayer::Update(void)
 {
+	// 前回位置の保存
+	m_posOld = m_pos;
+
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
 		if (m_Respawn == RESPAWN_START)
@@ -755,7 +756,6 @@ void CPlayer::Update(void)
 						m_pLowerMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
 					}
 				}
-				m_posOld = m_pos;
 			}
 		}
 
@@ -1073,7 +1073,6 @@ void CPlayer::Draw(void)
 //=========================================
 void CPlayer::Movement(void)
 {
-	m_posOld = m_pos;
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
 	bool bKey = false;				// ボタン押下フラグ
@@ -1151,6 +1150,16 @@ void CPlayer::Movement(void)
 	{// 移動量の加算
 		m_move = D3DXVECTOR3(sinf(fDirMove + fRotY), 0.0f, cosf(fDirMove + fRotY)) * m_fSpeed;
 	}
+
+#ifdef _DEBUG
+
+	// ダッシュ
+	if (pKeyboard->GetPress(DIK_SPACE))
+	{
+		m_move += m_move * 1.5f;
+	}
+
+#endif // DEBUG
 
 	if (NULL != m_pUpperMotion && NULL != m_pLowerMotion)
 	{// モーションクラスが使われている
@@ -2370,7 +2379,6 @@ void CPlayer::LoadBattleFile(void)
 	char acLine[MAX_CHAR];							// 1行読み込む変数
 	char acData[MAX_CHAR];							// 1文読み込む変数
 
-
 	char *pBattleFileName = "";	//読み込むテキスト
 	if (CMechaSelect::MECHATYPE_ASSULT == m_mecha) { pBattleFileName = ASSULT_BATTLE_FILE; }
 	else if (CMechaSelect::MECHATYPE_LIGHT == m_mecha) { pBattleFileName = LIGHT_BATTLE_FILE; }
@@ -2379,7 +2387,6 @@ void CPlayer::LoadBattleFile(void)
 
 	// ファイルを開く
 	pFile = fopen(pBattleFileName, "r");
-
 
 	if (pFile != NULL)
 	{
@@ -2517,23 +2524,26 @@ bool CPlayer::Distance(void)
 				//CDebugProc::Print("fCrossProduct2：%.2f", fCrossProduct2);
 
 				if ((fCrossProduct0 > 0.0f && fCrossProduct1 > 0.0f && fCrossProduct2 > 0.0f) || (fCrossProduct0 < 0.0f && fCrossProduct1 < 0.0f && fCrossProduct2 < 0.0f))
-				{//三角形の内側に敵がいる
+				{// 三角形の内側に敵がいる
+
+					// 発見した敵プレイヤーの情報を取得
+					m_pFindPlayer = pPlayer;
+
 					if (m_nCountCollect >= COLLECTIONDATA_MAX)
 					{// 収集データが最大まで集まった場合
 						m_bCollectSwitch = true;// 平均値の割り出し方法を切り替える
 						m_nCountCollect = 0;// カウントを初期化する
 					}
-					m_collectionPos[m_nCountCollect] = pPlayer->GetPos();	// 敵プレイヤーの位置情報を取得
+					m_collectionPos[m_nCountCollect] = m_pFindPlayer->GetPos();	// 敵プレイヤーの位置情報を取得
 					m_nCountCollect++;	// カウントを進める
-
-					// 発見した敵プレイヤーの方向を見る
-					m_fRotDestUpper.y = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);
 
 					bFind = true;
 					return bFind;
 				}
 				else
 				{
+					// 発見しているプレイヤーの情報を削除する
+					m_pFindPlayer = NULL;
 					bFind = false;
 				}
 
@@ -2548,52 +2558,13 @@ bool CPlayer::Distance(void)
 }
 
 //=============================================================================
-//	先頭
+//	戦闘
 //=============================================================================
 void CPlayer::Battle(void)
 {
-	//CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
-	//CScene *pSceneNext = NULL;
-	//D3DXVECTOR3 dispertion;								// ブレ
-
-	//while (pScene != NULL)
-	//{// NULLになるまでループ
-	//	pSceneNext = pScene->GetSceneNext();
-	//	CScene::OBJTYPE objType = pScene->GetObjType();
-
-	//	if (CScene::OBJTYPE_PLAYER == objType)
-	//	{//プレイヤーオブジェクトのとき
-	//		CPlayer *pPlayer = (CPlayer*)pScene;
-	//		int nTeam = pPlayer->GetTeam();
-	//		if (m_nTeam != nTeam)
-	//		{//チームが違うとき
-
-	//			if (rand() % 20 == 0)
-	//			{
-	//				//弾撃ち
-	//				CpuShoot();
-	//			}
-
-	//		}//チームが違うとき
-	//	}//プレイヤーオブジェクトのとき
-	//	 // 次のオブジェクトを見る
-	//	pScene = pSceneNext;
-	//}
-}
-
-//=============================================================================
-//	移動
-//=============================================================================
-void CPlayer::BattleMovent(void)
-{
-	m_posOld = m_pos;
-	bool bKey = false;				// ボタン押下フラグ
-	float fDirMove;
-
-	// 敵を探す
 	CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
 	CScene *pSceneNext = NULL;
-	D3DXVECTOR3 dispertion;								// ブレ
+	D3DXVECTOR3 dispertion; // ブレ
 
 	while (pScene != NULL)
 	{// NULLになるまでループ
@@ -2601,22 +2572,41 @@ void CPlayer::BattleMovent(void)
 		CScene::OBJTYPE objType = pScene->GetObjType();
 
 		if (CScene::OBJTYPE_PLAYER == objType)
-		{//プレイヤーオブジェクトのとき
+		{// プレイヤーオブジェクトのとき
 			CPlayer *pPlayer = (CPlayer*)pScene;
 			int nTeam = pPlayer->GetTeam();
-			int IdxPlayer = pPlayer->GetPlayerIdx();
+
 			if (m_nTeam != nTeam)
-			{//チームが違うとき
-
-				m_fRotDestUpper.y = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);			//上半身の方向
-				fDirMove = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);			//移動方向
-				bKey = true;
-
-			}//チームが違うとき
-		}//プレイヤーオブジェクトのとき
-
+			{// チームが違うとき
+				if (rand() % 20 == 0)
+				{
+					// 弾撃ち
+					CpuShoot();
+				}
+			}
+		}
+		
 		 // 次のオブジェクトを見る
 		pScene = pSceneNext;
+	}
+}
+
+//=============================================================================
+//	移動
+//=============================================================================
+void CPlayer::BattleMovent(void)
+{
+	bool bKey = false;	// ボタン押下フラグ
+	float fDirMove;
+
+	if (m_pFindPlayer != NULL)
+	{// 敵プレイヤーを発見している場合
+		// 発見した敵プレイヤーの方向へ移動する
+		fDirMove = atan2f(m_pFindPlayer->GetPos().x - m_pos.x, m_pFindPlayer->GetPos().z - m_pos.z);
+
+		// 発見した敵プレイヤーの方向を見る
+		m_rotDest.y = atan2f(m_pFindPlayer->GetPos().x - m_pos.x, m_pFindPlayer->GetPos().z - m_pos.z);
+		bKey = true;
 	}
 
 	if (bKey)
@@ -2662,79 +2652,72 @@ void CPlayer::BattleMovent(void)
 }
 
 //=============================================================================
-//	たまたま
+//	弾発射処理
 //=============================================================================
 void CPlayer::CpuShoot(void)
 {
-	D3DXVECTOR3 dispertion;	// ブレ
+	D3DXVECTOR3 dispertion;	// 弾のブレ
 
 	// 弾の発射間隔
 	m_nCntShoot = (m_nCntShoot + 1) % 7;
 
 	if (m_nRemBullet > 0)
-	{
-		if ((m_mecha != CMechaSelect::MECHATYPE_LIGHT && !m_bShootButton) || (m_mecha == CMechaSelect::MECHATYPE_LIGHT &&m_nCntShoot == 1))
+	{// 弾が残っている場合
+		for (int nCntShoots = 0; nCntShoots < m_nNumShoot; nCntShoots++)
 		{
-			for (int nCntShoots = 0; nCntShoots < m_nNumShoot; nCntShoots++)
-			{
-				// カメラの角度と注視点を取得
-				D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
-				D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
+			// カメラの角度と注視点を取得
+			D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
+			D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
-				// レティクル（目的の位置）の取得
-				D3DXMATRIX MtxSearch = m_pSearch[0]->GetMtxWorld();
-				D3DXVECTOR3 posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
-				if (m_nDispertion != 0)
-				{// ブレが０でないとき
-					dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
-					posReticle += dispertion;
-				}
-
-				// 射出口の位置の取得
-				D3DXMATRIX mtxCanon = m_pModel[2]->GetMtxWorld();
-				D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
-
-				// 水平方向の角度の計算
-				m_pAngle[nCntShoots * 2] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
-				m_pAngleV[nCntShoots * 2] = rotCamera.x;
-				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
-
-				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this);
-
-				// レティクル（目的の位置）の取得
-				posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
-				if (m_nDispertion != 0)
-				{// ブレが０でないとき
-					dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
-					posReticle += dispertion;
-				}
-
-				// 射出口の位置の取得
-				mtxCanon = m_pModel[3]->GetMtxWorld();
-				posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
-
-				// 水平方向の角度の計算
-				m_pAngle[nCntShoots * 2 + 1] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
-				m_pAngleV[nCntShoots * 2 + 1] = rotCamera.x;
-				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
-
-				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this);
-
-				m_bShoot = true;
+			// レティクル（目的の位置）の取得
+			D3DXMATRIX MtxSearch = m_pSearch[0]->GetMtxWorld();
+			D3DXVECTOR3 posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
+			if (m_nDispertion != 0)
+			{// ブレが０でないとき
+				dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
+				posReticle += dispertion;
 			}
 
-			m_nRemBullet--;
-		}
-		else
-		{
-			m_bShoot = false;
-		}
-	}
+			// 射出口の位置の取得
+			D3DXMATRIX mtxCanon = m_pModel[2]->GetMtxWorld();
+			D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
 
-	// リロード処理
-	//Reload();
+			// 水平方向の角度の計算
+			m_pAngle[nCntShoots * 2] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
+			m_pAngleV[nCntShoots * 2] = rotCamera.x;
+			if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
+
+			// 弾の生成
+			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this);
+
+			// レティクル（目的の位置）の取得
+			posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
+			if (m_nDispertion != 0)
+			{// ブレが０でないとき
+				dispertion = D3DXVECTOR3((float)(m_nDispertion - rand() % (m_nDispertion * 2)), 0.0f, (float)(m_nDispertion - rand() % (m_nDispertion * 2)));
+				posReticle += dispertion;
+			}
+
+			// 射出口の位置の取得
+			mtxCanon = m_pModel[3]->GetMtxWorld();
+			posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(rotCamera.y) * 30.0f, cosf(rotCamera.x) * 30.0f, cosf(rotCamera.y) * 30.0f);
+
+			// 水平方向の角度の計算
+			m_pAngle[nCntShoots * 2 + 1] = atan2f(posReticle.x - posCanon.x, posReticle.z - posCanon.z);
+			m_pAngleV[nCntShoots * 2 + 1] = rotCamera.x;
+			if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
+
+			// 弾の発射
+			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this);
+		}
+
+		// 弾を減らす
+		m_nRemBullet--;
+	}
+	else if (m_nRemBullet <= 0)
+	{// 弾がなくなった場合
+		m_bReload = true;
+	}
 }
 
 //=============================================================================
@@ -2753,6 +2736,9 @@ void CPlayer::AIUpdate(void)
 	//CDebugProc::Print("ゴールした回数: %d\n", m_nGoalCount);
 	//CDebugProc::Print("\n");
 
+	// 前回の目標角度の保存
+	m_rotDestOld = m_rotDest;
+
 	for (int nCntSearch = 0; nCntSearch < MAX_SEARCH; nCntSearch++)
 	{// 探索の更新処理
 		m_pSearch[nCntSearch]->Update();
@@ -2761,8 +2747,10 @@ void CPlayer::AIUpdate(void)
 	// 前回の発見状態の取得
 	m_bFindOld = m_bFind;
 
+	// 発見状態の取得
 	m_bFind = Distance();
 
+	// 現在地の更新
 	if (m_bFindOld != m_bFind)
 	{// 敵を見失った場合　または　敵を発見した場合
 		float fMinLength = 100000, fLength = 100000;	// 差分系
@@ -2792,8 +2780,9 @@ void CPlayer::AIUpdate(void)
 		m_nStartNode = nNearNode;
 	}
 
+	// 行動の設定
 	if (m_bFind == true)
-	{
+	{// 敵を発見している場合
 		//戦闘時の移動処理
 		BattleMovent();
 
@@ -2807,9 +2796,21 @@ void CPlayer::AIUpdate(void)
 	}
 	//CDebugProc::Print("m_bFind: %d", m_bFind);
 
-	//==================//
-	//  収集データ参照  //
-	//==================//
+	// リロード処理
+	if (m_bReload == true)
+	{// リロード状態の場合
+		m_nCntReRoad++;		// カウンター加算
+
+		if (m_nCntReRoad % m_nReload == 0)
+		{// 設定時間経過でリロードを完了させる
+			m_nRemBullet = m_nCapacity;	// 弾を装填
+			m_bReload = false;			// リロードを完了させる
+		}
+	}
+
+	//===========================================//
+	//               収集データ参照              //
+	//===========================================//
 	float fMinLength = 100000, fLength = 100000;	// 差分系
 	D3DXVECTOR3 total = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 収集したデータの合計値
 
@@ -2841,7 +2842,7 @@ void CPlayer::AIUpdate(void)
 	// 平均値に最も近いノードを検索する
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-	 // 差分を求める
+		// 差分を求める
 		fLength =
 			(m_pNodeData->GetLoadData().pos[nCntNode].x - m_totalCollectPos.x) *
 			(m_pNodeData->GetLoadData().pos[nCntNode].x - m_totalCollectPos.x) +
@@ -2853,6 +2854,22 @@ void CPlayer::AIUpdate(void)
 			fMinLength = fLength;
 			m_nNearTotalCollectNumber = nCntNode;
 		}
+	}
+
+	if (m_rotDest.y > D3DX_PI) { m_rotDest.y -= D3DX_PI * 2.0f; }
+	if (m_rotDest.y < -D3DX_PI) { m_rotDest.y += D3DX_PI * 2.0f; }
+
+	if (m_fRotDestUpper.y > D3DX_PI) { m_fRotDestUpper.y -= D3DX_PI * 2.0f; }
+	if (m_fRotDestUpper.y < -D3DX_PI) { m_fRotDestUpper.y += D3DX_PI * 2.0f; }
+
+	if (m_rotDest.y - m_fRotDestUpper.y > D3DX_PI || m_rotDest.y - m_fRotDestUpper.y < -D3DX_PI)
+	{// 差分が1周以上ある場合
+		m_fRotDestUpper.y -= (m_rotDest.y - m_fRotDestUpper.y) * (m_fSpeed * 0.03f);
+	}
+	else
+	{
+		// 目標方向へ向く
+		m_fRotDestUpper.y += (m_rotDest.y - m_fRotDestUpper.y) * (m_fSpeed * 0.03f);
 	}
 }
 
@@ -2877,7 +2894,7 @@ void CPlayer::AutoMove()
 		bMove = true;
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
-
+		
 		if (!m_bFind)
 		{// 敵未発見時
 			m_rotDest.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z);
@@ -2945,22 +2962,6 @@ void CPlayer::AutoMove()
 		}
 	}
 
-	if (m_rotDest.y > D3DX_PI) { m_rotDest.y -= D3DX_PI * 2.0f; }
-	if (m_rotDest.y < -D3DX_PI) { m_rotDest.y += D3DX_PI * 2.0f; }
-
-	if (m_fRotDestUpper.y > D3DX_PI) { m_fRotDestUpper.y -= D3DX_PI * 2.0f; }
-	if (m_fRotDestUpper.y < -D3DX_PI) { m_fRotDestUpper.y += D3DX_PI * 2.0f; }
-
-	if (m_rotDest.y - m_fRotDestUpper.y > D3DX_PI || m_rotDest.y - m_fRotDestUpper.y < -D3DX_PI)
-	{// 差分が1周以上ある場合
-		m_fRotDestUpper.y -= (m_rotDest.y - m_fRotDestUpper.y) * (m_fSpeed * 0.03f);
-	}
-	else
-	{
-		// 目標方向へ向く
-		m_fRotDestUpper.y += (m_rotDest.y - m_fRotDestUpper.y) * (m_fSpeed * 0.03f);
-	}
-
 	m_move.x += (0 - m_move.x) * 0.4f;
 	m_move.z += (0 - m_move.z) * 0.4f;
 
@@ -2991,8 +2992,7 @@ void CPlayer::NodeSearch()
 		} while (m_nNewEndNode == nMovePoint);
 		m_nNewEndNode = nMovePoint;
 	}
-
-	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
 		if (m_pNodeData->GetLoadData().pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
 			&& m_pNodeData->GetLoadData().pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x

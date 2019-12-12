@@ -597,8 +597,8 @@ HRESULT CButtonManagerStrategy::Init(void)
 	m_pAIType[0]->SetColor(BUTTON_UNSELECTED_COLOR);
 	m_pAIType[1]->SetColor(BUTTON_UNSELECTED_COLOR);
 
-	m_pAIType[0]->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_WORKER_BUTTON));
-	m_pAIType[1]->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_DRONE_BUTTON));
+	m_pAIType[0]->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_DRONE_BUTTON));
+	m_pAIType[1]->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_WORKER_BUTTON));
 
 	return S_OK;
 }

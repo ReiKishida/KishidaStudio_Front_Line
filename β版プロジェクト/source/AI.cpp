@@ -536,7 +536,6 @@ void CAIMecha::Draw(void)
 	}
 }
 
-
 //=============================================================================
 // ダメージ処理
 //=============================================================================
@@ -784,7 +783,7 @@ void CAIMecha::AIUpdate()
 	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
-																// 前回のパート情報の保存
+	// 前回のパート情報の保存
 	m_bPartSwitchOld = m_bPartSwitch;
 	// 現在のパート情報を取得
 	m_bPartSwitch = CManager::GetGame()->GetPart();
