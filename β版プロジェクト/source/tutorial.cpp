@@ -26,7 +26,6 @@
 #include "number.h"
 #include "bullet.h"
 #include "button.h"
-#include "enemy.h"
 #include "mouseCursor.h"
 #include "UI_Number.h"
 #include "UI_Texture.h"

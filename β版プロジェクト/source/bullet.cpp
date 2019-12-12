@@ -7,7 +7,6 @@
 #include "bullet.h"
 #include "manager.h"
 #include "renderer.h"
-#include "enemy.h"
 #include "player.h"
 #include "game.h"
 #include "texture.h"

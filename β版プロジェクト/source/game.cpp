@@ -26,7 +26,6 @@
 #include "number.h"
 #include "bullet.h"
 #include "button.h"
-#include "enemy.h"
 #include "mouseCursor.h"
 #include "UI_Number.h"
 #include "UI_Texture.h"
@@ -547,27 +546,23 @@ void CGame::CreateActionUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 420.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_WORKER);	// AI02
 
 																											// チームのチケット数フレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(345.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
-	CUI_TEXTURE::Create(D3DXVECTOR3(935.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
+	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
+	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
 
-																											// タイマーフレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 30.0f, 0.0f), 100.0f, 35.0f, CUI_TEXTURE::UIFLAME_TIMER);	// タイムロゴ
+	//																											// パート切り替えテクスチャ
+	//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);	// ストラテジーパート
+	//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);		// アクションパート
 
-																												// パート切り替えテクスチャ
-	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);	// ストラテジーパート
-	CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);		// アクションパート
-
-																												// パート切り替え（チェンジ）
-	CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
+	//																											// パート切り替え（チェンジ）
+	//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 	//****************************************
 	// UI生成（数字）
 	//****************************************
 	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
 	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// プレイヤーライフ
-	CUI_NUMBER::Create(D3DXVECTOR3(430.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 1, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
-	CUI_NUMBER::Create(D3DXVECTOR3(720.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_RED, 2, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
-
+	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
+	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 
 }
 
@@ -586,15 +581,12 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(495.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
 	CUI_TEXTURE::Create(D3DXVECTOR3(1085.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
 
-																											// タイマーフレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(790, 30.0f, 0.0f), 100.0f, 35.0f, CUI_TEXTURE::UIFLAME_TIMER);	// タイムロゴ
+	//																								// パート切り替えテクスチャ
+	//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);	// アクションパート
+	//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);		// ストラテジーパート
 
-																									// パート切り替えテクスチャ
-	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);	// アクションパート
-	CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);		// ストラテジーパート
-
-																													// パート切り替え（チェンジ）
-	CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
+	//																												// パート切り替え（チェンジ）
+	//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 	// フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(785.0f, 420.0f, 0.0f), 990.0f, 590.0f, CUI_TEXTURE::UIFLAME_FLAME_BLUE);	// 大枠
@@ -1850,12 +1842,15 @@ void CGame::CreateKillLog(void)
 		{//ログが使用されている且つ対象のＵＩが全てNULLの場合
 		 //UIの生成処理
 			m_apKillLogBase[nCntLog] = CUI_TEXTURE::Create(D3DXVECTOR3(1125.0f, 30.0f, 0.0f), 250.0f, 50.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_BG);
+			m_apKillLogBase[nCntLog]->SetObjType(OBJTYPE_KILLLOG);
 			m_apKillLogBase[nCntLog]->SetTex(0, 1, 2);
 
 
 			m_apKillLogPlayerIcon[nCntLog][0] = CUI_TEXTURE::Create(D3DXVECTOR3(1035.0f, 30.0f, 0.0f), 45.0f, 45.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERICON);
+			m_apKillLogPlayerIcon[nCntLog][0]->SetObjType(OBJTYPE_KILLLOG);
 
 			m_apKillLogPlayerIcon[nCntLog][1] = CUI_TEXTURE::Create(D3DXVECTOR3(1215.0f, 30.0f, 0.0f), 45.0f, 45.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERICON);
+			m_apKillLogPlayerIcon[nCntLog][1]->SetObjType(OBJTYPE_KILLLOG);
 
 			if (m_playerType[0] == TYPE_PLAYER)
 			{
@@ -1876,9 +1871,11 @@ void CGame::CreateKillLog(void)
 			}
 
 			m_apKillLogPlayerIdx[nCntLog][0] = CUI_TEXTURE::Create(D3DXVECTOR3(1070.0f, 40.0f, 0.0f), 35.0f, 35.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERIDX);
+			m_apKillLogPlayerIdx[nCntLog][0]->SetObjType(OBJTYPE_KILLLOG);
 			m_apKillLogPlayerIdx[nCntLog][0]->SetTex(m_nKillIdx[nCntLog], 1, 4);
 
 			m_apKillLogPlayerIdx[nCntLog][1] = CUI_TEXTURE::Create(D3DXVECTOR3(1175.0f, 40.0f, 0.0f), 35.0f, 35.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERIDX);
+			m_apKillLogPlayerIdx[nCntLog][1]->SetObjType(OBJTYPE_KILLLOG);
 			m_apKillLogPlayerIdx[nCntLog][1]->SetTex(m_nDeathIdx[nCntLog], 1, 4);
 
 			//m_apKillLogBase[nCntLog] = CUI_TEXTURE::Create(D3DXVECTOR3(1000.0f, 100.0f, 0.0f), 300.0f, 100.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_BG);
@@ -1912,27 +1909,28 @@ void CGame::UpdateKillLog(void)
 	for (int nCntLog = 0; nCntLog < NUM_KILL_LOG; nCntLog++)
 	{
 		if (m_bLog[nCntLog] == true)
-		{//ログを使用されている場合
+		{//ログが使用されている且つ対象のＵＩが全てNULLではない場合
 			m_nCntDrawLog[nCntLog]++;	//ログの描画カウンターを加算
 			if (m_nCntDrawLog[nCntLog] >= 300)
 			{//ログの描画カウンターが300以上の場合
-			 //色を取得
+				//色を取得
+
 				D3DXCOLOR col = m_apKillLogBase[nCntLog]->GetColor();
 				col.a -= 0.05f;	//色の減算
 
-								//UIの色を設置処理
-				m_apKillLogBase[nCntLog]->SetColor(col);
-				m_apKillLogPlayerIcon[nCntLog][0]->SetColor(col);
-				m_apKillLogPlayerIcon[nCntLog][1]->SetColor(col);
-				m_apKillLogPlayerIdx[nCntLog][0]->SetColor(col);
-				m_apKillLogPlayerIdx[nCntLog][1]->SetColor(col);
+				//UIの色を設置処理
+				if (m_apKillLogBase[nCntLog] != NULL) { m_apKillLogBase[nCntLog]->SetColor(col); }
+				if (m_apKillLogPlayerIcon[nCntLog][0] != NULL) {m_apKillLogPlayerIcon[nCntLog][0]->SetColor(col);}
+				if (m_apKillLogPlayerIcon[nCntLog][1] != NULL) {m_apKillLogPlayerIcon[nCntLog][1]->SetColor(col);}
+				if(m_apKillLogPlayerIdx[nCntLog][0] != NULL){ m_apKillLogPlayerIdx[nCntLog][0]->SetColor(col); }
+				if(m_apKillLogPlayerIdx[nCntLog][1] != NULL){ m_apKillLogPlayerIdx[nCntLog][1]->SetColor(col); }
 
 				if (col.a <= 0.0f)
 				{//透明度が0以下の場合
 					m_nCntDrawLog[nCntLog] = 0;	//ログの描画カウンタ－を初期化
 					m_bLog[nCntLog] = false;	//ログを使用していない状態にする
 
-												//ログの開放処理
+					//ログの開放処理
 					ReleaseKillLog(nCntLog);
 				}
 			}

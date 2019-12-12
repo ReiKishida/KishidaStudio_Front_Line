@@ -12,7 +12,6 @@
 #include "input.h"
 #include "camera.h"
 #include "game.h"
-#include "enemy.h"
 #include "player.h"
 #include "nodePointer.h"
 #include "scene2D.h"

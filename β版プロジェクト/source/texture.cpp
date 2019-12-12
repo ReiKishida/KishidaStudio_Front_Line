@@ -138,6 +138,12 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/UI/killLog_player_icon.png" },				// オプションフレーム
 		{ "data/TEXTURE/UI/KillLog_player.png" },					// バツボタン
 
+		// help
+		{ "data/TEXTURE/help/interface.png" },					// インターフェース
+		{ "data/TEXTURE/help/keyboard_inst.png" },				// キーボードの操作説明
+		{ "data/TEXTURE/help/gamepad_inst.png" },				// ゲームパッドの操作説明
+		{ "data/TEXTURE/help/help_frame.png" },					// ヘルプフレーム
+
 	};
 
 	for (int nCntTexture = 0; nCntTexture < TEXTURE_MAX; nCntTexture++)

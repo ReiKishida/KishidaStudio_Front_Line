@@ -69,6 +69,8 @@ public:
 		OBJTYPE_EFFECT,				// エフェクト
 		OBJTYPE_DAMAGEDIRECTION,	// ダメージを受けた方向表示
 		OBJTYPE_FILE,				// マップデータファイル
+		OBJTYPE_KILLLOG,			// キルログ
+		OBJTYPE_HELP,				// ヘルプ
 		OBJTYPE_MAX					// オブジェクトの種類の最大数
 	}OBJTYPE;
 

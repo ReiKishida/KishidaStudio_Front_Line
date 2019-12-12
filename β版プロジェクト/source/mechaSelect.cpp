@@ -249,7 +249,7 @@ void CMechaSelect::MechaSelectCreate(void)
 		m_pBg = CBg::Create();
 	}
 
-	if (m_apUI[0] == NULL && m_apUI[1] == NULL && m_apUI[2] == NULL)
+	if (m_apUI[0] == NULL && m_apUI[1] == NULL && m_apUI[2] == NULL && m_apUI[3] == NULL && m_apUI[4] == NULL)
 	{
 		// ã@ëÃëIëÉçÉS
 		m_apUI[0] = CScene2D::Create();

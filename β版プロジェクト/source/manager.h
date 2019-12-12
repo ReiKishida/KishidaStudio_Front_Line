@@ -25,6 +25,7 @@ class CSound;
 
 class CTitle;
 class CMenu;
+class CHelp;
 class CMechaSelect;
 class CMatching;
 class CTutorialMenu;
@@ -46,6 +47,7 @@ public:
 	{// フレームワーク
 		MODE_TITLE = 0,
 		MODE_MENU,
+		MODE_HELP,
 		MODE_MECHASELECT,
 		MODE_MATCHING,
 		MODE_TUTORIALMENU,
@@ -96,6 +98,7 @@ private:
 
 	static CTitle			*m_pTitle;				// タイトルクラスのポインタ変数
 	static CMenu			*m_pMenu;				// メニュークラスのポインタ変数
+	static CHelp			*m_pHelp;				// ヘルプクラスのポインタ変数
 	static CMechaSelect		*m_pMechaSelect;		// メニュークラスのポインタ変数
 	static CMatching		*m_pMatching;			// マッチングクラスのポインタ情報
 	static CTutorial		*m_pTutorial;			// チュートリアルクラスのポインタ変数

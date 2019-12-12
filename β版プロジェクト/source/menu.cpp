@@ -208,8 +208,8 @@ void CMenu::Update(void)
 				CFade::Create(CManager::MODE_TITLE);
 				break;
 
-			case MODE_CREDIT:
-				//CFade::Create(CManager::MODE_TUTORIAL);
+			case MODE_HELP:
+				CFade::Create(CManager::MODE_HELP);
 				break;
 			}
 		}
@@ -256,7 +256,7 @@ void CMenu::MenuCreate(void)
 	}
 
 	// ボタンの生成
-	if (m_apButtonUI[0] == NULL && m_apButtonUI[1] == NULL && m_apButtonUI[2] == NULL && m_apButtonUI[3] == NULL && m_apButtonUI[4] == NULL && m_apButtonUI[5] == NULL)
+	if (m_apButtonUI[0] == NULL && m_apButtonUI[1] == NULL && m_apButtonUI[2] == NULL && m_apButtonUI[3] == NULL && m_apButtonUI[4] == NULL)
 	{
 		m_apButtonUI[0] = CButton2D::Create(D3DXVECTOR3(250.0f, 325.0f, 0.0f), MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);				// シングルプレイ
 		m_apButtonUI[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_MENU_FLAME)));

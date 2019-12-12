@@ -123,6 +123,10 @@ public:
 		TEXTURE_KILLLOG_ICON,			// キルログのアイコン
 		TEXTURE_KILLLOG_PLAYER,			// キルログのプレイヤー番号
 
+		TEXTURE_INTERFACE,				// インターフェース
+		TEXTURE_KEYBOARD_INST,			// キーボードの操作説明
+		TEXTURE_GAMEPAD_INST,			// ゲームパッドの操作説明
+		TEXTURE_HELP_FLAME,				// ヘルプフレーム
 		TEXTURE_SHADOW,
 
 		TEXTURE_MAX

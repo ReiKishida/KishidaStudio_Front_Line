@@ -26,6 +26,7 @@
 #include "server.h"
 #include "matching.h"
 #include "particle.h"
+#include "help.h"
 
 #include <stdio.h>
 //=========================================
@@ -47,6 +48,7 @@ CDebugProc			*CManager::m_pDebugProc = NULL;			// デバッグ文字クラスのポインタ変
 CSound				*CManager::m_pSound = NULL;				// サウンドクラスのポインタ変数
 CTitle				*CManager::m_pTitle = NULL;				// タイトルクラスのポインタ変数
 CMenu				*CManager::m_pMenu = NULL;				// メニュークラスのポインタ変数
+CHelp				*CManager::m_pHelp = NULL;				// ヘルプクラスのポインタ変数
 CMechaSelect		*CManager::m_pMechaSelect = NULL;
 CMatching			*CManager::m_pMatching = NULL;			// マッチングクラスのポインタ情報
 CTutorial			*CManager::m_pTutorial = NULL;			// チュートリアルクラスのポインタ変数
@@ -54,7 +56,7 @@ CTutorialMenu		*CManager::m_pTutorialMenu = NULL;
 CGame				*CManager::m_pGame = NULL;				// ゲームクラスのポインタ変数
 CResult				*CManager::m_pResult = NULL;			// リザルトクラスのポインタ変数
 CRanking			*CManager::m_pRanking = NULL;			// ランキングクラスのポインタ変数
-CManager::MODE		CManager::m_mode = CManager::MODE_GAME;
+CManager::MODE		CManager::m_mode = CManager::MODE_MENU;
 
 int  CManager::m_nNumStage = 0;
 
@@ -503,9 +505,16 @@ const void CManager::SetMode(MODE mode)
 		}
 		break;
 
+	case MODE_HELP:
+		if (m_pHelp != NULL)
+		{// メカセレクト
+			m_pHelp = NULL;
+		}
+		break;
+
 	case MODE_MECHASELECT:
 		if (m_pMechaSelect != NULL)
-		{// メニュー
+		{// メカセレクト
 			m_pMechaSelect = NULL;
 		}
 		break;
@@ -569,6 +578,14 @@ const void CManager::SetMode(MODE mode)
 		{// メニュー
 			m_pMenu = new CMenu;
 			m_pMenu->Init();
+		}
+		break;
+
+	case MODE_HELP:
+		if (m_pHelp == NULL)
+		{// メニュー
+			m_pHelp = new CHelp;
+			m_pHelp->Init();
 		}
 		break;
 
