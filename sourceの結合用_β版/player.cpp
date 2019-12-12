@@ -37,6 +37,7 @@
 #include "particle.h"
 #include "search.h"
 #include "damageDirection.h"
+#include "nodeDataFiler.h"
 
 //==================================
 // マクロ定義
@@ -45,6 +46,7 @@
 #define LIGHT_FILE				"data/TEXT/PLAYER/light/model_light.txt"
 #define HEAVY_FILE				"data/TEXT/PLAYER/heavy/model_heavy.txt"
 #define SNIPE_FILE				"data/TEXT/PLAYER/snipe/model_snipe.txt"
+
 //戦闘用
 #define ASSULT_BATTLE_FILE		"data/TEXT/PLAYER/assult/battle_assult.txt"
 #define LIGHT_BATTLE_FILE		"data/TEXT/PLAYER/light/battle_light.txt"
@@ -54,8 +56,6 @@
 #define PLAYER_DAMAGE_TIME		(60)		// ダメージを受けた時の無敵時間
 #define PLAYER_DAMAGE_MOVE		(40)		// ダメージを受けてから動けるようになるまでの時間
 #define PLAYER_RETICLE_LENGTH	(2500.0f)	// レティクルの距離
-
-#define NODE_MAX	(256)		// ノードの最大数
 
 // =============================================================
 // UI関係
@@ -68,25 +68,25 @@
 #define PLAYER_UI_HEIGHT		(630.0f)
 
 // ラジオチャット
-#define RADIOCHAT_MESS_SPEED		(10)			// ラジオチャットメッセージの速さ
+#define RADIOCHAT_MESS_SPEED	(10)		// ラジオチャットメッセージの速さ
 #define RADIOCHAT_DISPLAY_TIME	(60 * 2)	// メッセージ表示時間
-#define RADIOCHAT_COL						(0.05f)		// 透明度の減算
+#define RADIOCHAT_COL			(0.05f)		// 透明度の減算
 
 // =============================================================
 // AI関係
 // =============================================================
 #define	LOAD_FILENAME		("data/TEXT/NODE_DATA/NodeData.txt")	// マップデータを読み込むファイルの名前
+//#define	LOAD_FILENAME	("data/TEXT/NODE_DATA/NodeDataTutorial.txt")	// 読み込むファイルのパス
 #define MOVE_ACCEPTABLE		(50.0f)		// 移動時の誤差の許容範囲
 #define POS_ACCEPTABLE		(30.0f)		// 検索時の誤差の許容範囲
 #define MOUSE_ACCEPTABLE	(20.0f)		// マウスの誤差の許容範囲
-#define COLLECT_TIME		(5)			// データの収集を行う間隔(秒)
-#define DATA_REFERENCE_TIME	(5)			// データの参照を行う間隔(回)
+#define DATA_REFERENCE_TIME	(3)			// データの参照を行う間隔(回)
 #define PLAYER_BREAKTIME	(1)			// 休憩時間(フレーム)
-#define PLAYER_FINALPOINT_BREAKTIME	(120)	// 最終地点の休憩時間(フレーム)
+#define PLAYER_FINALPOINT_BREAKTIME	(180)	// 最終地点の休憩時間(フレーム)
 
-#define MAX_CHAR (254)					//読み取る文字数
-#define MAX_SEARCH (4)	//センサー数
-#define FIND_FIND_CHARACTER_PRIORITY (4)				//探すプレイヤーの優先順位
+#define MAX_CHAR			(254)			// 読み取る文字数
+#define MAX_SEARCH			(4)				// センサー数
+#define FIND_FIND_CHARACTER_PRIORITY (4)	// 探すプレイヤーの優先順位
 
 //==================================
 // 静的メンバ変数宣言
@@ -163,12 +163,6 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_bAllyCol = false;
 	m_nTexTimer = 0;
 	m_nAllyTimer = 0;
-	m_bOption = false;
-	m_pUITexOption = NULL;
-	m_pUIButtonBack = NULL;
-	m_nSelectOption = 2;
-	m_pUIButtonOption = NULL;
-	m_nRadioChat = 0;
 
 	//AI戦闘系の変数
 	m_pSearch = NULL;
@@ -180,11 +174,6 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_fRange = 0.0f;
 	m_fRotDestUpper = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_bFind = false;
-
-	for (int nCnt = 0; nCnt < OPTION_SELECT; nCnt++)
-	{	// カメラ速度設定（オプション）
-		m_pUIButtonSelect[nCnt] = NULL;
-	}
 
 	for (int nCnt = 0; nCnt < AI_MAX; nCnt++)
 	{
@@ -558,7 +547,8 @@ HRESULT CPlayer::Init(void)
 		}
 	}
 
-	// 数値の初期化==============================================================================
+	// 移動系AI数値の初期化
+	m_pNodeData = CGame::GetNodeFiler();	// ファイル情報の取得
 	m_posDest = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_nPoint = 0;
 	m_nCountPoint = 0;
@@ -566,40 +556,38 @@ HRESULT CPlayer::Init(void)
 	m_nBreaktime = 0;
 	m_nGoalCount = 0;
 	m_nVigilanceCount = 0;
-	m_nCollectionTimer = COLLECT_TIME * 60;
 	m_bGoal = false;
 	m_bPartSwitch = false;
 	m_bCollectSwitch = false;
 
-	for (int nCntEnemy = 0; nCntEnemy < ENEMY_PLAYER_MAX; nCntEnemy++)
-	{// エネミーの最大値分回る
-		for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
-		{// 収集データの最大値分回る
-			m_collectionPos[nCntEnemy][nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-		}
+	for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+	{// 収集データの最大値分回る
+		m_collectionPos[nCntCollect] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	}
 
-	for (int nCntNode = 0; nCntNode < NODE_MAX; nCntNode++)
+	for (int nCntNode = 0; nCntNode < NODEPOINT_MAX; nCntNode++)
 	{// ノードの最大値分回る
 		m_waypoint[nCntNode] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	}
 
 	if (!m_bConnect)
 	{// 人間が接続していない場合
+
+		// 戦闘データの読み込み
 		LoadBattleFile();
 		m_fRotDestUpper = D3DXVECTOR3(D3DX_PI * 0.5f, D3DX_PI, 0.0f);
 
-		// マップ関係==============================================================================
-		CPlayer::FileLoad(LOAD_FILENAME);
+		// マップデータの読み込み
+		m_pNodeData->FileLoad(LOAD_FILENAME);
 
 		// 開始時点のノードの初期化
 		float fMinLength = 100000, fLength = 100000;	// 差分系
 
 		// 開始時点のノードの初期化
-		for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// ノードの数だけ回る
 			// 差分を求める
-			fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
+			fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) * (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) + (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) * (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -607,10 +595,8 @@ HRESULT CPlayer::Init(void)
 				m_nStartNode = nCntNode;
 			}
 		}
-		m_nEndNode = m_nMovePoint[rand() % 7];
+		m_nEndNode = m_nMovePoint[rand() % RANDOM_MOVE_POINT];
 
-		// ポイント検索
-		CPlayer::NodeSearch();
 		// ポイントへの経路探索
 		CPlayer::RootSearch();
 	}
@@ -803,7 +789,7 @@ void CPlayer::Update(void)
 						{// パーツモデルの更新
 							m_pModel[nCntModel]->Update();
 						}
-						CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
+						//CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
 					}
 					if (m_Respawn == RESPAWN_DEATH)
 					{	// 行動不能状態
@@ -856,21 +842,6 @@ void CPlayer::Update(void)
 						// 弾を撃つ
 						Shoot();
 
-						if (m_bChat == false)
-						{	// ラジオチャットしていない
-							ChatBotton();
-						}
-
-						if (m_bOption == true)
-						{	// オプション設定中
-							Option(m_bOption);
-						}
-
-						if (m_bChat == true)
-						{	// チャットしてる
-							ChatMess(m_bChat);
-						}
-
 						D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 						D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
 
@@ -881,7 +852,7 @@ void CPlayer::Update(void)
 						{// パーツモデルの更新
 							m_pModel[nCntModel]->Update();
 						}
-						CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
+						//CDebugProc::Print("位置：%.2f %.2f %.2f", m_pos.x, m_pos.y, m_pos.z);
 					}
 					if (m_Respawn == RESPAWN_DEATH)
 					{	// 行動不能状態
@@ -1112,7 +1083,7 @@ void CPlayer::Shoot(void)
 	CXInput *pXInput = CManager::GetXInput();			// XInputの入力を取得
 	D3DXVECTOR3 dispertion;								// ブレ
 
-	if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_0) && m_nRemBullet > 0 && m_bChatBotton == false && m_bReload == false && m_bOption == false)
+	if (pMouse->GetPress(CInputMouse::DIMS_BUTTON_0) && m_nRemBullet > 0 && m_bChatBotton == false && m_bReload == false)
 	{
 		// 弾の発射間隔
 		m_nCntShoot = (m_nCntShoot + 1) % 7;
@@ -1266,7 +1237,7 @@ void CPlayer::Angle(void)
 
 
 	if (!m_bConnect)
-	{
+	{// 人間が接続していない場合
 		// 角度を求める
 		D3DXVECTOR3 rotCamera = m_fRotDestUpper;
 		float fDiffRot;
@@ -1306,8 +1277,6 @@ void CPlayer::Angle(void)
 			rot = D3DXVECTOR3(-rotCamera.x + (D3DX_PI * 0.5f), m_fCameraAngle - (fAngle - D3DX_PI), rot.z);
 			m_pModel[1]->SetRot(rot);
 		}
-
-
 	}
 }
 
@@ -1615,10 +1584,8 @@ void CPlayer::Respawn(RESPAWN respawn)
 
 	m_Respawn = respawn;
 
-#ifdef _DEBUG
-	CDebugProc::Print("m_nDisTime : %d\n", m_nDisTime);
-	CDebugProc::Print("m_nRespawnTimer : %d\n", m_nRespawnTimer);
-#endif
+	//CDebugProc::Print("m_nDisTime : %d\n", m_nDisTime);
+	//CDebugProc::Print("m_nRespawnTimer : %d\n", m_nRespawnTimer);
 }
 
 //=========================================
@@ -1756,86 +1723,7 @@ void CPlayer::SelectRespawn(void)
 		}	// ボタン押された時
 	}	// 生成された
 
-#ifdef _DEBUG
-	CDebugProc::Print("リスポーン選択中");
-#endif
-}
-
-//=============================================================================
-//	チャットボタンの生成
-//=============================================================================
-void CPlayer::CreateRadioChatButton(void)
-{
-	if (m_pUIRadioBotton[0] == NULL && m_pUIRadioBotton[1] == NULL && m_pUIRadioBotton[2] == NULL && m_pUIRadioBotton[3] == NULL
-		&& m_pUIRadioBotton[4] == NULL && m_pUIRadioBotton[5] == NULL && m_pUIRadioBotton[6] == NULL && m_pUIRadioBotton[7] == NULL && m_pCursor == NULL)
-	{	// ボタンとカーソルの生成
-		m_pUIRadioBotton[0] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-		m_pUIRadioBotton[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-		m_pUIRadioBotton[0]->SetTex(0, 1, RADIOCHAT_BOTTON_PATTERN);
-
-		m_pUIRadioBotton[1] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-		m_pUIRadioBotton[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-		m_pUIRadioBotton[1]->SetTex(1, 1, RADIOCHAT_BOTTON_PATTERN);
-
-		m_pUIRadioBotton[2] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-		m_pUIRadioBotton[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-		m_pUIRadioBotton[2]->SetTex(2, 1, RADIOCHAT_BOTTON_PATTERN);
-
-		m_pUIRadioBotton[3] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-		m_pUIRadioBotton[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-		m_pUIRadioBotton[3]->SetTex(3, 1, RADIOCHAT_BOTTON_PATTERN);
-
-		m_pUIRadioBotton[4] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-		m_pUIRadioBotton[4]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-		m_pUIRadioBotton[4]->SetTex(7, 1, RADIOCHAT_BOTTON_PATTERN);
-
-		m_pUIRadioBotton[5] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-		m_pUIRadioBotton[5]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-		m_pUIRadioBotton[5]->SetTex(6, 1, RADIOCHAT_BOTTON_PATTERN);
-
-		m_pUIRadioBotton[6] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-		m_pUIRadioBotton[6]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-		m_pUIRadioBotton[6]->SetTex(5, 1, RADIOCHAT_BOTTON_PATTERN);
-
-		m_pUIRadioBotton[7] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
-		m_pUIRadioBotton[7]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
-		m_pUIRadioBotton[7]->SetTex(4, 1, RADIOCHAT_BOTTON_PATTERN);
-
-		m_pCursor = CMouseCursor2D::Create();		// カーソル
-	}
-
-	if (m_pUIButtonOption == NULL)
-	{	// オプションボタン生成
-		m_pUIButtonOption = CButton2D::Create(D3DXVECTOR3(970.0f, 530.0f, 0.0f), 100.0f, 120.0f);
-		m_pUIButtonOption->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_OPTION_ICON)));
-	}
-}
-
-//=============================================================================
-//	チャットボタンの破棄
-//=============================================================================
-void CPlayer::UninitRadioChatButton(void)
-{
-	for (int nCnt = 0; nCnt < RADIOCHAT_BOTTON; nCnt++)
-	{
-		if (m_pUIRadioBotton[nCnt] != NULL)
-		{	// ラジオチャットボタンの破棄
-			m_pUIRadioBotton[nCnt]->Uninit();
-			m_pUIRadioBotton[nCnt] = NULL;
-		}
-	}
-
-	if (m_pCursor != NULL)
-	{	// カーソルの破棄
-		m_pCursor->Uninit();
-		m_pCursor = NULL;
-	}
-
-	if (m_pUIButtonOption != NULL)
-	{	// オプションボタン破棄
-		m_pUIButtonOption->Uninit();
-		m_pUIButtonOption = NULL;
-	}
+	//CDebugProc::Print("リスポーン選択中");
 }
 
 //=============================================================================
@@ -1849,51 +1737,67 @@ void CPlayer::ChatBotton(void)
 
 	if (pKeyboard->GetTrigger(DIK_M) || pDirectInput->GetGamePadTrigger(1))
 	{
-		m_nRadioChat = (m_nRadioChat + 1) % 2;
-
-		if (m_nRadioChat == 1)
-		{
+		if (m_pUIRadioBotton[0] == NULL || m_pUIRadioBotton[1] == NULL || m_pUIRadioBotton[2] == NULL || m_pUIRadioBotton[3] == NULL
+			|| m_pUIRadioBotton[4] == NULL || m_pUIRadioBotton[5] == NULL || m_pUIRadioBotton[6] == NULL || m_pUIRadioBotton[7] == NULL || m_pCursor == NULL)
+		{	// ボタンとカーソルの生成
 			m_bChatBotton = true;		// ボタン表示中
-			CreateRadioChatButton();	// チャットボタンの生成
-		}
-		else
-		{
-			m_bChatBotton = false;		// ボタン非表示中
-			UninitRadioChatButton();	// チャットボタンの破棄
+
+			m_pUIRadioBotton[0] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[0]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[0]->SetTex(0, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[1] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[1]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[1]->SetTex(1, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[2] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[2]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[2]->SetTex(2, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[3] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 + 100.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[3]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[3]->SetTex(3, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[4] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 180.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[4]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[4]->SetTex(7, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[5] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 280.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[5]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[5]->SetTex(6, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[6] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 200.0f, 470.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[6]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[6]->SetTex(5, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pUIRadioBotton[7] = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH / 2 - 97.0f, 570.0f, 0.0f), RADIOCHAT_BOTTON_WIDTH, RADIOCHAT_BOTTON_HEIGHT);
+			m_pUIRadioBotton[7]->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_RADIOCHAT)));
+			m_pUIRadioBotton[7]->SetTex(4, 1, RADIOCHAT_BOTTON_PATTERN);
+
+			m_pCursor = CMouseCursor2D::Create();		// カーソル
 		}
 	}
 
-	if (m_pUIRadioBotton[0] != NULL && m_pUIRadioBotton[1] != NULL && m_pUIRadioBotton[2] != NULL && m_pUIRadioBotton[3] != NULL
-		&& m_pUIRadioBotton[4] != NULL && m_pUIRadioBotton[5] != NULL && m_pUIRadioBotton[6] != NULL && m_pUIRadioBotton[7] != NULL && m_pCursor != NULL && m_pUIButtonOption != NULL)
+	if (m_pUIRadioBotton[0] != NULL || m_pUIRadioBotton[1] != NULL || m_pUIRadioBotton[2] != NULL || m_pUIRadioBotton[3] != NULL
+		|| m_pUIRadioBotton[4] != NULL || m_pUIRadioBotton[5] != NULL || m_pUIRadioBotton[6] != NULL || m_pUIRadioBotton[7] != NULL || m_pCursor != NULL)
 	{	// ボタンとカーソルが生成された
 		m_bChat = false;
 		int nSelect = -1;
+		//m_radiochat = RADIOCHAT_OK;
 
-		// オプションボタンの設定
-		if (m_pUIButtonOption->InRangeMenu(m_pCursor->GetMousePosition()))
-		{// 範囲内かチェック
-			if (m_pUIButtonOption->ClickRelease())
-			{// クリックされた
-				m_bOption = true;				// オプション設定中
-				m_bChatBotton = false;		// ボタン非表示
-			}
-		}
+		// ボタンの判定
+		for (int nCntButton = 0; nCntButton < RADIOCHAT_BOTTON; nCntButton++)
+		{
+			if (m_pUIRadioBotton[nCntButton]->InRange(m_pCursor->GetMousePosition()))
+			{// 範囲内かチェック
+				if (m_pUIRadioBotton[nCntButton]->ClickRelease())
+				{// クリックされた
+					m_bChat = true;
+					m_radiochat = (RADIOCHAT)nCntButton;
+					break;
 
-		// チャットボタンの判定
-		if (m_bOption == false)
-		{	// オプション設定じゃない時
-			for (int nCntButton = 0; nCntButton < RADIOCHAT_BOTTON; nCntButton++)
-			{
-				if (m_pUIRadioBotton[nCntButton]->InRangeMenu(m_pCursor->GetMousePosition()))
-				{// 範囲内かチェック
-					if (m_pUIRadioBotton[nCntButton]->ClickRelease())
-					{// クリックされた
-						m_bChat = true;
-						m_radiochat = (RADIOCHAT)nCntButton;
-						break;
-					}
-					nSelect = nCntButton;
 				}
+				nSelect = nCntButton;
 			}
 		}
 	}
@@ -1913,8 +1817,22 @@ void CPlayer::ChatMess(bool bChat)
 	}
 	if (m_pUITexRadio != NULL)
 	{
-		UninitRadioChatButton();	// チャットボタンの破棄
-		bool bMove = false;			// 止まったかどうか
+		for (int nCnt = 0; nCnt < RADIOCHAT_BOTTON; nCnt++)
+		{
+			if (m_pUIRadioBotton[nCnt] != NULL)
+			{	// ラジオチャットボタンの破棄
+				m_pUIRadioBotton[nCnt]->Uninit();
+				m_pUIRadioBotton[nCnt] = NULL;
+			}
+		}
+
+		if (m_pCursor != NULL)
+		{	// カーソルの破棄
+			m_pCursor->Uninit();
+			m_pCursor = NULL;
+		}
+
+		bool bMove = false;		// 止まったかどうか
 		D3DXVECTOR3 texPos = m_pUITexRadio->GetPos();		// 現在の位置を取得
 		D3DXCOLOR texCol = m_pUITexRadio->GetColor();		// 現在の色を取得
 
@@ -1954,7 +1872,7 @@ void CPlayer::ChatMess(bool bChat)
 			m_bChat = false;					// チャットしていない
 			bMove = false;
 			m_bCol = false;
-			m_nRadioChat = 0;				// 切り替えリセット
+
 		}
 	}
 }
@@ -2018,127 +1936,6 @@ void CPlayer::AllyChatMess(void)
 }
 
 //=============================================================================
-//	オプションの破棄
-//=============================================================================
-void CPlayer::UninitOption(void)
-{
-	for (int nCnt = 0; nCnt < OPTION_SELECT; nCnt++)
-	{
-		if (m_pUIButtonSelect[nCnt] != NULL)
-		{	// 項目の破棄
-			m_pUIButtonSelect[nCnt]->Uninit();
-			m_pUIButtonSelect[nCnt] = NULL;
-		}
-	}
-
-	if (m_pUITexOption != NULL)
-	{	// フレームの破棄
-		m_pUITexOption->Uninit();
-		m_pUITexOption = NULL;
-	}
-
-	if (m_pCursor != NULL)
-	{	// カーソルの破棄
-		m_pCursor->Uninit();
-		m_pCursor = NULL;
-	}
-
-	if (m_pUIButtonBack != NULL)
-	{	// ×ボタンの破棄
-		m_pUIButtonBack->Uninit();
-		m_pUIButtonBack = NULL;
-	}
-}
-
-//=============================================================================
-//	オプション設定処理
-//=============================================================================
-void CPlayer::Option(bool bOption)
-{
-	CCamera *pCamera = NULL;
-
-	if (bOption == true)
-	{
-		if (m_pUITexOption == NULL && m_pUIButtonSelect[0] == NULL && m_pUIButtonSelect[1] == NULL
-			&& m_pUIButtonSelect[2] == NULL && m_pUIButtonSelect[3] == NULL && m_pUIButtonSelect[4] == NULL && m_pUIButtonBack == NULL)
-		{	// マウス設定フレーム、トグルスイッチ生成
-			m_pUITexOption = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), 450.0f, 200.0f, CUI_TEXTURE::UIFLAME_OPTION_FLAME);
-
-			for (int nCnt = 0; nCnt < OPTION_SELECT; nCnt++)
-			{	// トグルスイッチの生成
-				m_pUIButtonSelect[nCnt] = CButton2D::Create(D3DXVECTOR3(460.0f + (nCnt * 92.0f), SCREEN_HEIGHT / 2 + 30.0f, 0.0f), 30.0f, 30.0f);
-				m_pUIButtonSelect[nCnt]->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_OPTION_TOGGlE));
-				m_pUIButtonSelect[nCnt]->SetTex(0, 1, 2);		// 最初は黒テクスチャ
-			}
-
-			// ×ボタン
-			m_pUIButtonBack = CButton2D::Create(D3DXVECTOR3(820.0f, 300.0f, 0.0f), 65.0f, 40.0f);
-			m_pUIButtonBack->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_OPTION_BATSU));
-		}
-
-		// 使用しないテクスチャは破棄する
-		for (int nCnt = 0; nCnt < RADIOCHAT_BOTTON; nCnt++)
-		{
-			if (m_pUIRadioBotton[nCnt] != NULL)
-			{	// ラジオチャットボタンの破棄
-				m_pUIRadioBotton[nCnt]->Uninit();
-				m_pUIRadioBotton[nCnt] = NULL;
-			}
-		}
-
-		if (m_pUIButtonOption != NULL)
-		{	// オプションボタンの破棄
-			m_pUIButtonOption->Uninit();
-			m_pUIButtonOption = NULL;
-		}
-
-		if (m_pUITexOption != NULL && m_pUIButtonSelect[0] != NULL&& m_pUIButtonSelect[1] != NULL
-			&& m_pUIButtonSelect[2] != NULL && m_pUIButtonSelect[3] != NULL && m_pUIButtonSelect[4] != NULL)
-		{	// マウス設定フレーム、トグルスイッチ生成された
-			bool bOptionSelect = false;		// 何も選択されていない状態
-
-			// カメラ速度設定ボタン
-			for (int nCntButton = 0; nCntButton < OPTION_SELECT; nCntButton++)
-			{
-				if (m_pUIButtonSelect[nCntButton]->InRangeMenu(m_pCursor->GetMousePosition()))
-				{// 範囲内かチェック
-					if (m_pUIButtonSelect[nCntButton]->ClickRelease())
-					{// クリックされた
-						bOptionSelect = true;
-						m_nSelectOption = nCntButton;			// クリックされたやつ
-						SetSelectOption(m_nSelectOption);	// 選択項目の設定
-						break;
-					}
-				}
-
-				if (nCntButton == m_nSelectOption)
-				{	// 選択したやつ
-					m_pUIButtonSelect[nCntButton]->SetTex(1, 1, 2);
-					m_pUIButtonSelect[nCntButton]->SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-				}
-				else
-				{	// それ以外
-					m_pUIButtonSelect[nCntButton]->SetTex(0, 1, 2);
-					m_pUIButtonSelect[nCntButton]->SetColor(D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.0f));
-				}
-			}
-
-			// ×ボタン
-			if (m_pUIButtonBack->InRangeMenu(m_pCursor->GetMousePosition()))
-			{	// 範囲内かチェック
-				if (m_pUIButtonBack->ClickRelease())
-				{	// クリックされた
-					UninitOption();			// オプションの破棄
-					m_bOption = false;		// オプション設定OFF
-					m_nRadioChat = 0;		// 切り替えリセット
-
-				}
-			}
-		}
-	}
-}
-
-//=============================================================================
 //	戦闘用テキスト読み込み
 //=============================================================================
 void CPlayer::LoadBattleFile(void)
@@ -2146,7 +1943,6 @@ void CPlayer::LoadBattleFile(void)
 	FILE *pFile;									// 読み込むファイル
 	char acLine[MAX_CHAR];							// 1行読み込む変数
 	char acData[MAX_CHAR];							// 1文読み込む変数
-
 
 	char *pBattleFileName = "";	//読み込むテキスト
 	if (CMechaSelect::MECHATYPE_ASSULT == m_mecha) { pBattleFileName = ASSULT_BATTLE_FILE; }
@@ -2238,7 +2034,6 @@ bool CPlayer::Distance(void)
 	D3DXMATRIX mtxSearch1 = m_pSearch[1]->GetMtxWorld();
 	D3DXMATRIX mtxSearch2 = m_pSearch[2]->GetMtxWorld();
 
-
 	//空のベクトルに代入
 	D3DXVECTOR3 VecPos_0 = D3DXVECTOR3(mtxSearch1._41, mtxSearch1._42, mtxSearch1._43);//左側
 	D3DXVECTOR3 VecPos_1 = D3DXVECTOR3(mtxSearch2._41, mtxSearch2._42, mtxSearch2._43);//右側
@@ -2251,13 +2046,11 @@ bool CPlayer::Distance(void)
 	D3DXVECTOR3 Vec_0_P;//点０とプレイヤーのベクトル
 	D3DXVECTOR3 Vec_1_P;//点１とプレイヤーのベクトル
 
-
 	float fCrossProduct0;//外積計算用
 	float fCrossProduct1;//外積計算用
 	float fCrossProduct2;//外積計算用
 
-
-						 // 敵を探す
+	// 敵を探す
 	CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
 	CScene *pSceneNext = NULL;
 	while (pScene != NULL)
@@ -2272,7 +2065,7 @@ bool CPlayer::Distance(void)
 			int nIdxPlayer = pPlayer->GetPlayerIdx();
 			if (m_nTeam != nTeam)
 			{//チームが違うとき
-			 //認識用ベクトルの計算
+				//認識用ベクトルの計算
 				m_SearchVec_0 = CSearch::Sub_Vector(VecPos_1, m_pos);
 				EmpVec_0 = CSearch::Sub_Vector(pPlayer->GetPos(), VecPos_1);
 
@@ -2287,8 +2080,6 @@ bool CPlayer::Distance(void)
 				fCrossProduct1 = (m_SearchVec_1.x * EmpVec_1.z) - (m_SearchVec_1.z * EmpVec_1.x);
 				fCrossProduct2 = (m_SearchVec_2.x * EmpVec_2.z) - (m_SearchVec_2.z * EmpVec_2.x);
 
-
-
 				//CDebugProc::Print("CPUベクトル１：%.2f %.2f %.2f", m_SearchVec_0.x, m_SearchVec_0.y, m_SearchVec_0.z);
 				//CDebugProc::Print("CPUベクトル２：%.2f %.2f %.2f", m_SearchVec_1.x, m_SearchVec_1.y, m_SearchVec_1.z);
 				//CDebugProc::Print("CPUベクトル３：%.2f %.2f %.2f", m_SearchVec_2.x, m_SearchVec_2.y, m_SearchVec_2.z);
@@ -2297,9 +2088,20 @@ bool CPlayer::Distance(void)
 				//CDebugProc::Print("fCrossProduct1：%.2f", fCrossProduct1);
 				//CDebugProc::Print("fCrossProduct2：%.2f", fCrossProduct2);
 
-
 				if ((fCrossProduct0 > 0.0f && fCrossProduct1 > 0.0f && fCrossProduct2 > 0.0f) || (fCrossProduct0 < 0.0f && fCrossProduct1 < 0.0f && fCrossProduct2 < 0.0f))
 				{//三角形の内側に敵がいる
+
+					if (m_nCountCollect >= COLLECTIONDATA_MAX)
+					{// 収集データが最大まで集まった場合
+						m_bCollectSwitch = true;// 平均値の割り出し方法を切り替える
+						m_nCountCollect = 0;// カウントを初期化する
+					}
+					m_collectionPos[m_nCountCollect] = pPlayer->GetPos();	// 敵プレイヤーの位置情報を取得
+					m_nCountCollect++;	// カウントを進める
+
+					// 発見した敵プレイヤーの方向を見る
+					m_fRotDestUpper.y = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);
+					
 					bFind = true;
 					return bFind;
 				}
@@ -2307,8 +2109,6 @@ bool CPlayer::Distance(void)
 				{
 					bFind = false;
 				}
-
-				CDebugProc::Print("bFind = %d", bFind);
 			}
 		}
 		// 次のオブジェクトを見る
@@ -2319,37 +2119,37 @@ bool CPlayer::Distance(void)
 }
 
 //=============================================================================
-//	先頭
+//	戦闘
 //=============================================================================
 void CPlayer::Battle(void)
 {
-	//CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
-	//CScene *pSceneNext = NULL;
-	//D3DXVECTOR3 dispertion;								// ブレ
+	CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
+	CScene *pSceneNext = NULL;
+	D3DXVECTOR3 dispertion;	// ブレ
 
-	//while (pScene != NULL)
-	//{// NULLになるまでループ
-	//	pSceneNext = pScene->GetSceneNext();
-	//	CScene::OBJTYPE objType = pScene->GetObjType();
+	while (pScene != NULL)
+	{// NULLになるまでループ
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
 
-	//	if (CScene::OBJTYPE_PLAYER == objType)
-	//	{//プレイヤーオブジェクトのとき
-	//		CPlayer *pPlayer = (CPlayer*)pScene;
-	//		int nTeam = pPlayer->GetTeam();
-	//		if (m_nTeam != nTeam)
-	//		{//チームが違うとき
+		if (CScene::OBJTYPE_PLAYER == objType)
+		{//プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pScene;
+			int nTeam = pPlayer->GetTeam();
+			if (m_nTeam != nTeam)
+			{//チームが違うとき
 
-	//			if (rand() % 20 == 0)
-	//			{
-	//				//弾撃ち
-	//				CpuShoot();
-	//			}
+				if (rand() % 20 == 0)
+				{
+					//弾撃ち
+					CpuShoot();
+				}
 
-	//		}//チームが違うとき
-	//	}//プレイヤーオブジェクトのとき
-	//	 // 次のオブジェクトを見る
-	//	pScene = pSceneNext;
-	//}
+			}//チームが違うとき
+		}//プレイヤーオブジェクトのとき
+		 // 次のオブジェクトを見る
+		pScene = pSceneNext;
+	}
 }
 
 //=============================================================================
@@ -2364,7 +2164,7 @@ void CPlayer::BattleMovent(void)
 	// 敵を探す
 	CScene *pScene = CScene::GetSceneTop(FIND_FIND_CHARACTER_PRIORITY);
 	CScene *pSceneNext = NULL;
-	D3DXVECTOR3 dispertion;								// ブレ
+	D3DXVECTOR3 dispertion;	// ブレ
 
 	while (pScene != NULL)
 	{// NULLになるまでループ
@@ -2378,14 +2178,10 @@ void CPlayer::BattleMovent(void)
 			int IdxPlayer = pPlayer->GetPlayerIdx();
 			if (m_nTeam != nTeam)
 			{//チームが違うとき
+				m_fRotDestUpper.y = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);	//上半身の方向
+				fDirMove = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);			//移動方向
 
-					m_fRotDestUpper.y = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);			//上半身の方向
-
-
-					fDirMove = atan2f(pPlayer->GetPos().x - m_pos.x, pPlayer->GetPos().z - m_pos.z);			//移動方向
-
-					bKey = true;
-
+				bKey = true;
 			}//チームが違うとき
 		}//プレイヤーオブジェクトのとき
 
@@ -2442,7 +2238,7 @@ void CPlayer::CpuShoot(void)
 {
 	D3DXVECTOR3 dispertion;								// ブレ
 
-														// 弾の発射間隔
+	// 弾の発射間隔
 	m_nCntShoot = (m_nCntShoot + 1) % 7;
 
 	if (m_nRemBullet > 0)
@@ -2531,24 +2327,105 @@ void CPlayer::AIUpdate(void)
 	{// 探索の更新処理
 		m_pSearch[nCntSearch]->Update();
 	}
+	// 前回の発見状態の取得
+	m_bFindOld = m_bFind;
 
-
+	// 探索処理
 	m_bFind = Distance();
+
+	if (m_bFindOld != m_bFind)
+	{// 敵を見失った場合　または　敵を発見した場合
+		float fMinLength = 100000, fLength = 100000;	// 差分系
+		int nNearNode = 0;
+
+		// 自分の位置に最も近いノードを検索する
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+		{// ノードの数だけ回る
+		 // 差分を求める
+			if (m_pPlayer != NULL)
+			{// プレイヤーのNULLチェック
+				fLength =
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) +
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
+
+				if (fMinLength > fLength)
+				{// 差分の最小値を求める
+					fMinLength = fLength;
+					nNearNode = nCntNode;
+				}
+			}
+		}
+
+		// 現在地を開始ノードに設定する
+		m_nStartNode = nNearNode;
+	}
+
 	if (m_bFind == true)
-	{
+	{// 敵を発見している場合
 		//戦闘時の移動処理
-		BattleMovent();
+		CPlayer::BattleMovent();
 
 		//戦闘の処理
-		Battle();
+		CPlayer::Battle();
 	}
 	else
-	{
+	{// 敵を発見していない場合
 		// 自動移動処理
 		CPlayer::AutoMove();
 	}
-	//CDebugProc::Print("m_bFind: %d", m_bFind);
 
+	//CDebugProc::Print("m_bFind = %s", m_bFind ? "true" : "false");
+	//CDebugProc::Print("m_bBattle: %s", m_bBattle ? "true" : "false");
+
+	//==================//
+	//  収集データ参照  //
+	//==================//
+	float fMinLength = 100000, fLength = 100000;	// 差分系
+	D3DXVECTOR3 total = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 収集したデータの合計値
+
+	if (!m_bCollectSwitch)
+	{// 1週目
+		for (int nCntCollect = 0; nCntCollect < m_nCountCollect + 1; nCntCollect++)
+		{// 収集したデータの数だけ回る
+			total += m_collectionPos[nCntCollect];	// 収集データを合計する
+		}
+	}
+	else
+	{// 2週目以降
+		for (int nCntCollect = 0; nCntCollect < COLLECTIONDATA_MAX; nCntCollect++)
+		{// 収集できるデータの最大数だけ回る
+			total += m_collectionPos[nCntCollect];	// 収集データを合計する
+		}
+	}
+
+	// 収集データの平均値を取る
+	if (!m_bCollectSwitch)
+	{// 1週目の場合
+		m_totalCollectPos = total / (float)(m_nCountCollect + 1);
+	}
+	else
+	{// 2週目以降
+		m_totalCollectPos = total / (float)COLLECTIONDATA_MAX;
+	}
+
+	// 平均値に最も近いノードを検索する
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+	{// ノードの数だけ回る
+	 // 差分を求める
+		fLength =
+			(m_pNodeData->GetLoadData().pos[nCntNode].x - m_totalCollectPos.x) *
+			(m_pNodeData->GetLoadData().pos[nCntNode].x - m_totalCollectPos.x) +
+			(m_pNodeData->GetLoadData().pos[nCntNode].z - m_totalCollectPos.z) *
+			(m_pNodeData->GetLoadData().pos[nCntNode].z - m_totalCollectPos.z);
+
+		if (fMinLength > fLength)
+		{// 差分の最小値を求める
+			fMinLength = fLength;
+			m_nNearTotalCollectNumber = nCntNode;
+		}
+	}
 }
 
 //=============================================================================
@@ -2558,13 +2435,13 @@ void CPlayer::AutoMove()
 {
 	CMotionManager::TYPE type = CMotionManager::TYPE_NEUTRAL;	// モーションの種類
 	bool bMove = false;	// ボタン押下フラグ
-	float VigilanceRot[CONNECT_MAX];
+	float fVigilanceRot[CONNECT_MAX];
 
 	// 目標地点を設定
 	m_posDest = m_waypoint[m_nPoint];
 
 	// 目的との差分を出す
-	float fLength = (m_pos.x - m_posDest.x) * (m_pos.x - m_posDest.x) + (m_pos.z - m_posDest.z) * (m_pos.z - m_posDest.z);
+	float fLength = (m_posDest.x - m_pos.x) * (m_posDest.x - m_pos.x) + (m_posDest.z - m_pos.z) * (m_posDest.z - m_pos.z);
 	m_nBreaktime--;
 
 	if (fLength > MOVE_ACCEPTABLE)
@@ -2572,9 +2449,11 @@ void CPlayer::AutoMove()
 		bMove = true;
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
-		//m_rot.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
-		m_fRotDestUpper.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) /*+ D3DX_PI*/;
 
+		if (!m_bFind)
+		{// 敵未発見時
+			m_rotDest.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z);
+		}
 	}
 	else if (m_nBreaktime < 0)
 	{// 移動中
@@ -2583,10 +2462,7 @@ void CPlayer::AutoMove()
 
 		if (m_nPoint == m_nCountPoint)
 		{// 最終目標地点に到着したら次の目的地を探す
-			if (m_nGoalCount != 0)
-			{// 最初以外に最終地点用の休憩時間を与える
-				m_nBreaktime = PLAYER_FINALPOINT_BREAKTIME;
-			}
+			m_nBreaktime = PLAYER_FINALPOINT_BREAKTIME;
 			m_nPoint = 0;		// 現在の移動回数の初期化
 			m_nCountPoint = -1;	// 目的までの移動回数の初期化
 			m_nGoalCount++;		// ゴールした回数を増やす
@@ -2607,19 +2483,18 @@ void CPlayer::AutoMove()
 		bMove = false;
 		m_move = D3DXVECTOR3(0.0f, 0.0f, 0.0f);	// 停止する
 
-		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[m_nStartNode]; nCntConnect++)
+		for (int nCntConnect = 0; nCntConnect < m_pNodeData->GetLoadData().connectNum[m_nStartNode]; nCntConnect++)
 		{// 繋がってるノードの数だけ回る
-			VigilanceRot[nCntConnect] = atan2f(m_NodeData.pos[m_NodeData.connectIndex[m_nStartNode][nCntConnect]].x - m_pos.x, m_NodeData.pos[m_NodeData.connectIndex[m_nStartNode][nCntConnect]].z - m_pos.z) + D3DX_PI;
+			fVigilanceRot[nCntConnect] = atan2f(m_pNodeData->GetLoadData().pos[m_pNodeData->GetLoadData().connectIndex[m_nStartNode][nCntConnect]].x - m_pos.x, m_pNodeData->GetLoadData().pos[m_pNodeData->GetLoadData().connectIndex[m_nStartNode][nCntConnect]].z - m_pos.z) + D3DX_PI;
 		}
 
-		if (m_nBreaktime == PLAYER_FINALPOINT_BREAKTIME - 1 || m_nBreaktime % (PLAYER_FINALPOINT_BREAKTIME / m_NodeData.connectNum[m_nStartNode]) == 0)
-		{// 繋がってるノードの方向すべてを見る
-			//m_rot.y = VigilanceRot[m_nVigilanceCount];
-			m_fRotDestUpper.y = VigilanceRot[m_nVigilanceCount] + D3DX_PI;
+		if (!m_bFind && (m_nBreaktime == PLAYER_FINALPOINT_BREAKTIME - 1 || m_nBreaktime % (PLAYER_FINALPOINT_BREAKTIME / m_pNodeData->GetLoadData().connectNum[m_nStartNode]) == 0))
+		{// 敵未発見時に繋がってるノードの方向すべてを見る
+			m_rotDest.y = fVigilanceRot[m_nVigilanceCount] + D3DX_PI;
 
 			m_nVigilanceCount++;
 
-			if (m_nVigilanceCount >= m_NodeData.connectNum[m_nStartNode])
+			if (m_nVigilanceCount >= m_pNodeData->GetLoadData().connectNum[m_nStartNode])
 			{// 上限まで行ったら初期化
 				m_nVigilanceCount = 0;
 			}
@@ -2642,6 +2517,22 @@ void CPlayer::AutoMove()
 		}
 	}
 
+	if (m_rotDest.y > D3DX_PI) { m_rotDest.y -= D3DX_PI * 2.0f; }
+	if (m_rotDest.y < -D3DX_PI) { m_rotDest.y += D3DX_PI * 2.0f; }
+
+	if (m_fRotDestUpper.y > D3DX_PI) { m_fRotDestUpper.y -= D3DX_PI * 2.0f; }
+	if (m_fRotDestUpper.y < -D3DX_PI) { m_fRotDestUpper.y += D3DX_PI * 2.0f; }
+
+	if (m_rotDest.y - m_fRotDestUpper.y > D3DX_PI || m_rotDest.y - m_fRotDestUpper.y < -D3DX_PI)
+	{// 差分が1周以上ある場合
+		m_fRotDestUpper.y -= (m_rotDest.y - m_fRotDestUpper.y) * (m_fSpeed * 0.03f);
+	}
+	else
+	{
+		// 目標方向へ向く
+		m_fRotDestUpper.y += (m_rotDest.y - m_fRotDestUpper.y) * (m_fSpeed * 0.03f);
+	}
+
 	m_move.x += (0 - m_move.x) * 0.4f;
 	m_move.z += (0 - m_move.z) * 0.4f;
 
@@ -2659,32 +2550,39 @@ void CPlayer::NodeSearch()
 	int nNearEnemyNumber = 0;	// 最も近い敵の番号
 	int nMovePoint = 0;
 
-	// 移動先の設定
-	do
-	{// 同じ地点だった場合はもう1度決める
-		nMovePoint = m_nMovePoint[rand() % RANDOM_MOVE_POINT];
-	} while (m_nNewEndNode == nMovePoint);
-	m_nNewEndNode = nMovePoint;
+	// 目的の設定
+	if (m_nGoalCount % DATA_REFERENCE_TIME == 0)
+	{// 定期的に収集したデータに基づいた移動を行う
+		m_nNewEndNode = m_nNearTotalCollectNumber;
+	}
+	else
+	{// 新規目的地を指定地点からランダムで決定する
+		do
+		{// 同じ地点だった場合はもう1度決める
+			nMovePoint = m_nMovePoint[rand() % RANDOM_MOVE_POINT];
+		} while (m_nNewEndNode == nMovePoint);
+		m_nNewEndNode = nMovePoint;
+	}
 
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		if (m_NodeData.pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
-			&& m_NodeData.pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
-			&& m_NodeData.pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
-			&& m_NodeData.pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
+		if (m_pNodeData->GetLoadData().pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
+			&& m_pNodeData->GetLoadData().pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
+			&& m_pNodeData->GetLoadData().pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
+			&& m_pNodeData->GetLoadData().pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
 		{// プレイヤーの位置が許容範囲内
 			m_nStartNode = m_nEndNode;	// 前回の目的地を開始地点として登録
 		}
 	}
 
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		if (m_NodeData.pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
-			&& m_NodeData.pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
-			&& m_NodeData.pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
-			&& m_NodeData.pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
+		if (m_pNodeData->GetLoadData().pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
+			&& m_pNodeData->GetLoadData().pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x
+			&& m_pNodeData->GetLoadData().pos[nCntNode].z + POS_ACCEPTABLE > m_pos.z
+			&& m_pNodeData->GetLoadData().pos[nCntNode].z - POS_ACCEPTABLE < m_pos.z)
 		{// プレイヤーの位置が目的地の許容範囲内
-			if (m_NodeData.pos[nCntNode] != m_NodeData.pos[m_nNewEndNode])
+			if (m_pNodeData->GetLoadData().pos[nCntNode] != m_pNodeData->GetLoadData().pos[m_nNewEndNode])
 			{// 新規目的地が前回の目的地と同じじゃない場合
 				m_nEndNode = m_nNewEndNode;	// 目的地を登録
 			}
@@ -2703,22 +2601,22 @@ void CPlayer::RootSearch()
 	std::vector<int> path;			// 最短経路の情報を保持するvector
 
 	//======= エッジコストの算出 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++, nCntWeight++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
-		weight[nCntWeight] = sqrt((m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) * (m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) + (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z) * (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z));
+		weight[nCntWeight] = sqrt((m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) * (m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) + (m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z) * (m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
 	}
 
 	//======= エッジ追加 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[nCntNode]; nCntConnect++)
+		for (int nCntConnect = 0; nCntConnect < m_pNodeData->GetLoadData().connectNum[nCntNode]; nCntConnect++)
 		{// 繋がってるノードの数だけ回る
-			CPlayer::AddEdge(nCntNode, m_NodeData.connectIndex[nCntNode][nCntConnect], weight[nCntNode], node);
+			CPlayer::AddEdge(nCntNode, m_pNodeData->GetLoadData().connectIndex[nCntNode][nCntConnect], weight[nCntNode], node);
 		}
 	}
 
 	//======= 最短経路を調べる =========================================================================
-	CPlayer::Dijkstra(m_NodeData.nodeMax, m_nStartNode, m_nEndNode, node);
+	CPlayer::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nStartNode, m_nEndNode, node);
 
 	for (int nCntNode = m_nEndNode; nCntNode != m_nStartNode; nCntNode = node[nCntNode].from)
 	{// 最短経路をゴールから順にスタートまでたどる
@@ -2737,11 +2635,11 @@ void CPlayer::RootSearch()
 	}
 
 	//======= 目標地点の設定 =========================================================================
-	for (int nCntNodeMax = 0; nCntNodeMax < m_NodeData.nodeMax; )
+	for (int nCntNodeMax = 0; nCntNodeMax < m_pNodeData->GetLoadData().nodeMax; )
 	{// ノードの数だけ回る
 		for (int nCntNode = path.size() - 1; nCntNode >= 0; nCntNode--, nCntNodeMax++)
 		{
-			m_waypoint[nCntNodeMax] = m_NodeData.pos[path[nCntNode]];
+			m_waypoint[nCntNodeMax] = m_pNodeData->GetLoadData().pos[path[nCntNode]];
 		}
 	}
 }
@@ -2815,115 +2713,6 @@ void CPlayer::Dijkstra(int nodeMax, int start, int end, Node *node)
 			}
 		}
 	}
-}
-
-//=============================================================================
-// ルート探索用ファイルの読み込み
-//=============================================================================
-void CPlayer::FileLoad(char* pFileName)
-{
-	FILE* pFile = NULL;		// ファイルポインタ
-	char ReadText[256];		// 読み込んだ文字列を入れておく
-	char HeadText[256];		// 比較用
-	char DustBox[256];		// 使用しないものを入れておく
-	int nCount = 0;
-	int nCntIndex = 0;
-
-	// 一時データベース
-	std::vector<NodeState> LoadState; LoadState.clear();
-
-	// 初期化
-	NodeState OneState = {};
-
-	// ファイルオープン
-	pFile = fopen(pFileName, "r");
-
-	if (pFile != NULL)
-	{// ファイルが開かれていれば
-		while (strcmp(HeadText, "START_LOAD") != 0)
-		{// "START_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-			fgets(ReadText, sizeof(ReadText), pFile);
-			sscanf(ReadText, "%s", &HeadText);
-		}
-		if (strcmp(HeadText, "START_LOAD") == 0)
-		{// "START_LOAD" が読み取れた場合、処理開始
-			while (strcmp(HeadText, "END_LOAD") != 0)
-			{// "END_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-				fgets(ReadText, sizeof(ReadText), pFile);
-				sscanf(ReadText, "%s", &HeadText);
-
-				if (strcmp(HeadText, "\n") == 0)
-				{// 文字列の先頭が [\n](改行) の場合処理しない
-
-				}
-				else if (strcmp(HeadText, "START_DATA") == 0)
-				{// "START_DATA" が読み取れた場合
-					nCount = 0;
-					while (strcmp(HeadText, "END_DATA") != 0)
-					{// "END_DATA" が読み込まれるまで繰り返し文字列を読み取る
-						fgets(ReadText, sizeof(ReadText), pFile);
-						sscanf(ReadText, "%s", &HeadText);
-
-						if (strcmp(HeadText, "\n") == 0)
-						{// 文字列の先頭が [\n](改行) の場合処理しない
-
-						}
-						else if (strcmp(HeadText, "NODESET") == 0)
-						{// "NODESET" が読み取れた場合
-							while (strcmp(HeadText, "END_NODESET") != 0)
-							{// "END_NODESET" が読み込まれるまで繰り返し文字列を読み取る
-								fgets(ReadText, sizeof(ReadText), pFile);
-								sscanf(ReadText, "%s", &HeadText);
-
-								if (strcmp(HeadText, "\n") == 0)
-								{// 文字列の先頭が [\n](改行) の場合処理しない
-
-								}
-								else if (strcmp(HeadText, "NODE_POS") == 0)	// ノードの位置
-								{
-									sscanf(ReadText, "%s %c %f %f %f",
-										&DustBox, &DustBox,
-										&OneState.pos[nCount].x,
-										&OneState.pos[nCount].y,
-										&OneState.pos[nCount].z);
-								}
-								else if (strcmp(HeadText, "CONNECT_NUM") == 0)	// 接続ノードの数
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectNum[nCount]);
-								}
-								else if (strcmp(HeadText, "CONNECT_INDEX") == 0)	// 接続ノードの番号
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectIndex[nCount][nCntIndex]);
-									nCntIndex++;
-								}
-							}
-
-							OneState.index[nCount] = nCount;
-							nCntIndex = 0;
-							nCount++;
-						}
-					}
-					OneState.nodeMax = nCount; // ノードの総数
-
-											   // 一つのデータを読み込んだ後,一時データベースに格納
-					LoadState.emplace_back(OneState);
-				}
-			}
-		}
-
-		// ファイルクローズ
-		if (pFile != NULL)
-		{
-			fclose(pFile);
-			pFile = NULL;
-		}
-	}
-
-	m_NodeData = OneState;	// データの代入
 }
 
 //=============================================================================

@@ -8,6 +8,7 @@
 #include "AI.h"
 #include "player.h"
 #include "manager.h"
+#include "camera.h"
 #include "renderer.h"
 #include "debugProc.h"
 #include "model.h"
@@ -21,21 +22,29 @@
 #include "mouseCursor.h"
 #include "menu.h"
 #include "nodeDataFiler.h"
+#include "search.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
 #define WALKER_FILE	"data/TEXT/AI/walker/model_walker.txt"
 #define DRONE_FILE	"data/TEXT/AI/drone/model_drone.txt"
+#define AI_SPEED			(2.7f)		// 移動速度
 
-// ルート探索用
+// 移動系AI関連
 #define	LOAD_FILENAME		("data/TEXT/NODE_DATA/NodeData.txt")
 //#define	LOAD_FILENAME	("data/TEXT/NODE_DATA/NodeDataTutorial.txt")	// 読み込むファイルのパス
 #define ENEMY_BREAKTIME		(1)			// 休憩時間(フレーム)
 #define MOUSE_ACCEPTABLE	(20.0f)		// マウスの誤差の許容範囲
 #define MOVE_ACCEPTABLE		(25.0f)		// 移動の誤差の許容範囲
 #define POS_ACCEPTABLE		(100.0f)	// 位置の誤差の許容範囲
-#define AI_SPEED			(3.0f)		// 移動速度
+
+// 戦闘系AI関連
+#define ATTACK_AREA			(100000.0f)		// 攻撃範囲
+#define DRONE_BATTLE_FILE	("data/TEXT/AI/DRONE/battle_drone.txt")
+#define MAX_CHAR			(254)			// 読み取る文字数
+#define MAX_SEARCH			(4)				// センサー数
+#define FIND_FIND_CHARACTER_PRIORITY (4)	// 探すプレイヤーの優先順位
 
 //=============================================================================
 // 静的メンバ変数宣言
@@ -98,6 +107,8 @@ CAIMecha::~CAIMecha() {}
 //=============================================================================
 HRESULT CAIMecha::Init(void)
 {
+	srand((unsigned int)time(0));
+
 	// デバイスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
 	LPDIRECT3DDEVICE9 pDevice;
@@ -336,7 +347,10 @@ HRESULT CAIMecha::Init(void)
 		m_nTeam = 1;
 	}
 
-	// 移動AI関係数値の初期化==============================================
+	// 戦闘系AI数値の初期化
+	m_bFind = false;
+
+	// 移動系AI数値の初期化
 	m_pNodeData = CGame::GetNodeFiler();	// ファイル情報の取得
 
 	// パート関係
@@ -451,6 +465,8 @@ void CAIMecha::Uninit(void)
 //=============================================================================
 void CAIMecha::Update(void)
 {
+	m_posOld = m_pos;
+
 	if (NULL != m_pMotion && MECHATYPE_WALKER == m_mechaType)
 	{// モーション
 		m_pMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
@@ -626,7 +642,9 @@ void CAIMecha::AIUpdate()
 	//	CDebugProc::Print("\n");
 	//}
 
-	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
+	//CDebugProc::Print("m_bFind : %s\n", m_bFind ? "true" : "false");
+
+	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
 	// 前回のパート情報の保存
@@ -637,6 +655,49 @@ void CAIMecha::AIUpdate()
 	// 中断処理
 	Cancel();
 
+	// 攻撃関係処理
+	Attack();
+
+	// AI行動設定
+	AIActionSet(pMouse);
+
+	if (m_bPartSwitch == CGame::PART_ACTION)
+	{// アクションパートの場合
+		m_nRallyCount = 0;
+
+		// 自動移動処理
+		CAIMecha::AutoMove();
+	}
+	else if (m_bPartSwitch == CGame::PART_STRATEGY)
+	{// ストラテジーパートの場合
+		if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
+		{// AIの行動が決定している状態で左クリックされた場合
+			m_nPoint = 0;
+			m_nCountPoint = -1;
+
+			// 経路探索方法
+			if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)// 往復移動時
+			{// ポイント間を徘徊する経路探索
+				CAIMecha::RootSearch();
+				CAIMecha::PatrolRootSearch();
+			}
+			else if (m_AIAction[2] == AI_ACTION_RALLY)// ラリー時
+			{// ラリーポイントによる経路探索
+				CAIMecha::RallyRootSearch();
+			}
+			if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)// 目標優先時
+			{// ポイントへの経路探索
+				CAIMecha::RootSearch();
+			}
+		}
+	}
+}
+
+//=============================================================================
+//	AI行動設定処理
+//=============================================================================
+void CAIMecha::AIActionSet(CInputMouse *pMouse)
+{
 	if (m_bPartSwitch == CGame::PART_STRATEGY && CManager::GetGame()->GetButtonManager() != NULL)
 	{// ストラテジーパート時でボタンマネージャーがNULLじゃない場合
 		if (CManager::GetGame()->GetButtonManager()->GetSelectFinish() == true)
@@ -741,6 +802,7 @@ void CAIMecha::AIUpdate()
 		}
 	}
 
+	// 行動ごとの処理
 	if (m_AIAction[0] == AI_ACTION_NONE)
 	{// AIの行動が決定していない場合
 	 // 追従モードに設定する
@@ -785,36 +847,86 @@ void CAIMecha::AIUpdate()
 		{// 待機の場合
 		}
 	}
+}
 
-	if (m_bPartSwitch == CGame::PART_ACTION)
-	{// アクションパートの場合
-		m_nRallyCount = 0;
+//=============================================================================
+//	攻撃関係処理
+//=============================================================================
+void CAIMecha::Attack()
+{
+	CScene *pScene = CScene::GetSceneTop(PLAYER_PRIORITY);
+	CScene *pSceneNext = NULL;
+	int nCntEnemyPlayer = 0;	// 敵プレイヤーのカウント
+	float fAttackLength = 0.0f;	// 差分
+	bool bFind[2] = { false, false };	// 発見状態
 
-		// 自動移動処理
-		CAIMecha::AutoMove();
-	}
-	else if (m_bPartSwitch == CGame::PART_STRATEGY)
-	{// ストラテジーパートの場合
-		if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
-		{// AIの行動が決定している状態で左クリックされた場合
-			m_nPoint = 0;
-			m_nCountPoint = -1;
+	while (pScene != NULL)
+	{// NULLになるまでループ
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
 
-			// 経路探索方法
-			if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)// 往復移動時
-			{// ポイント間を徘徊する経路探索
-				CAIMecha::RootSearch();
-				CAIMecha::PatrolRootSearch();
-			}
-			else if (m_AIAction[2] == AI_ACTION_RALLY)// ラリー時
-			{// ラリーポイントによる経路探索
-				CAIMecha::RallyRootSearch();
-			}
-			if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)// 目標優先時
-			{// ポイントへの経路探索
-				CAIMecha::RootSearch();
+		if (CScene::OBJTYPE_PLAYER == objType)
+		{// プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pScene;
+			int nTeam = pPlayer->GetTeam();
+			if (m_nTeam != nTeam)
+			{// チームが違うとき
+				m_pEnemyPlayer[nCntEnemyPlayer] = pPlayer;
+				nCntEnemyPlayer++;
 			}
 		}
+
+		// 次のオブジェクトを見る
+		pScene = pSceneNext;
+	}
+
+	for (int nCntPlayer = 0; nCntPlayer < nCntEnemyPlayer; nCntPlayer++)
+	{// 敵プレイヤーの数分回る
+		if (m_pEnemyPlayer[nCntPlayer] != NULL)
+		{// NULLチェック
+			fAttackLength = 
+				(m_pEnemyPlayer[nCntPlayer]->GetPos().x - m_pos.x) * 
+				(m_pEnemyPlayer[nCntPlayer]->GetPos().x - m_pos.x) + 
+				(m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z) * 
+				(m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z);
+
+			if (fAttackLength < ATTACK_AREA)
+			{// 範囲内に敵が入った場合
+
+				// 発見状態にする
+				bFind[nCntPlayer] = true;
+
+				// 見つけた敵の方向を向く
+				m_rotDest.y = atan2f(m_pEnemyPlayer[nCntPlayer]->GetPos().x - m_pos.x, m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z) + D3DX_PI;
+
+				// 攻撃方向の設定
+				float fAngle = 
+					(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) * 
+					(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) + 
+					(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) * 
+					(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y);
+
+				if (rand() % 25 == 0)
+				{// ランダムに攻撃
+					// 弾の生成
+					CBulletPlayer::Create(m_pos, m_rot.y + D3DX_PI, fAngle, m_nAttack, m_nTeam);
+				}
+			}
+			else
+			{// 範囲内に敵がいない場合
+				bFind[nCntPlayer] = false;
+			}
+		}
+	}
+
+	// 発見状態の遷移
+	if (bFind[0] || bFind[1])
+	{// どちらか一方でも発見している
+		m_bFind = true;
+	}
+	else if (!bFind[0] && !bFind[1])
+	{// どっちも発見していない
+		m_bFind = false;
 	}
 }
 
@@ -823,7 +935,6 @@ void CAIMecha::AIUpdate()
 //=============================================================================
 void CAIMecha::AutoMove()
 {
-
 	if (m_bPatrol)
 	{// 往復移動時
 		m_posDest = m_patrolWaypoint[m_nPoint];
@@ -842,7 +953,11 @@ void CAIMecha::AutoMove()
 	{// 差分が許容値内に収まるまで目的地に移動する
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * AI_SPEED;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * AI_SPEED;
-		m_rotDest.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
+
+		if (!m_bFind)
+		{// 未発見時
+			m_rotDest.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
+		}
 	}
 	else if (m_nBreaktime < 0)
 	{// 移動後休憩
@@ -879,12 +994,22 @@ void CAIMecha::AutoMove()
 	if (m_rot.y > D3DX_PI) { m_rot.y -= D3DX_PI * 2.0f; }
 	if (m_rot.y < -D3DX_PI) { m_rot.y += D3DX_PI * 2.0f; }
 
-	// 目標方向へ向く
-	m_rot.y += (m_rotDest.y - m_rot.y) * 0.1f;
+	if (m_rotDest.y - m_rot.y > D3DX_PI || m_rotDest.y - m_rot.y < -D3DX_PI)
+	{// 差分が1周以上ある場合
+		m_rot.y -= (m_rotDest.y - m_rot.y) * 0.1f;
+	}
+	else
+	{
+		// 目標方向へ向く
+		m_rot.y += (m_rotDest.y - m_rot.y) * 0.1f;
+	}
 
 	// 位置の更新
 	m_pos.x += m_move.x;
 	m_pos.z += m_move.z;
+
+	//CDebugProc::Print("m_rot.y : %.1f ", m_rot.y);
+	//CDebugProc::Print("m_rotDest.y : %.1f ", m_rotDest.y);
 }
 
 //=============================================================================
@@ -901,7 +1026,11 @@ void CAIMecha::Follow()
 	 // 差分を求める
 		if (m_pPlayer != NULL)
 		{// プレイヤーのNULLチェック
-			fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) * (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) + (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) * (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
+			fLength = 
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) * 
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) + 
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) * 
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -924,7 +1053,11 @@ void CAIMecha::Follow()
 	 // 差分を求める
 		if (m_pPlayer != NULL)
 		{// プレイヤーのNULLチェック
-			fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pPlayer->GetPos().x) * (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pPlayer->GetPos().x) + (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pPlayer->GetPos().z) * (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pPlayer->GetPos().z);
+			fLength = 
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pPlayer->GetPos().x) * 
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pPlayer->GetPos().x) +
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pPlayer->GetPos().z) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pPlayer->GetPos().z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -959,7 +1092,11 @@ void CAIMecha::Follow()
 		// 今自分が向かってるノードを検索する
 		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// ノードの数だけ回る
-			fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - m_posDest.x) * (m_pNodeData->GetLoadData().pos[nCntNode].x - m_posDest.x) + (m_pNodeData->GetLoadData().pos[nCntNode].z - m_posDest.z) * (m_pNodeData->GetLoadData().pos[nCntNode].z - m_posDest.z);
+			fLength = 
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_posDest.x) * 
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_posDest.x) +
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_posDest.z) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_posDest.z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -1001,7 +1138,11 @@ void CAIMecha::NodeSearch(bool node)
 		 // 差分を求める
 			if (m_pPlayer != NULL)
 			{// プレイヤーのNULLチェック
-				fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) * (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) + (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) * (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
+				fLength = 
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) * 
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) + 
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
 
 				if (fMinLength > fLength)
 				{// 差分の最小値を求める
@@ -1025,7 +1166,11 @@ void CAIMecha::NodeSearch(bool node)
 		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// ノードの数だけ回る
 		 // 差分を求める
-			fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - CManager::GetGame()->GetMouse()->Getsetpos().x) * (m_pNodeData->GetLoadData().pos[nCntNode].x - CManager::GetGame()->GetMouse()->Getsetpos().x) + (m_pNodeData->GetLoadData().pos[nCntNode].z - CManager::GetGame()->GetMouse()->Getsetpos().z) * (m_pNodeData->GetLoadData().pos[nCntNode].z - CManager::GetGame()->GetMouse()->Getsetpos().z);
+			fLength = 
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - CManager::GetGame()->GetMouse()->Getsetpos().x) * 
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - CManager::GetGame()->GetMouse()->Getsetpos().x) +
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - CManager::GetGame()->GetMouse()->Getsetpos().z) * 
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - CManager::GetGame()->GetMouse()->Getsetpos().z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -1066,7 +1211,11 @@ void CAIMecha::RootSearch()
 	//======= エッジコストの算出 =========================================================================
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
-		weight[nCntWeight] = sqrt((m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) * (m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) + (m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z) * (m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
+		weight[nCntWeight] = sqrt(
+			(m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) * 
+			(m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) + 
+			(m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z) * 
+			(m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
 	}
 
 	//======= エッジ追加 =========================================================================
@@ -1354,7 +1503,12 @@ void CAIMecha::Cancel()
 		float fMinLength = 100000, fLength = 100000;
 		for (int nCntAll = 0; nCntAll < m_pNodeData->GetLoadData().nodeMax; nCntAll++)
 		{// 全てのノードとプレイヤーとの差分を出す
-			fLength = (m_pos.x - m_pNodeData->GetLoadData().pos[nCntAll].x) * (m_pos.x - m_pNodeData->GetLoadData().pos[nCntAll].x) + (m_pos.z - m_pNodeData->GetLoadData().pos[nCntAll].z) * (m_pos.z - m_pNodeData->GetLoadData().pos[nCntAll].z);
+			fLength = 
+				(m_pos.x - m_pNodeData->GetLoadData().pos[nCntAll].x) *
+				(m_pos.x - m_pNodeData->GetLoadData().pos[nCntAll].x) +
+				(m_pos.z - m_pNodeData->GetLoadData().pos[nCntAll].z) * 
+				(m_pos.z - m_pNodeData->GetLoadData().pos[nCntAll].z);
+
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
 				fMinLength = fLength;
