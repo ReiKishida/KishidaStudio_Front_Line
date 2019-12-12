@@ -20,6 +20,8 @@
 #define NUMTEX_UV_Y			(3)
 #define NUM_TEAM			(2)
 #define NUM_RESPAWN_POS		(4)
+#define NUM_KILL_LOG		(4)
+#define NUM_KILL_LOG_PLAYER (2)
 
 //*****************************************************************************
 // 前方宣言
@@ -35,6 +37,7 @@ class CScene3D;
 class CMouseCursor;
 class CDamageDirection;
 class CNodeDataFiler;
+class CUI_TEXTURE;
 
 //*****************************************************************************
 // クラス定義
@@ -57,6 +60,14 @@ public:
 		PART_STRATEGY,
 		PART_MAX,
 	}PART;
+
+	typedef enum
+	{// 種類
+		TYPE_PLAYER = 0,
+		TYPE_DROWN,
+		TYPE_WALKER,
+		TYPE_MAX,
+	}TYPE;
 
 	CGame(int nPriority = GAME_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_GAME);
 	~CGame();
@@ -96,6 +107,14 @@ public:
 
 	D3DXVECTOR3 GetRespawnPos(int nTeam, int nPoint) { return m_aRespawnPos[nTeam][nPoint]; };
 
+	void SetKillIdx(int nIdx, int nPlayerIdx) { m_nKillIdx[nIdx] = nPlayerIdx; };
+	void SetDeathIdx(int nIdx, int nPlayerIdx) { m_nDeathIdx[nIdx] = nPlayerIdx; };
+
+	void SetLog(int nIdx, bool bLog) { m_bLog[nIdx] = bLog; };
+	bool GetLog(int nIdx) { return m_bLog[nIdx]; };
+
+	void SetPlayerType(int nIdx, TYPE type) { m_playerType[nIdx] = type; };
+
 	static void SetMechaType(int nPlayerIdx, CMechaSelect::MECHATYPE type) { m_aMechaType[nPlayerIdx] = type; };
 	static CMechaSelect::MECHATYPE GetMechaType(int nPlayerIdx) { return m_aMechaType[nPlayerIdx]; };
 
@@ -104,6 +123,7 @@ public:
 
 private:
 	void LoadRespawnPos(void);
+	void CreatePlayer(void);
 
 	void PrintData(void);
 	void PrintCPUData(void);
@@ -121,6 +141,10 @@ private:
 	void CreateActionUI(void);
 	void CreateStrategyUI(void);
 	void SwicthPart(void);
+
+	void CreateKillLog(void);
+	void UpdateKillLog(void);
+	void ReleaseKillLog(int nIdx);
 
 	CPause *m_pPause;							// ポーズクラスのポインタ変数
 	static STATE m_state;						// ゲームの状態
@@ -145,6 +169,15 @@ private:
 
 	bool m_bPlayerDeath[MAX_PLAYER_CONNECT];
 	bool m_bAIDeath[2][MAX_PLAYER_CONNECT];
+
+	int m_nKillIdx[NUM_KILL_LOG];	//倒した側の番号
+	int m_nDeathIdx[NUM_KILL_LOG];	//倒された側の番号
+	bool m_bLog[NUM_KILL_LOG];		//ログを使用しているかどうか
+	int m_nCntDrawLog[NUM_KILL_LOG];	//ログの描画している間のカウンター
+	TYPE m_playerType[NUM_KILL_LOG_PLAYER];
+	CUI_TEXTURE *m_apKillLogBase[NUM_KILL_LOG];								// キルログの土台
+	CUI_TEXTURE *m_apKillLogPlayerIcon[NUM_KILL_LOG][NUM_KILL_LOG_PLAYER];	// キルログのプレイヤーアイコン
+	CUI_TEXTURE *m_apKillLogPlayerIdx[NUM_KILL_LOG][NUM_KILL_LOG_PLAYER];	// キルログのプレイヤー番号
 
 	static CMechaSelect::MECHATYPE m_aMechaType[MAX_PLAYER_CONNECT];
 

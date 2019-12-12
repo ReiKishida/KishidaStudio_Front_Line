@@ -20,6 +20,8 @@
 #include "damageDirection.h"
 #include "model.h"
 
+#include "menu.h"
+
 //==================================
 // マクロ定義
 //==================================
@@ -169,7 +171,7 @@ void CBulletCollision::Draw(void)
 //==================================
 // 生成処理
 //==================================
-CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,int nTeam)
+CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, int nTeam, CScene *pScene)
 {
 	CBulletPlayer *pBullet = NULL;
 
@@ -178,6 +180,7 @@ CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngle
 	if (NULL != pBullet)
 	{// メモリ確保成功
 		pBullet->m_nTeam = nTeam;
+		pBullet->m_pScene = pScene;
 		pBullet->Init(pos, fAngle, fAngleVertical, nDamage);
 	}
 
@@ -221,7 +224,7 @@ HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical,
 //=========================================
 void CBulletPlayer::Uninit(void)
 {
-	m_pPlayer = NULL;
+	m_pScene = NULL;
 	CScene3DBill::Uninit();
 }
 
@@ -263,11 +266,28 @@ bool CBulletPlayer::BulletCollision(void)
 			{
 				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f))
 				{// 接触している
-					float fAngle = CManager::GetCamera()->GetRot().y;
-					D3DXVECTOR3 dir = D3DXVECTOR3(sinf(fAngle), 0.0f, cosf(fAngle));
-					CManager::GetGame()->GetDamageDirection()->CreatePolygon(dir, CBullet::GetMove());
+					if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+					{//シングルプレイの場合
+						if (pPlayer->GetPlayerIdx() == 0)
+						{//プレイヤー番号が０の場合
+							float fAngle = CManager::GetCamera()->GetRot().y;
+							D3DXVECTOR3 dir = D3DXVECTOR3(sinf(fAngle), 0.0f, cosf(fAngle));
+							CManager::GetGame()->GetDamageDirection()->CreatePolygon(dir, CBullet::GetMove());
+						}
+					}
+					else if (CMenu::GetMode() == CMenu::MODE_MULTI)
+					{//マルチプレイの場合
+						if (CManager::GetClient()->GetPlayerIdx() == pPlayer->GetPlayerIdx())
+						{//プレイヤー番号が一致する場合　
+							float fAngle = CManager::GetCamera()->GetRot().y;
+							D3DXVECTOR3 dir = D3DXVECTOR3(sinf(fAngle), 0.0f, cosf(fAngle));
+							CManager::GetGame()->GetDamageDirection()->CreatePolygon(dir, CBullet::GetMove());
+						}
+					}
 
-					pPlayer->Damage(CBullet::GetDamage());
+					pPlayer->Damage(CBullet::GetDamage(), m_pScene);
+					//pPlayer->Damage(CBullet::GetDamage(), ->GetPlayerIdx());
+
 					CParticle::Create(CBullet::GetPos(), 1);
 
 					Uninit();
@@ -275,7 +295,7 @@ bool CBulletPlayer::BulletCollision(void)
 				}
 			}
 		}
-		else if(CScene::OBJTYPE_AI == objType)
+		else if (CScene::OBJTYPE_AI == objType)
 		{// AI機体
 			CAIMecha *pAI = (CAIMecha*)pScene;
 			int nTeam = pAI->GetTeam();
@@ -283,7 +303,8 @@ bool CBulletPlayer::BulletCollision(void)
 			{
 				if (CScene3DBill::Collision(pAI->GetPos(), 50.0f))
 				{// 接触している
-					pAI->Damage(CBullet::GetDamage());
+					pAI->Damage(CBullet::GetDamage(), m_pScene);
+					//pAI->Damage(CBullet::GetDamage(),m_pPlayer->GetPlayerIdx());
 					CParticle::Create(CBullet::GetPos(), 1);
 					Uninit();
 					return true;		// 接触したのでtrueを返す
@@ -407,7 +428,7 @@ bool CBulletEnemy::BulletCollision(void)
 
 	if (Collision(pPlayer->GetPos(), pPlayer->GetVtxMax().x))
 	{// 接触している
-		pPlayer->Damage(GetDamage());	// ダメージを与える
+		pPlayer->Damage(GetDamage(), this);	// ダメージを与える
 		return true;					// 接触したのでtrueを返す
 	}
 

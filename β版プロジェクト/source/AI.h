@@ -10,6 +10,7 @@
 #include "main.h"
 #include "scene.h"
 #include "game.h"
+#include "player.h"
 
 //=============================================================================
 // マクロ定義
@@ -20,11 +21,13 @@
 //=============================================================================
 // 前方宣言
 //=============================================================================
+class CInputMouse;
 class CModel;
 class CMotion;
 class CPlayer;
 class CButtonManagerStrategy;
 class CNodeDataFiler;
+class CSearch;
 
 //=============================================================================
 // クラス定義
@@ -105,7 +108,7 @@ public:
 	D3DXVECTOR3 GetVtxMax(void) { return m_vtxMax; }
 	D3DXVECTOR3 GetVtxMin(void) { return m_vtxMin; }
 
-	void Damage(int nDamage);
+	void Damage(int nDamage, CScene *pScene);
 
 	CModel *GetModel(int nIdx) { return m_pModel[nIdx]; };
 
@@ -113,23 +116,38 @@ public:
 
 	int GetTeam(void) { return m_nTeam; };
 	void SetDeath(bool bDeath) { m_bDeath = bDeath; };
-	bool GetDeath(void) { return m_bDeath; };									
+	bool GetDeath(void) { return m_bDeath; };
+	CPlayer *GetPlayer(void) { return m_pPlayer; };
+	int GetKillPlayerIdx(void) { return m_nKillPlayerIdx; };
+	int GetNumParts(void) { return m_nNumParts; };
 
 private:
-	// AI移動系の関数
-	void AIUpdate(void);			// AIの更新
-	void Follow(void);				// 追従処理
-	void NodeSearch(bool node);		// マウス座標からノード検索
-	void AutoMove(void);			// 自動移動
-	void RootSearch(void);			// 最短経路検索
-	void RallyRootSearch(void);		// ラリーポイントでの最短経路検索
-	void PatrolRootSearch(void);	// 往復用の最短経路検索
-	void Cancel(void);				// 中断
+	// =============================================================
+	// 移動系AIの関数
+	// =============================================================
+	void AIUpdate(void);					// AIの更新
+	void AIActionSet(CInputMouse *pMouse);	// AI行動の設定
+	void Attack(void);						// 攻撃関係処理
+	void AutoMove(void);					// 自動移動
+	void Follow(void);						// 追従処理
+	void NodeSearch(bool node);				// マウス座標からノード検索
+	void RootSearch(void);					// 最短経路検索
+	void RallyRootSearch(void);				// ラリーポイントでの最短経路検索
+	void PatrolRootSearch(void);			// 往復用の最短経路検索
+	void Cancel(void);						// 中断
 	void AddEdge(int first, int second, float weight, Node *node);	// エッジの追加
 	void Dijkstra(int nodeMax, int start, int end, Node *node);		// 経路探索
 
+	// =============================================================
+	// 戦闘系AIの関数
+	// =============================================================
+
+	// =============================================================
+	// 基本系AIの変数
+	// =============================================================
 	D3DXMATRIX		m_mtxWorld;			// ワールドマトリックス
 	D3DXVECTOR3		m_pos;				// 位置
+	D3DXVECTOR3		m_posOld;			// 前回位置
 	D3DXVECTOR3		m_rot;				// 回転
 	D3DXVECTOR3		m_move;				// 移動量
 	D3DXVECTOR3		m_vtxMax;			// 頂点座標の最大値
@@ -142,6 +160,7 @@ private:
 	STATE			m_state;			// 状態
 	MECHATYPE		m_mechaType;		// 機体の種類
 	CPlayer			*m_pPlayer;			// プレイヤーのポインタ変数
+	CPlayer			*m_pEnemyPlayer[ENEMY_PLAYER_MAX];	// 敵プレイヤーのポインタ変数
 	float			m_fSpeed;			// 移動量
 	int				m_nLife;			// 現在の耐久力
 	int				m_nLifeMax;			// 最大耐久力
@@ -149,10 +168,11 @@ private:
 	int				m_nAttack;			// 攻撃力
 	int				m_nNumShoot;		// 発射数
 	int				m_nTeam;			// チーム
-	bool			m_bDeath;			//死亡しているかどうか
+	bool			m_bDeath;			// 死亡しているかどうか
+	int				m_nKillPlayerIdx;
 
 	// =============================================================
-	// AI移動系の変数
+	// 移動系AIの変数
 	// =============================================================
 	CNodeDataFiler *m_pNodeData;							// マップ情報へのポインタ
 
@@ -189,6 +209,16 @@ private:
 	// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
+
+	// =============================================================
+	// 戦闘系のAI変数
+	// =============================================================
+	// 認識系
+	bool m_bFind;
+
+	// 攻撃系
+	int nAttackDelay;
+
 };
 
 #endif

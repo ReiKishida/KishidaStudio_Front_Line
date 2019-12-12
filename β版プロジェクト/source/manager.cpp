@@ -54,7 +54,7 @@ CTutorialMenu		*CManager::m_pTutorialMenu = NULL;
 CGame				*CManager::m_pGame = NULL;				// ゲームクラスのポインタ変数
 CResult				*CManager::m_pResult = NULL;			// リザルトクラスのポインタ変数
 CRanking			*CManager::m_pRanking = NULL;			// ランキングクラスのポインタ変数
-CManager::MODE		CManager::m_mode = CManager::MODE_MENU;
+CManager::MODE		CManager::m_mode = CManager::MODE_GAME;
 
 int  CManager::m_nNumStage = 0;
 

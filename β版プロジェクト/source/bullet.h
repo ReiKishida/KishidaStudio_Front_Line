@@ -85,12 +85,12 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,int nTeam);
+	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, int nTeam, CScene *pScene);
 
 	bool BulletCollision(void);
 
 private:
-	CPlayer *m_pPlayer;			// プレイヤークラスのポインタ変数
+	CScene *m_pScene;			// オブジェクトクラスのポインタ変数
 	int		m_nTeam;			// チームの情報
 	float	m_fAngle;			// 進行方向の角度
 };
