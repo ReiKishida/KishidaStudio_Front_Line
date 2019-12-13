@@ -9,7 +9,7 @@ SCRIPT
 #******************************************
 #	パーティクルの数
 #******************************************
-NUM_PARTICLE = 4
+NUM_PARTICLE = 6
 
 #******************************************
 #	パーティクルの設定
@@ -97,6 +97,48 @@ PARTICLESET		[ 3 ]
 	BOUND = 0						＃バウンド[0:なし　1:あり]
 	TEXTURE = 3						＃テクスチャの種類
 	DRAW = 1						＃加算合成[0:なし　1:あり]
+END_PARTICLESET
+
+PARTICLESET		[ 4 ]
+	MAXMOVE = 0 0 0					＃移動量の最大
+	MINMOVE = 0 0 0					＃移動量の最小
+	INITCOL = 1.00 1.00 1.00 0.90	＃初期カラー
+	FLAMECOL = 0.00 0.00 0.00 -0.03	＃フレーム毎のカラーの変化
+	INITSIZE = 15 28					＃初期サイズ
+	FLAMESIZE = 0.220002			＃フレーム毎のサイズの変化
+	EMITTERLIFE = 5					＃エミッタの寿命
+	PARLIFE = 92 94					＃ポリゴンの寿命
+	APPEAR = 1						＃出現間隔
+	SPREAD = 0.10					＃拡散
+	LAP = 5							＃1周に出す個数
+	GRAVITY = 0.000000				＃重力
+	ROTPATTERN = 0					＃回転のパターン
+	ROTSPEED = 0.000000				＃回転の速度
+	LOOP = 0						＃ループ[0:なし　1:あり]
+	BOUND = 0						＃バウンド[0:なし　1:あり]
+	TEXTURE = 4						＃テクスチャの種類
+	DRAW = 1						＃加算合成[0:なし　1:あり]
+END_PARTICLESET
+
+PARTICLESET		[ 5 ]
+	MAXMOVE = 1 1 1					＃移動量の最大
+	MINMOVE = 0 0 0					＃移動量の最小
+	INITCOL = 0.00 0.00 0.00 1.00	＃初期カラー
+	FLAMECOL = 0.00 0.00 0.00 -0.01	＃フレーム毎のカラーの変化
+	INITSIZE = 25 25					＃初期サイズ
+	FLAMESIZE = 0.799999			＃フレーム毎のサイズの変化
+	EMITTERLIFE = 5					＃エミッタの寿命
+	PARLIFE = 87 87					＃ポリゴンの寿命
+	APPEAR = 1						＃出現間隔
+	SPREAD = 0.30					＃拡散
+	LAP = 5							＃1周に出す個数
+	GRAVITY = 0.000000				＃重力
+	ROTPATTERN = 0					＃回転のパターン
+	ROTSPEED = 0.000000				＃回転の速度
+	LOOP = 0						＃ループ[0:なし　1:あり]
+	BOUND = 0						＃バウンド[0:なし　1:あり]
+	TEXTURE = 0						＃テクスチャの種類
+	DRAW = 0						＃加算合成[0:なし　1:あり]
 END_PARTICLESET
 
 END_SCRIPT
