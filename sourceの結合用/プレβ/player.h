@@ -184,6 +184,8 @@ public:
 
 	bool GetReload(void) { return m_bReload; };
 
+	CMechaSelect::MECHATYPE	GetMechaType(void) { return m_mecha; };
+	
 	// ラジオチャット
 	RADIOCHAT GetRadioChat(void) { return m_radiochat; }									// ラジオチャット情報の取得
 	void SetRadioChat(RADIOCHAT radiochat) { m_radiochat = radiochat; }						// ラジオチャットの設定

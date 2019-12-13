@@ -1489,15 +1489,24 @@ void CPlayer::Damage(int nDamage, CScene *pScene)
 			if (m_nLife > 0 && m_bDeath == false)
 			{//体力が０より大きく且つ死亡していない場合
 
-				if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_FRONT))
-				{
-					m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
-					m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
-				}
-				else if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_BACK))
-				{
-					m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
-					m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+				if (pScene->GetObjType() == CScene::OBJTYPE_PLAYER)
+				{//オブジェクトの種類がプレイヤーの場合
+					CPlayer *pPlayer = (CPlayer*)pScene;
+					if (pPlayer->GetMechaType() == CMechaSelect::MECHATYPE_HEAVY || pPlayer->GetMechaType() == CMechaSelect::MECHATYPE_SHOOTER)
+					{
+						if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_FRONT))
+						{
+							m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
+							m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_FRONT);	// ダメージモーションを再生
+						}
+						else if (CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_BACK) ||
+							CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_RIGHT) ||
+							CManager::GetGame()->GetDamageDirection()->GetDamageDirection(CDamageDirection::DIRECTION_LEFT))
+						{
+							m_pUpperMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+							m_pLowerMotion->SetMotion(CMotionManager::TYPE_DAMAGE_BACK);	// ダメージモーションを再生
+						}
+					}
 				}
 
 				m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
