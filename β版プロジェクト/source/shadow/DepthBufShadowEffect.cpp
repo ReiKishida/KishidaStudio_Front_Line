@@ -44,17 +44,17 @@ bool CDepthBufShadowEffect::Init(LPDIRECT3DDEVICE9 &cpDev )
 		return false;
 	}
 #else
-	if(FAILED( D3DXCreateEffectFromResource(
-		cpDev.GetPtr(),
-		NULL,
-		MAKEINTRESOURCE(FXID_DEPTHBUFSHADOW),
-		NULL,
-		NULL,
-		0,
-		NULL,
-		m_cpEffect.ToCreator(),
-		NULL )))
-		return false;
+	//if(FAILED( D3DXCreateEffectFromResource(
+	//	cpDev.GetPtr(),
+	//	NULL,
+	//	MAKEINTRESOURCE(FXID_DEPTHBUFSHADOW),
+	//	NULL,
+	//	NULL,
+	//	0,
+	//	NULL,
+	//	m_cpEffect.ToCreator(),
+	//	NULL )))
+	//	return false;
 #endif
 
 	m_hWorldMat		 = m_cpEffect->GetParameterByName( NULL, "matWorld" );

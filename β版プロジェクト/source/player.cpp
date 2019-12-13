@@ -728,9 +728,6 @@ void CPlayer::Uninit(void)
 //=========================================
 void CPlayer::Update(void)
 {
-	// 前回位置の保存
-	m_posOld = m_pos;
-
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
 		if (m_Respawn == RESPAWN_START)
@@ -757,6 +754,9 @@ void CPlayer::Update(void)
 					}
 				}
 			}
+			// 前回位置の保存
+			m_posOld = m_pos;
+
 		}
 
 		if (CMenu::GetMode() == CMenu::MODE_MULTI)
@@ -845,6 +845,9 @@ void CPlayer::Update(void)
 		}
 		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
 		{
+			// 前回位置の保存
+			m_posOld = m_pos;
+
 			if (m_nPlayerIdx == 0)
 			{
 				m_pReticle->SetDisp(false);
@@ -954,6 +957,9 @@ void CPlayer::Update(void)
 	}
 	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
 	{
+		// 前回位置の保存
+		m_posOld = m_pos;
+
 		if (m_Respawn == RESPAWN_START)
 		{	// 戦闘開始 状態
 			Respawn(RESPAWN_START);
@@ -2585,7 +2591,7 @@ void CPlayer::Battle(void)
 				}
 			}
 		}
-		
+
 		 // 次のオブジェクトを見る
 		pScene = pSceneNext;
 	}
@@ -2894,7 +2900,7 @@ void CPlayer::AutoMove()
 		bMove = true;
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
-		
+
 		if (!m_bFind)
 		{// 敵未発見時
 			m_rotDest.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z);
@@ -2992,7 +2998,8 @@ void CPlayer::NodeSearch()
 		} while (m_nNewEndNode == nMovePoint);
 		m_nNewEndNode = nMovePoint;
 	}
-	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
 		if (m_pNodeData->GetLoadData().pos[nCntNode].x + POS_ACCEPTABLE > m_pos.x
 			&& m_pNodeData->GetLoadData().pos[nCntNode].x - POS_ACCEPTABLE < m_pos.x

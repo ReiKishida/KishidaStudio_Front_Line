@@ -126,6 +126,15 @@ public:
 	int GetNumParts(void) { return m_nNumParts; };
 
 	void SetLife(int nLife) { m_nLife = nLife; };
+
+	D3DXVECTOR3 GetPosCanon(void) { return m_posCanon; };
+	float GetAngle(void) { return m_fAngle; };
+	float GetAngleV(void) { return m_fAngleV; };
+	void SetShoot(bool bShoot) { m_bShoot = bShoot; };
+	bool GetShoot(void) { return m_bShoot; };
+	int GetAttack(void) { return m_nAttack; };
+
+
 private:
 	// =============================================================
 	// ˆÚ“®ŒnAI‚ÌŠÖ”
@@ -219,6 +228,10 @@ private:
 	// í“¬Œn‚ÌAI•Ï”
 	// =============================================================
 	bool m_bFind;	// ”­Œ©‚Ìó‘Ô
+	D3DXVECTOR3 m_posCanon;									//ËoŒû‚ÌˆÊ’u
+	float m_fAngle;											//¶‰EUŒ‚•ûŒü‚Ìî•ñ
+	float m_fAngleV;										//ã‰ºUŒ‚•ûŒü‚Ìî•ñ
+	bool m_bShoot;											//”­Ë‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©
 };
 
 #endif

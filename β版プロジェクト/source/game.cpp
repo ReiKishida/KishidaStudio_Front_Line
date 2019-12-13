@@ -154,8 +154,8 @@ CGame::~CGame()
 //=============================================================================
 HRESULT CGame::Init(void)
 {
-	m_nBlueLinkEnergy = 100;
-	m_nRedLinkEnergy = 100;
+	m_nBlueLinkEnergy = MAX_LINKENERGY;
+	m_nRedLinkEnergy = MAX_LINKENERGY;
 
 	//リスポーン位置の読み込み
 	LoadRespawnPos();
@@ -673,7 +673,7 @@ void CGame::CreatePlayer(void)
 		{//マルチプレイの場合
 			bool bConnect = false;	//接続しているかどうか
 
-									//クライアントの取得
+			//クライアントの取得
 			CClient *pClient = CManager::GetClient();
 
 			if (m_aMechaType[nCntPlayer] == -1)
@@ -825,6 +825,67 @@ void CGame::PrintData(void)
 				pClient->Printf(" ");
 			}
 
+			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+			{
+				//AIの位置を書き込む
+				pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetPos().y, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetPos().z);
+				pClient->Printf(" ");
+
+				//AIの向きを書き込む
+				pClient->Printf("%.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetRot().y);
+				pClient->Printf(" ");
+
+				//AIの死亡しているかどうかを書き込む
+				if (m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetDeath() == true)
+				{//死亡している場合
+				 //死亡している情報を書きこむ
+					pClient->Printf("1");
+					pClient->Printf(" ");
+
+					//キルプレイヤーの番号を書き込む
+					pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetKillPlayerIdx());
+					pClient->Printf(" ");
+
+					//キルプレイヤーの種類を書き込む
+					pClient->Printf("%d", (int)m_playerType[0]);
+					pClient->Printf(" ");
+
+				}
+				else
+				{
+					//死亡していないことを書き込む
+					pClient->Printf("0");
+					pClient->Printf(" ");
+				}
+
+				//弾を発射しているかどうかを書き込む
+				if (m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetShoot() == true)
+				{//発射されている場合
+					//発射している情報を書き込む
+					pClient->Printf("1");
+					pClient->Printf(" ");
+
+					//攻撃力を書き込む
+					pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetAttack());
+					pClient->Printf(" ");
+
+					//水平角度の情報を書き込む
+					pClient->Printf("%.2f %.2f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetAngle(), m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetAngleV());
+					pClient->Printf(" ");
+
+					//発射していない状態に戻す
+					m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->SetShoot(false);
+				}
+				else
+				{
+					//発射していない情報を書き込む
+					pClient->Printf("0");
+					pClient->Printf(" ");
+			}
+
+		}
+
+#if 0
 			//AIの位置を書き込む
 			pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().y, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().z);
 			pClient->Printf(" ");
@@ -855,7 +916,7 @@ void CGame::PrintData(void)
 				pClient->Printf("0");
 				pClient->Printf(" ");
 			}
-
+#endif
 			if (pClient->GetPlayerIdx() == 0)
 			{//ホストの場合
 				if (m_state == STATE_END)
@@ -1073,14 +1134,27 @@ char *CGame::ReadPlayerData(char *pStr)
 	int nRedLinkEnergy = 0;											//レッドチームのリンクエネルギー
 	int nState = 0;													//状態情報
 	int nLife = 0;													//体力情報
+	int nKillPlayerIdx = 0;											//キルプレイヤーの番号
+	TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
+
+	D3DXVECTOR3 AIPos[AI_MAX] = {D3DXVECTOR3(0.0f,0.0f,0.0f),D3DXVECTOR3(0.0f,0.0f,0.0f)};		//AIの位置
+	D3DXVECTOR3 AIRot[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f) ,D3DXVECTOR3(0.0f,0.0f,0.0f) };	//AIの向き
+	bool bAIDeath[AI_MAX] = {false ,false};														//AIが死んでいるかどうか
+	int nAIKillPlayerIdx[AI_MAX] = {0,0};														//AIキルプレイヤーの番号
+	TYPE AIPlayerType[AI_MAX] = {TYPE_PLAYER,TYPE_PLAYER};										//AIキルプレイヤーの種類
+	bool bAIShoot[AI_MAX] = { false,false };													//AI弾発射したかどうか
+	float fAIAngle[AI_MAX] = { 0.0f,0.0f };														//AI角度
+	float fAIAngleV[AI_MAX] = { 0.0f,0.0f };													//AI角度
+	int nAIAttack[AI_MAX] = { 0, 0 };															//AI攻撃力
+
+
+#if 0
 	D3DXVECTOR3 AIPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//AIの位置
 	D3DXVECTOR3 AIRot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//AIの向き
 	bool bAIDeath = false;											//AIが死んでいるかどうか
-	int nKillPlayerIdx = 0;											//キルプレイヤーの番号
 	int nAIKillPlayerIdx = 0;										//AIキルプレイヤーの番号
-	TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
 	TYPE AIPlayerType = TYPE_PLAYER;								//AIキルプレイヤーの種類
-
+#endif
 																	//クライアントの取得
 	CClient *pClient = CManager::GetClient();
 	if (pClient != NULL)
@@ -1209,38 +1283,64 @@ char *CGame::ReadPlayerData(char *pStr)
 				pStr += nWord;
 			}
 
-			//AIの位置を代入
-			AIPos.x = CServerFunction::ReadFloat(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-			AIPos.y = CServerFunction::ReadFloat(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-			AIPos.z = CServerFunction::ReadFloat(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-
-			//AIの向きを代入
-			AIRot.y = CServerFunction::ReadFloat(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-
-			//AIの死亡しているかどうかを代入
-			bAIDeath = CServerFunction::ReadBool(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-
-			if (bAIDeath == true)
+			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
 			{
-				//キルプレイヤーの番号を代入
-				nAIKillPlayerIdx = CServerFunction::ReadInt(pStr, "");
+				//AIの位置を代入
+				AIPos[nCntAI].x = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				AIPos[nCntAI].y = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				AIPos[nCntAI].z = CServerFunction::ReadFloat(pStr, "");
 				nWord = CServerFunction::PopString(pStr, "");
 				pStr += nWord;
 
-				//キルプレイヤーの種類を代入
-				AIPlayerType = (TYPE)CServerFunction::ReadInt(pStr, "");
+				//AIの向きを代入
+				AIRot[nCntAI].y = CServerFunction::ReadFloat(pStr, "");
 				nWord = CServerFunction::PopString(pStr, "");
 				pStr += nWord;
+
+				//AIの死亡しているかどうかを代入
+				bAIDeath[nCntAI] = CServerFunction::ReadBool(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				if (bAIDeath[nCntAI] == true)
+				{
+					//キルプレイヤーの番号を代入
+					nAIKillPlayerIdx[nCntAI] = CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					//キルプレイヤーの種類を代入
+					AIPlayerType[nCntAI] = (TYPE)CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+				}
+
+				//弾を発射しているかどうかを代入
+				bAIShoot[nCntAI] = CServerFunction::ReadBool(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				if (bAIShoot[nCntAI] == true)
+				{//弾を発射している場合
+					//攻撃力を代入
+					nAIAttack[nCntAI] = CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					//水平角度の代入
+					fAIAngle[nCntAI] = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					fAIAngleV[nCntAI] = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+				}
+
 			}
 
 			if (nPlayerIdx == 0)
@@ -1316,60 +1416,71 @@ char *CGame::ReadPlayerData(char *pStr)
 				}
 			}
 
-			if (bAIDeath == true)
-			{//AIが死亡している場合
-				m_pPlayer[nPlayerIdx]->GetMyAI(0)->SetDeath(bAIDeath);	//AIの死亡設置処理
-				if (m_bAIDeath[0][nPlayerIdx] == false)
-				{//
-					m_bAIDeath[0][nPlayerIdx] = true;
-					if (m_bAIDeath[0][nPlayerIdx] == true)
+			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+			{
+
+				if (bAIDeath[nCntAI] == true)
+				{//AIが死亡している場合
+					m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetDeath(bAIDeath[nCntAI]);	//AIの死亡設置処理
+					if (m_bAIDeath[nCntAI][nPlayerIdx] == false)
 					{//
-					 //パーティクルを生成
-						CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(0)->GetWorldPos(), 4);
-						CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(0)->GetWorldPos(), 5);
-						for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetNumParts(); nCntModel++)
-						{//表示しない
-							m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(nCntModel)->SetDisp(false);
-						}
+						m_bAIDeath[nCntAI][nPlayerIdx] = true;
+						if (m_bAIDeath[nCntAI][nPlayerIdx] == true)
+						{//
+						 //パーティクルを生成
+							CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(0)->GetWorldPos(), 4);
+							CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(0)->GetWorldPos(), 5);
+							for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetNumParts(); nCntModel++)
+							{//表示しない
+								m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(nCntModel)->SetDisp(false);
+							}
 
-						//チーム別処理
-						switch (nTeam)
-						{
-						case 0:
-							m_nBlueLinkEnergy -= 20;	//ブルーチームのリンクエネルギー減算
-							break;
-						case 1:
-							m_nRedLinkEnergy -= 20;		//レッドチームのリンクエネルギー減算
-							break;
-						}
-
-						//キルログの設置処理
-						for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
-						{
-							if (CManager::GetGame()->GetLog(nCntKill) == false)
+							//チーム別処理
+							switch (nTeam)
 							{
-								CManager::GetGame()->SetKillIdx(nCntKill, nAIKillPlayerIdx);
-								CManager::GetGame()->SetDeathIdx(nCntKill, nPlayerIdx);
-								CManager::GetGame()->SetPlayerType(0, AIPlayerType);
-								CManager::GetGame()->SetPlayerType(1, TYPE_DROWN);
-								CManager::GetGame()->SetLog(nCntKill, true);
+							case 0:
+								m_nBlueLinkEnergy -= 10;	//ブルーチームのリンクエネルギー減算
 								break;
+							case 1:
+								m_nRedLinkEnergy -= 10;		//レッドチームのリンクエネルギー減算
+								break;
+							}
+
+							//キルログの設置処理
+							for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
+							{
+								if (CManager::GetGame()->GetLog(nCntKill) == false)
+								{
+									CManager::GetGame()->SetKillIdx(nCntKill, nAIKillPlayerIdx[nCntAI]);
+									CManager::GetGame()->SetDeathIdx(nCntKill, nPlayerIdx);
+									CManager::GetGame()->SetPlayerType(0, AIPlayerType[nCntAI]);
+									if (m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
+									{
+										CManager::GetGame()->SetPlayerType(1, TYPE_DROWN);
+									}
+									else if (m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
+									{
+										CManager::GetGame()->SetPlayerType(1, TYPE_WORKER);
+									}
+									CManager::GetGame()->SetLog(nCntKill, true);
+									break;
+								}
 							}
 						}
 					}
 				}
-			}
-			else
-			{
-				if (m_bAIDeath[0][nPlayerIdx] == true)
+				else
 				{
-					m_bAIDeath[0][nPlayerIdx] = false;
-					m_pPlayer[nPlayerIdx]->GetMyAI(0)->SetDeath(bAIDeath);
-
-					//表示しない
-					for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetNumParts(); nCntModel++)
+					if (m_bAIDeath[nCntAI][nPlayerIdx] == true)
 					{
-						m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(nCntModel)->SetDisp(true);
+						m_bAIDeath[nCntAI][nPlayerIdx] = false;
+						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetDeath(bAIDeath[nCntAI]);
+
+						//表示しない
+						for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetNumParts(); nCntModel++)
+						{
+							m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(nCntModel)->SetDisp(true);
+						}
 					}
 				}
 			}
@@ -1385,11 +1496,25 @@ char *CGame::ReadPlayerData(char *pStr)
 					//体力の設置処理
 					m_pPlayer[nPlayerIdx]->SetLife(nLife);
 
-					//位置の設置処理
-					m_pPlayer[nPlayerIdx]->GetMyAI(0)->SetPos(AIPos);
+					for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+					{
+						//位置の設置処理
+						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetPos(AIPos[nCntAI]);
 
-					//向きの設置処理
-					m_pPlayer[nPlayerIdx]->GetMyAI(0)->SetRot(AIRot);
+						//向きの設置処理
+						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetRot(AIRot[nCntAI]);
+
+						if (bAIShoot[nCntAI] == true)
+						{
+							D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMtxWorld();
+
+							D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
+							// 弾の生成
+							CBulletPlayer::Create(posCanon, fAIAngle[nCntAI], fAIAngleV[nCntAI], nAIAttack[nCntAI], nTeam, m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI));
+
+							m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetShoot(false);
+						}
+					}
 
 					if (bShoot == true)
 					{//弾を発射していintる場合
@@ -1872,6 +1997,10 @@ void CGame::CreateKillLog(void)
 			{
 				m_apKillLogPlayerIcon[nCntLog][0]->SetTex(4, 1, 6);
 			}
+			else if (m_playerType[0] == TYPE_WORKER)
+			{
+				m_apKillLogPlayerIcon[nCntLog][0]->SetTex(5, 1, 6);
+			}
 
 			if (m_playerType[1] == TYPE_PLAYER)
 			{
@@ -1880,6 +2009,10 @@ void CGame::CreateKillLog(void)
 			else if (m_playerType[1] == TYPE_DROWN)
 			{
 				m_apKillLogPlayerIcon[nCntLog][1]->SetTex(4, 1, 6);
+			}
+			else if (m_playerType[1] == TYPE_WORKER)
+			{
+				m_apKillLogPlayerIcon[nCntLog][1]->SetTex(5, 1, 6);
 			}
 
 			m_apKillLogPlayerIdx[nCntLog][0] = CUI_TEXTURE::Create(D3DXVECTOR3(1070.0f, 40.0f, 0.0f), 35.0f, 35.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERIDX);

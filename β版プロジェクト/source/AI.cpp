@@ -98,6 +98,10 @@ CAIMecha::CAIMecha(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_nTeam = 0;
 	m_bDeath = false;
 	m_nKillPlayerIdx = 0;
+	m_posCanon = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_fAngle = 0.0f;
+	m_fAngleV = 0.0f;
+	m_bShoot = false;
 }
 
 //=============================================================================
@@ -498,9 +502,19 @@ void CAIMecha::Update(void)
 			m_pModel[nCntModel]->SetDisp(true);
 		}
 
-		// AI関係の更新処理
-		CAIMecha::AIUpdate();
-
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{
+			if (CManager::GetClient()->GetPlayerIdx() == m_pPlayer->GetPlayerIdx())
+			{
+				// AI関係の更新処理
+				CAIMecha::AIUpdate();
+			}
+		}
+		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+		{
+			// AI関係の更新処理
+			CAIMecha::AIUpdate();
+		}
 	}
 }
 
@@ -570,7 +584,9 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 									CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());			//キルプレイヤーの番号を設置処理
 									CManager::GetGame()->SetDeathIdx(nCntKill, m_pPlayer->GetPlayerIdx());		//デスプレイヤーの番号を設置処理
 									CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);					//プレイヤーの種類を設置処理
-									CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);					//プレイヤーの種類を設置処理
+									//プレイヤーの種類を設置処理
+									if(m_mechaType == MECHATYPE_DRONE){ CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+									else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 									CManager::GetGame()->SetLog(nCntKill, true);								//ログの設置処理
 								}
 							}
@@ -585,13 +601,17 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 									if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
 									{//オブジェクトの種類がドローンの場合
 										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
-										CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
+										//プレイヤーの種類を設置処理
+										if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+										else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 										CManager::GetGame()->SetLog(nCntKill, true);										//ログの設置処理
 									}
 									else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 									{//オブジェクトの種類がワーカーの場合
 										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);							//プレイヤーの種類を設置処理
-										CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
+										//プレイヤーの種類を設置処理
+										if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+										else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 										CManager::GetGame()->SetLog(nCntKill, true);										//ログの設置処理
 									}
 								}
@@ -614,10 +634,10 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 				switch (m_nTeam)
 				{
 				case 0:
-					CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 20);
+					CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 10);
 					break;
 				case 1:
-					CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 20);
+					CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 10);
 					break;
 				}
 			}
@@ -656,7 +676,9 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 											CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());		//キルプレイヤーの番号を設置処理
 											CManager::GetGame()->SetDeathIdx(nCntKill, m_pPlayer->GetPlayerIdx());	//デスプレイヤーの番号を設置処理
 											CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);				//プレイヤーの種類を設置処理
-											CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);				//プレイヤーの種類を設置処理
+											//プレイヤーの種類を設置処理
+											if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+											else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 											CManager::GetGame()->SetLog(nCntKill, true);							//ログの設置処理
 										}
 									}
@@ -671,13 +693,17 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 											if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
 											{//オブジェクトの種類がドローンの場合
 												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
-												CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
+												//プレイヤーの種類を設置処理
+												if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+												else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 											}
 											else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 											{//オブジェクトの種類がワーカーの場合
 												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);						//プレイヤーの種類を設置処理
-												CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
+												//プレイヤーの種類を設置処理
+												if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+												else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 											}
 										}
@@ -701,10 +727,10 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 						switch (m_nTeam)
 						{
 						case 0:
-							CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 20);
+							CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 10);
 							break;
 						case 1:
-							CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 20);
+							CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 10);
 							break;
 						}
 					}
@@ -783,7 +809,7 @@ void CAIMecha::AIUpdate()
 	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
-	// 前回のパート情報の保存
+																// 前回のパート情報の保存
 	m_bPartSwitchOld = m_bPartSwitch;
 	// 現在のパート情報を取得
 	m_bPartSwitch = CManager::GetGame()->GetPart();
@@ -1044,22 +1070,25 @@ void CAIMecha::Attack()
 				if (rand() % 30 == 0)
 				{// ランダムなタイミングで攻撃
 
-					// 左右攻撃方向の設定
-					float fAngle = m_rot.y + D3DX_PI;
+				 // 左右攻撃方向の設定
+					m_fAngle = m_rot.y + D3DX_PI;
 
 					// 上下攻撃方向の設定
-					float fAngleV =
+					m_fAngleV =
 						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) *
 						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) +
 						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) *
 						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y);
 
 					// 弾をばらつかせる
-					fAngle += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.005f;
-					fAngleV += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.003f;
+					m_fAngle += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.005f;
+					m_fAngleV += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.003f;
 
 					// 弾の生成
-					CBulletPlayer::Create(posCanon, fAngle, fAngleV, m_nAttack, m_nTeam, this);
+					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this);
+
+					//撃っている状態にする
+					m_bShoot = true;
 				}
 			}
 			else

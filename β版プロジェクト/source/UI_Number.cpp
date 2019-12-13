@@ -125,10 +125,14 @@ HRESULT CUI_NUMBER::Init(void)
 		break;
 
 	case UI_NUMTYPE_BLUE:
-		m_nInitGauge = CManager::GetGame()->GetBlueLinkEnergy();		// ゲームからBLUEチームチケット取得
+		m_nInitGauge = MAX_LINKENERGY;
 		if (m_pGaugeBlue == NULL)
 		{
 			m_pGaugeBlue = CGauge2D::Create(2, m_pos, 0.0f, (float)m_nInitGauge, m_fWidth, m_fHeight);
+			m_nInitGauge = CManager::GetGame()->GetBlueLinkEnergy();		// ゲームからBLUEチームチケット取得
+			m_pGaugeBlue->AddSubtract((float)m_nInitGauge);			// ゲージの増減
+			m_pGaugeBlue->SetValue((float)m_nInitGauge);			// ゲージの値設定
+
 		}
 		if (m_pGaugeBlue != NULL)
 		{
@@ -143,13 +147,19 @@ HRESULT CUI_NUMBER::Init(void)
 		break;
 
 	case UI_NUMTYPE_RED:
-		m_nInitGauge = CManager::GetGame()->GetRedLinkEnergy();		// ゲームからREDチームチケット取得
+		//m_nInitGauge = CManager::GetGame()->GetRedLinkEnergy();		// ゲームからREDチームチケット取得
+		m_nInitGauge = MAX_LINKENERGY;
+
 		if (m_pGaugeRed == NULL)
 		{
 			m_pGaugeRed = CGauge2D::Create(2, m_pos, 0.0f, (float)m_nInitGauge, m_fWidth, m_fHeight);
 			m_pGaugeRed->SetColor(D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 0);	// 元の長さ
 			m_pGaugeRed->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f), 1);	// 現在の体力
 			m_pGaugeRed->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_LINK_RED), 1);
+			m_nInitGauge = CManager::GetGame()->GetRedLinkEnergy();		// ゲームからBLUEチームチケット取得
+			m_pGaugeRed->AddSubtract((float)m_nInitGauge);			// ゲージの増減
+			m_pGaugeRed->SetValue((float)m_nInitGauge);			// ゲージの値設定
+
 		}
 		if (m_pUITex == NULL)
 		{
