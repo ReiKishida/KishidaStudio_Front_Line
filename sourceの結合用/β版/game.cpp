@@ -154,8 +154,8 @@ CGame::~CGame()
 //=============================================================================
 HRESULT CGame::Init(void)
 {
-	m_nBlueLinkEnergy = 100;
-	m_nRedLinkEnergy = 100;
+	m_nBlueLinkEnergy = MAX_LINKENERGY;
+	m_nRedLinkEnergy = MAX_LINKENERGY;
 
 	//リスポーン位置の読み込み
 	LoadRespawnPos();
@@ -187,7 +187,7 @@ HRESULT CGame::Init(void)
 	CBulletCollision::Create();
 
 	// マップの当たり判定の読み込み
-	//CCollision::Load();
+	CCollision::Load();
 
 	//****************************************
 	// 2DUI生成（フレーム）
@@ -195,31 +195,33 @@ HRESULT CGame::Init(void)
 	// 武器フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(1100.0f, 650.0f, 0.0f), 350.0f, 120.0f, CUI_TEXTURE::UIFLAME_WEAPON);		// 武器
 
-																												// プレイヤー体力フレーム
+	// プレイヤー体力フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(180.0f, 650.0f, 0.0f), 350.0f, 125.0f, CUI_TEXTURE::UIFLAME_PLAYER_HP);	// 胴体
 
-																											// AIチケット数フレーム
+	// AIチケット数フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 530.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_DRONE);		// AI01
 	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 420.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_WORKER);	// AI02
 
-																											// チームのチケット数フレーム
+	// チームのチケット数フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
 	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
 
-																												// パート切り替えテクスチャ
+	// パート切り替えテクスチャ
 	//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);	// ストラテジーパート
 	//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);		// アクションパート
 
-	//																											// パート切り替え（チェンジ）
+	// パート切り替え（チェンジ）
 	//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 	//****************************************
 	// UI生成（数字）
 	//****************************************
-	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
-	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// プレイヤーライフ
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
+	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
+	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 530.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// ドローンライフ
+	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 420.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// ワーカーライフ
+	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// プレイヤーライフ
 
 	if (NULL == m_pDamageDirection)
 	{
@@ -360,9 +362,15 @@ void CGame::Update(void)
 		{
 			if (CManager::GetClient()->GetPlayerIdx() == 0)
 			{
-				if (m_nBlueLinkEnergy == 0 || m_nRedLinkEnergy == 0)
+				if (m_nBlueLinkEnergy <= 0)
 				{
 					m_state = STATE_END;
+					CResult::SetTeamWin(CResult::TEAM_WIN_RED);
+				}
+				else if (m_nRedLinkEnergy <= 0)
+				{
+					m_state = STATE_END;
+					CResult::SetTeamWin(CResult::TEAM_WIN_BLUE);
 				}
 			}
 		}
@@ -546,28 +554,25 @@ void CGame::CreateActionUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 420.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_WORKER);	// AI02
 
 																											// チームのチケット数フレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(345.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
-	CUI_TEXTURE::Create(D3DXVECTOR3(935.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
+	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
+	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
 
-																											// タイマーフレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, 30.0f, 0.0f), 100.0f, 35.0f, CUI_TEXTURE::UIFLAME_TIMER);	// タイムロゴ
+	//																											// パート切り替えテクスチャ
+	//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);	// ストラテジーパート
+	//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);		// アクションパート
 
-																												// パート切り替えテクスチャ
-	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);	// ストラテジーパート
-	CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);		// アクションパート
-
-																												// パート切り替え（チェンジ）
-	CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
+	//																											// パート切り替え（チェンジ）
+	//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 	//****************************************
 	// UI生成（数字）
 	//****************************************
+	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
+	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
-	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// プレイヤーライフ
-	CUI_NUMBER::Create(D3DXVECTOR3(430.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 1, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
-	CUI_NUMBER::Create(D3DXVECTOR3(720.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_RED, 2, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
-
-
+	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 530.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// ドローンライフの生成
+	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 420.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// ワーカーライフの生成
+	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// プレイヤーライフ
 }
 
 //=============================================================================
@@ -581,19 +586,12 @@ void CGame::CreateStrategyUI(void)
 	// 背景
 	CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH, SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_STRATEGY_BG);	// 背景
 
-																																				// チームのチケット数フレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(495.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
-	CUI_TEXTURE::Create(D3DXVECTOR3(1085.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
+	// パート切り替えテクスチャ
+	//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);	// アクションパート
+	//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);		// ストラテジーパート
 
-																											// タイマーフレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(790, 30.0f, 0.0f), 100.0f, 35.0f, CUI_TEXTURE::UIFLAME_TIMER);	// タイムロゴ
-
-																									// パート切り替えテクスチャ
-	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);	// アクションパート
-	CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);		// ストラテジーパート
-
-																													// パート切り替え（チェンジ）
-	CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
+	// パート切り替え（チェンジ）
+	//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 	// フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(785.0f, 420.0f, 0.0f), 990.0f, 590.0f, CUI_TEXTURE::UIFLAME_FLAME_BLUE);	// 大枠
@@ -601,9 +599,13 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(405.0f, 470.0f, 0.0f), 200.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// AI表示
 	CUI_TEXTURE::Create(D3DXVECTOR3(895.0f, 470.0f, 0.0f), 760.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// ロジック部分
 
-																												//****************************************
-																												// 1P小隊情報
-																												//****************************************
+	// チームのチケット数フレーム
+	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
+	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
+
+	//****************************************
+	// 1P小隊情報
+	//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 325.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_1P_INFO);
 
 	// プレイヤー体力フレーム
@@ -613,9 +615,13 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 335.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 410.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-																											//****************************************
-																											// 2P小隊情報
-																											//****************************************
+	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 270.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// 1Pプレイヤーライフ
+	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 340.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 1Pワーカーライフの生成
+	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 410.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// 1Pドローンライフの生成
+
+	//****************************************
+	// 2P小隊情報
+	//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 590.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_2P_INFO);
 
 	// プレイヤー体力フレーム
@@ -625,11 +631,15 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 600.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 675.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-																											//****************************************
-																											// UI生成（数字）
-																											//****************************************
-	CUI_NUMBER::Create(D3DXVECTOR3(630.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 1, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
-	CUI_NUMBER::Create(D3DXVECTOR3(920.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_RED, 2, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
+	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 520.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// 2Pプレイヤーライフ
+	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 590.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 2Pワーカーライフの生成
+	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 670.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 2Pドローンライフの生成
+
+	//****************************************
+	// UI生成（数字）
+	//****************************************
+	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
+	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 
 	if (NULL == m_pButtonManager)
 	{// ボタン管理クラスの生成
@@ -674,7 +684,7 @@ void CGame::CreatePlayer(void)
 		{//マルチプレイの場合
 			bool bConnect = false;	//接続しているかどうか
 
-									//クライアントの取得
+			//クライアントの取得
 			CClient *pClient = CManager::GetClient();
 
 			if (m_aMechaType[nCntPlayer] == -1)
@@ -826,6 +836,67 @@ void CGame::PrintData(void)
 				pClient->Printf(" ");
 			}
 
+			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+			{
+				//AIの位置を書き込む
+				pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetPos().y, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetPos().z);
+				pClient->Printf(" ");
+
+				//AIの向きを書き込む
+				pClient->Printf("%.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetRot().y);
+				pClient->Printf(" ");
+
+				//AIの死亡しているかどうかを書き込む
+				if (m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetDeath() == true)
+				{//死亡している場合
+				 //死亡している情報を書きこむ
+					pClient->Printf("1");
+					pClient->Printf(" ");
+
+					//キルプレイヤーの番号を書き込む
+					pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetKillPlayerIdx());
+					pClient->Printf(" ");
+
+					//キルプレイヤーの種類を書き込む
+					pClient->Printf("%d", (int)m_playerType[0]);
+					pClient->Printf(" ");
+
+				}
+				else
+				{
+					//死亡していないことを書き込む
+					pClient->Printf("0");
+					pClient->Printf(" ");
+				}
+
+				//弾を発射しているかどうかを書き込む
+				if (m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetShoot() == true)
+				{//発射されている場合
+					//発射している情報を書き込む
+					pClient->Printf("1");
+					pClient->Printf(" ");
+
+					//攻撃力を書き込む
+					pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetAttack());
+					pClient->Printf(" ");
+
+					//水平角度の情報を書き込む
+					pClient->Printf("%.2f %.2f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetAngle(), m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetAngleV());
+					pClient->Printf(" ");
+
+					//発射していない状態に戻す
+					m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->SetShoot(false);
+				}
+				else
+				{
+					//発射していない情報を書き込む
+					pClient->Printf("0");
+					pClient->Printf(" ");
+			}
+
+		}
+
+#if 0
 			//AIの位置を書き込む
 			pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().y, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().z);
 			pClient->Printf(" ");
@@ -856,7 +927,7 @@ void CGame::PrintData(void)
 				pClient->Printf("0");
 				pClient->Printf(" ");
 			}
-
+#endif
 			if (pClient->GetPlayerIdx() == 0)
 			{//ホストの場合
 				if (m_state == STATE_END)
@@ -1074,14 +1145,27 @@ char *CGame::ReadPlayerData(char *pStr)
 	int nRedLinkEnergy = 0;											//レッドチームのリンクエネルギー
 	int nState = 0;													//状態情報
 	int nLife = 0;													//体力情報
+	int nKillPlayerIdx = 0;											//キルプレイヤーの番号
+	TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
+
+	D3DXVECTOR3 AIPos[AI_MAX] = {D3DXVECTOR3(0.0f,0.0f,0.0f),D3DXVECTOR3(0.0f,0.0f,0.0f)};		//AIの位置
+	D3DXVECTOR3 AIRot[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f) ,D3DXVECTOR3(0.0f,0.0f,0.0f) };	//AIの向き
+	bool bAIDeath[AI_MAX] = {false ,false};														//AIが死んでいるかどうか
+	int nAIKillPlayerIdx[AI_MAX] = {0,0};														//AIキルプレイヤーの番号
+	TYPE AIPlayerType[AI_MAX] = {TYPE_PLAYER,TYPE_PLAYER};										//AIキルプレイヤーの種類
+	bool bAIShoot[AI_MAX] = { false,false };													//AI弾発射したかどうか
+	float fAIAngle[AI_MAX] = { 0.0f,0.0f };														//AI角度
+	float fAIAngleV[AI_MAX] = { 0.0f,0.0f };													//AI角度
+	int nAIAttack[AI_MAX] = { 0, 0 };															//AI攻撃力
+
+
+#if 0
 	D3DXVECTOR3 AIPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//AIの位置
 	D3DXVECTOR3 AIRot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//AIの向き
 	bool bAIDeath = false;											//AIが死んでいるかどうか
-	int nKillPlayerIdx = 0;											//キルプレイヤーの番号
 	int nAIKillPlayerIdx = 0;										//AIキルプレイヤーの番号
-	TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
 	TYPE AIPlayerType = TYPE_PLAYER;								//AIキルプレイヤーの種類
-
+#endif
 																	//クライアントの取得
 	CClient *pClient = CManager::GetClient();
 	if (pClient != NULL)
@@ -1210,38 +1294,64 @@ char *CGame::ReadPlayerData(char *pStr)
 				pStr += nWord;
 			}
 
-			//AIの位置を代入
-			AIPos.x = CServerFunction::ReadFloat(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-			AIPos.y = CServerFunction::ReadFloat(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-			AIPos.z = CServerFunction::ReadFloat(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-
-			//AIの向きを代入
-			AIRot.y = CServerFunction::ReadFloat(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-
-			//AIの死亡しているかどうかを代入
-			bAIDeath = CServerFunction::ReadBool(pStr, "");
-			nWord = CServerFunction::PopString(pStr, "");
-			pStr += nWord;
-
-			if (bAIDeath == true)
+			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
 			{
-				//キルプレイヤーの番号を代入
-				nAIKillPlayerIdx = CServerFunction::ReadInt(pStr, "");
+				//AIの位置を代入
+				AIPos[nCntAI].x = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				AIPos[nCntAI].y = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				AIPos[nCntAI].z = CServerFunction::ReadFloat(pStr, "");
 				nWord = CServerFunction::PopString(pStr, "");
 				pStr += nWord;
 
-				//キルプレイヤーの種類を代入
-				AIPlayerType = (TYPE)CServerFunction::ReadInt(pStr, "");
+				//AIの向きを代入
+				AIRot[nCntAI].y = CServerFunction::ReadFloat(pStr, "");
 				nWord = CServerFunction::PopString(pStr, "");
 				pStr += nWord;
+
+				//AIの死亡しているかどうかを代入
+				bAIDeath[nCntAI] = CServerFunction::ReadBool(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				if (bAIDeath[nCntAI] == true)
+				{
+					//キルプレイヤーの番号を代入
+					nAIKillPlayerIdx[nCntAI] = CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					//キルプレイヤーの種類を代入
+					AIPlayerType[nCntAI] = (TYPE)CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+				}
+
+				//弾を発射しているかどうかを代入
+				bAIShoot[nCntAI] = CServerFunction::ReadBool(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				if (bAIShoot[nCntAI] == true)
+				{//弾を発射している場合
+					//攻撃力を代入
+					nAIAttack[nCntAI] = CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					//水平角度の代入
+					fAIAngle[nCntAI] = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					fAIAngleV[nCntAI] = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+				}
+
 			}
 
 			if (nPlayerIdx == 0)
@@ -1317,60 +1427,71 @@ char *CGame::ReadPlayerData(char *pStr)
 				}
 			}
 
-			if (bAIDeath == true)
-			{//AIが死亡している場合
-				m_pPlayer[nPlayerIdx]->GetMyAI(0)->SetDeath(bAIDeath);	//AIの死亡設置処理
-				if (m_bAIDeath[0][nPlayerIdx] == false)
-				{//
-					m_bAIDeath[0][nPlayerIdx] = true;
-					if (m_bAIDeath[0][nPlayerIdx] == true)
+			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+			{
+
+				if (bAIDeath[nCntAI] == true)
+				{//AIが死亡している場合
+					m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetDeath(bAIDeath[nCntAI]);	//AIの死亡設置処理
+					if (m_bAIDeath[nCntAI][nPlayerIdx] == false)
 					{//
-					 //パーティクルを生成
-						CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(0)->GetWorldPos(), 4);
-						CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(0)->GetWorldPos(), 5);
-						for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetNumParts(); nCntModel++)
-						{//表示しない
-							m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(nCntModel)->SetDisp(false);
-						}
+						m_bAIDeath[nCntAI][nPlayerIdx] = true;
+						if (m_bAIDeath[nCntAI][nPlayerIdx] == true)
+						{//
+						 //パーティクルを生成
+							CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(0)->GetWorldPos(), 4);
+							CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(0)->GetWorldPos(), 5);
+							for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetNumParts(); nCntModel++)
+							{//表示しない
+								m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(nCntModel)->SetDisp(false);
+							}
 
-						//チーム別処理
-						switch (nTeam)
-						{
-						case 0:
-							m_nBlueLinkEnergy -= 20;	//ブルーチームのリンクエネルギー減算
-							break;
-						case 1:
-							m_nRedLinkEnergy -= 20;		//レッドチームのリンクエネルギー減算
-							break;
-						}
-
-						//キルログの設置処理
-						for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
-						{
-							if (CManager::GetGame()->GetLog(nCntKill) == false)
+							//チーム別処理
+							switch (nTeam)
 							{
-								CManager::GetGame()->SetKillIdx(nCntKill, nAIKillPlayerIdx);
-								CManager::GetGame()->SetDeathIdx(nCntKill, nPlayerIdx);
-								CManager::GetGame()->SetPlayerType(0, AIPlayerType);
-								CManager::GetGame()->SetPlayerType(1, TYPE_DROWN);
-								CManager::GetGame()->SetLog(nCntKill, true);
+							case 0:
+								m_nBlueLinkEnergy -= 10;	//ブルーチームのリンクエネルギー減算
 								break;
+							case 1:
+								m_nRedLinkEnergy -= 10;		//レッドチームのリンクエネルギー減算
+								break;
+							}
+
+							//キルログの設置処理
+							for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
+							{
+								if (CManager::GetGame()->GetLog(nCntKill) == false)
+								{
+									CManager::GetGame()->SetKillIdx(nCntKill, nAIKillPlayerIdx[nCntAI]);
+									CManager::GetGame()->SetDeathIdx(nCntKill, nPlayerIdx);
+									CManager::GetGame()->SetPlayerType(0, AIPlayerType[nCntAI]);
+									if (m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
+									{
+										CManager::GetGame()->SetPlayerType(1, TYPE_DROWN);
+									}
+									else if (m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
+									{
+										CManager::GetGame()->SetPlayerType(1, TYPE_WORKER);
+									}
+									CManager::GetGame()->SetLog(nCntKill, true);
+									break;
+								}
 							}
 						}
 					}
 				}
-			}
-			else
-			{
-				if (m_bAIDeath[0][nPlayerIdx] == true)
+				else
 				{
-					m_bAIDeath[0][nPlayerIdx] = false;
-					m_pPlayer[nPlayerIdx]->GetMyAI(0)->SetDeath(bAIDeath);
-
-					//表示しない
-					for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetNumParts(); nCntModel++)
+					if (m_bAIDeath[nCntAI][nPlayerIdx] == true)
 					{
-						m_pPlayer[nPlayerIdx]->GetMyAI(0)->GetModel(nCntModel)->SetDisp(true);
+						m_bAIDeath[nCntAI][nPlayerIdx] = false;
+						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetDeath(bAIDeath[nCntAI]);
+
+						//表示しない
+						for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetNumParts(); nCntModel++)
+						{
+							m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(nCntModel)->SetDisp(true);
+						}
 					}
 				}
 			}
@@ -1386,11 +1507,25 @@ char *CGame::ReadPlayerData(char *pStr)
 					//体力の設置処理
 					m_pPlayer[nPlayerIdx]->SetLife(nLife);
 
-					//位置の設置処理
-					m_pPlayer[nPlayerIdx]->GetMyAI(0)->SetPos(AIPos);
+					for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+					{
+						//位置の設置処理
+						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetPos(AIPos[nCntAI]);
 
-					//向きの設置処理
-					m_pPlayer[nPlayerIdx]->GetMyAI(0)->SetRot(AIRot);
+						//向きの設置処理
+						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetRot(AIRot[nCntAI]);
+
+						if (bAIShoot[nCntAI] == true)
+						{
+							D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMtxWorld();
+
+							D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
+							// 弾の生成
+							CBulletPlayer::Create(posCanon, fAIAngle[nCntAI], fAIAngleV[nCntAI], nAIAttack[nCntAI], nTeam, m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI));
+
+							m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetShoot(false);
+						}
+					}
 
 					if (bShoot == true)
 					{//弾を発射していintる場合
@@ -1850,8 +1985,14 @@ void CGame::CreateKillLog(void)
 		 //UIの生成処理
 			m_apKillLogBase[nCntLog] = CUI_TEXTURE::Create(D3DXVECTOR3(1125.0f, 30.0f, 0.0f), 250.0f, 50.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_BG);
 			m_apKillLogBase[nCntLog]->SetObjType(OBJTYPE_KILLLOG);
-			m_apKillLogBase[nCntLog]->SetTex(0, 1, 2);
-
+			if (m_nKillIdx[nCntLog] == 0 || m_nKillIdx[nCntLog] == 1)
+			{
+				m_apKillLogBase[nCntLog]->SetTex(0, 1, 2);
+			}
+			if (m_nKillIdx[nCntLog] == 2 || m_nKillIdx[nCntLog] == 3)
+			{
+				m_apKillLogBase[nCntLog]->SetTex(1, 1, 2);
+			}
 
 			m_apKillLogPlayerIcon[nCntLog][0] = CUI_TEXTURE::Create(D3DXVECTOR3(1035.0f, 30.0f, 0.0f), 45.0f, 45.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERICON);
 			m_apKillLogPlayerIcon[nCntLog][0]->SetObjType(OBJTYPE_KILLLOG);
@@ -1867,6 +2008,10 @@ void CGame::CreateKillLog(void)
 			{
 				m_apKillLogPlayerIcon[nCntLog][0]->SetTex(4, 1, 6);
 			}
+			else if (m_playerType[0] == TYPE_WORKER)
+			{
+				m_apKillLogPlayerIcon[nCntLog][0]->SetTex(5, 1, 6);
+			}
 
 			if (m_playerType[1] == TYPE_PLAYER)
 			{
@@ -1875,6 +2020,10 @@ void CGame::CreateKillLog(void)
 			else if (m_playerType[1] == TYPE_DROWN)
 			{
 				m_apKillLogPlayerIcon[nCntLog][1]->SetTex(4, 1, 6);
+			}
+			else if (m_playerType[1] == TYPE_WORKER)
+			{
+				m_apKillLogPlayerIcon[nCntLog][1]->SetTex(5, 1, 6);
 			}
 
 			m_apKillLogPlayerIdx[nCntLog][0] = CUI_TEXTURE::Create(D3DXVECTOR3(1070.0f, 40.0f, 0.0f), 35.0f, 35.0f, CUI_TEXTURE::UIFLAME_KILL_LOG_PLAYERIDX);

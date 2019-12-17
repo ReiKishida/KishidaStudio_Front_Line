@@ -22,7 +22,7 @@
 #define NUM_RESPAWN_POS		(4)
 #define NUM_KILL_LOG		(4)
 #define NUM_KILL_LOG_PLAYER (2)
-
+#define MAX_LINKENERGY		(100)
 //*****************************************************************************
 // 前方宣言
 //*****************************************************************************
@@ -36,7 +36,9 @@ class CModel;
 class CScene3D;
 class CMouseCursor;
 class CDamageDirection;
+class CNodeDataFiler;
 class CUI_TEXTURE;
+
 //*****************************************************************************
 // クラス定義
 //*****************************************************************************
@@ -63,7 +65,7 @@ public:
 	{// 種類
 		TYPE_PLAYER = 0,
 		TYPE_DROWN,
-		TYPE_WALKER,
+		TYPE_WORKER,
 		TYPE_MAX,
 	}TYPE;
 
@@ -111,16 +113,18 @@ public:
 	void SetLog(int nIdx, bool bLog) { m_bLog[nIdx] = bLog; };
 	bool GetLog(int nIdx) { return m_bLog[nIdx]; };
 
-	void SetPlayerType(int nIdx,TYPE type) { m_playerType[nIdx] = type; };
+	void SetPlayerType(int nIdx, TYPE type) { m_playerType[nIdx] = type; };
 
 	static void SetMechaType(int nPlayerIdx, CMechaSelect::MECHATYPE type) { m_aMechaType[nPlayerIdx] = type; };
 	static CMechaSelect::MECHATYPE GetMechaType(int nPlayerIdx) { return m_aMechaType[nPlayerIdx]; };
 
 	static CDamageDirection *GetDamageDirection(void) { return m_pDamageDirection; };
+	static CNodeDataFiler *GetNodeFiler(void) { return m_pNodeFiler; }				// マップデータの取得
 
 private:
 	void LoadRespawnPos(void);
 	void CreatePlayer(void);
+
 	void PrintData(void);
 	void PrintCPUData(void);
 	void ReadMessage(void);
@@ -175,10 +179,11 @@ private:
 	CUI_TEXTURE *m_apKillLogPlayerIcon[NUM_KILL_LOG][NUM_KILL_LOG_PLAYER];	// キルログのプレイヤーアイコン
 	CUI_TEXTURE *m_apKillLogPlayerIdx[NUM_KILL_LOG][NUM_KILL_LOG_PLAYER];	// キルログのプレイヤー番号
 
-
 	static CMechaSelect::MECHATYPE m_aMechaType[MAX_PLAYER_CONNECT];
 
 	static CDamageDirection *m_pDamageDirection;	// 攻撃を受けた方向表示
+
+	static CNodeDataFiler	*m_pNodeFiler;		// マップデータのファイル管理ポインタ
 };
 
 #endif
