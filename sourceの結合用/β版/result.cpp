@@ -41,7 +41,7 @@ CPlayer *CResult::m_pPlayer[MAX_PLAYER_CONNECT] = {};
 //=========================================
 // コンストラクタ
 //=========================================
-CResult::CResult()
+CResult::CResult(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType)
 {
 	for (int nCnt = 0; nCnt < RESULT_UI_TEX; nCnt++)
 	{
@@ -72,7 +72,7 @@ HRESULT CResult::Init(void)
 	CMotionManager::Load();
 
 	// オブジェクトタイプの設定
-	CScene::SetObjType(CScene::OBJTYPE_RESULT);
+	//CScene::SetObjType(CScene::OBJTYPE_RESULT);
 
 	// モードの取得
 	CManager::MODE mode = CManager::GetMode();
@@ -142,7 +142,7 @@ void CResult::Update(void)
 	CXInput			*pXInput = CManager::GetXInput();			// XInputの取得
 	CSound			*pSound = CManager::GetSound();				// サウンドの取得
 
-																// プレスボタン点滅
+	// プレスボタン点滅
 	if (m_pUITex[0] != NULL)
 	{
 		m_pUITex[0]->Flashing(m_nCntFlash);
@@ -156,19 +156,19 @@ void CResult::Update(void)
 			m_pUITex[1] = CUI_TEXTURE::Create(D3DXVECTOR3(250.0f, 100.0f, 0.0f), RESULT_LOGO_WIDTH, RESULT_LOGO_HEIGHT, CUI_TEXTURE::UIFLAME_TEAM_WIN);		// チームロゴ
 			m_pUITex[1]->SetTex(0, 1, TEAM_WIN_LOGO);
 
-			if (m_pPlayer[0] == NULL || m_pPlayer[1] == NULL || m_pPlayer[2] == NULL || m_pPlayer[3] == NULL)
+			if (m_pPlayer[0] == NULL && m_pPlayer[1] == NULL && m_pPlayer[2] == NULL && m_pPlayer[3] == NULL)
 			{
 				// BLUEが手前
-				m_pPlayer[0] = CPlayer::Create(0, CGame::GetMechaType(0), D3DXVECTOR3(590.0f, 0.0f, 250.0f), true);
-				m_pPlayer[0]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
-				m_pPlayer[1] = CPlayer::Create(1, CGame::GetMechaType(1), D3DXVECTOR3(590.0f, 0.0f, 320.0f), true);
-				m_pPlayer[1]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+				m_pPlayer[0] = CPlayer::Create(0, CGame::GetMechaType(0), D3DXVECTOR3(23.0f, 0.0f, -89.0f), true);
+				m_pPlayer[0]->SetRot(D3DXVECTOR3(0.0f, 100.0f, 0.0f));
+				m_pPlayer[1] = CPlayer::Create(1, CGame::GetMechaType(1), D3DXVECTOR3(-15.0f, 0.0f, -139.0f), true);
+				m_pPlayer[1]->SetRot(D3DXVECTOR3(0.0f, 100.0f, 0.0f));
 
 				// REDが奥
-				m_pPlayer[2] = CPlayer::Create(2, CGame::GetMechaType(2), D3DXVECTOR3(390.0f, 0.0f, 220.0f), true);
-				m_pPlayer[2]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
-				m_pPlayer[3] = CPlayer::Create(3, CGame::GetMechaType(3), D3DXVECTOR3(390.0f, 0.0f, 260.0f), true);
-				m_pPlayer[3]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+				m_pPlayer[2] = CPlayer::Create(2, CGame::GetMechaType(2), D3DXVECTOR3(-133.0f, 0.0f, -160.0f), true);
+				m_pPlayer[2]->SetRot(D3DXVECTOR3(0.0f, -200.0f, 0.0f));
+				m_pPlayer[3] = CPlayer::Create(3, CGame::GetMechaType(3), D3DXVECTOR3(-133.0f, 0.0f, -115.0f), true);
+				m_pPlayer[3]->SetRot(D3DXVECTOR3(0.0f, -200.0f, 0.0f));
 			}
 		}
 		break;
@@ -180,19 +180,19 @@ void CResult::Update(void)
 			m_pUITex[1]->SetTex(1, 1, TEAM_WIN_LOGO);
 		}
 
-		if (m_pPlayer[0] == NULL || m_pPlayer[1] == NULL || m_pPlayer[2] == NULL || m_pPlayer[3] == NULL)
+		if (m_pPlayer[0] == NULL && m_pPlayer[1] == NULL && m_pPlayer[2] == NULL && m_pPlayer[3] == NULL)
 		{
 			// BLUEが奥
-			m_pPlayer[0] = CPlayer::Create(0, CGame::GetMechaType(0), D3DXVECTOR3(390.0f, 0.0f, 220.0f), true);
-			m_pPlayer[0]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
-			m_pPlayer[1] = CPlayer::Create(1, CGame::GetMechaType(1), D3DXVECTOR3(390.0f, 0.0f, 260.0f), true);
-			m_pPlayer[1]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+			m_pPlayer[0] = CPlayer::Create(0, CGame::GetMechaType(0), D3DXVECTOR3(-133.0f, 0.0f, -160.0f), true);
+			m_pPlayer[0]->SetRot(D3DXVECTOR3(0.0f, -200.0f, 0.0f));
+			m_pPlayer[1] = CPlayer::Create(1, CGame::GetMechaType(1), D3DXVECTOR3(-133.0f, 0.0f, -115.0f), true);
+			m_pPlayer[1]->SetRot(D3DXVECTOR3(0.0f, -200.0f, 0.0f));
 
 			// REDが手前
-			m_pPlayer[2] = CPlayer::Create(2, CGame::GetMechaType(2), D3DXVECTOR3(590.0f, 0.0f, 250.0f), true);
-			m_pPlayer[2]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
-			m_pPlayer[3] = CPlayer::Create(3, CGame::GetMechaType(3), D3DXVECTOR3(590.0f, 0.0f, 320.0f), true);
-			m_pPlayer[3]->SetRot(D3DXVECTOR3(0.0f, 200.0f, 0.0f));
+			m_pPlayer[2] = CPlayer::Create(2, CGame::GetMechaType(2), D3DXVECTOR3(23.0f, 0.0f, -89.0f), true);
+			m_pPlayer[2]->SetRot(D3DXVECTOR3(0.0f, 100.0f, 0.0f));
+			m_pPlayer[3] = CPlayer::Create(3, CGame::GetMechaType(3), D3DXVECTOR3(-15.0f, 0.0f, -139.0f), true);
+			m_pPlayer[3]->SetRot(D3DXVECTOR3(0.0f, 100.0f, 0.0f));
 		}
 		break;
 	}

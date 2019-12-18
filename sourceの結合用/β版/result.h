@@ -40,7 +40,7 @@ public:
 		TEAM_WIN_MAX
 	} TEAM_WIN;
 
-	CResult();
+	CResult(int nPriority = GAME_PRIORITY, CScene::OBJTYPE objType = CScene::OBJTYPE_RESULT);
 	~CResult();
 	HRESULT Init(void);
 	void Uninit(void);
