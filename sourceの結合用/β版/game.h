@@ -135,6 +135,7 @@ private:
 	void SetPlayerData(int nPlayerIdx, D3DXVECTOR3 pos, D3DXVECTOR3 rot, D3DXVECTOR3 modelRotUp, D3DXVECTOR3 modelRotDown, D3DXVECTOR3 cameraRot);
 	void CreatePlayerBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECTOR3 cameraRot, float *pAngle, float *pAngleV);
 	void SetChatData(int nPlayerIdx, int radioChat);
+	void SetPinData(int nPlayerIdx,D3DXVECTOR3 pinPos, int nLife);
 	void SetCPUData(int nPlayerIdx, D3DXVECTOR3 pos, D3DXVECTOR3 rot);
 	void CreateCPUBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECTOR3 cameraRot, float *pAngle, float *pAngleV);
 
@@ -184,6 +185,7 @@ private:
 	static CDamageDirection *m_pDamageDirection;	// 攻撃を受けた方向表示
 
 	static CNodeDataFiler	*m_pNodeFiler;		// マップデータのファイル管理ポインタ
+
 };
 
 #endif

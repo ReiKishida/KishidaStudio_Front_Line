@@ -7,7 +7,6 @@
 #include "bullet.h"
 #include "manager.h"
 #include "renderer.h"
-#include "enemy.h"
 #include "player.h"
 #include "game.h"
 #include "texture.h"
@@ -19,6 +18,7 @@
 
 #include "damageDirection.h"
 #include "model.h"
+
 #include "menu.h"
 
 //==================================
@@ -170,7 +170,7 @@ void CBulletCollision::Draw(void)
 //==================================
 // 生成処理
 //==================================
-CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,int nTeam,CScene *pScene)
+CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, int nTeam, CScene *pScene)
 {
 	CBulletPlayer *pBullet = NULL;
 
@@ -263,7 +263,7 @@ bool CBulletPlayer::BulletCollision(void)
 			int nTeam = pPlayer->GetTeam();
 			if (m_nTeam != nTeam)
 			{
-				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f))
+				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f) && pPlayer->GetDeath() ==false)
 				{// 接触している
 					if (CMenu::GetMode() == CMenu::MODE_SINGLE)
 					{//シングルプレイの場合
@@ -276,7 +276,7 @@ bool CBulletPlayer::BulletCollision(void)
 					}
 					else if (CMenu::GetMode() == CMenu::MODE_MULTI)
 					{//マルチプレイの場合
-						if (CManager::GetClient()->GetPlayerIdx() == pPlayer->GetPlayerIdx())
+						if (CManager::GetClient()->GetPlayerIdx() == pPlayer->GetPlayerIdx() && pPlayer->GetDeath() == false)
 						{//プレイヤー番号が一致する場合　
 							float fAngle = CManager::GetCamera()->GetRot().y;
 							D3DXVECTOR3 dir = D3DXVECTOR3(sinf(fAngle), 0.0f, cosf(fAngle));
@@ -300,7 +300,7 @@ bool CBulletPlayer::BulletCollision(void)
 			int nTeam = pAI->GetTeam();
 			if (m_nTeam != nTeam)
 			{
-				if (CScene3DBill::Collision(pAI->GetPos(), 50.0f))
+				if (CScene3DBill::Collision(pAI->GetPos(), 50.0f) && pAI->GetDeath() == false)
 				{// 接触している
 					pAI->Damage(CBullet::GetDamage(), m_pScene);
 					//pAI->Damage(CBullet::GetDamage(),m_pPlayer->GetPlayerIdx());
@@ -427,8 +427,144 @@ bool CBulletEnemy::BulletCollision(void)
 
 	if (Collision(pPlayer->GetPos(), pPlayer->GetVtxMax().x))
 	{// 接触している
-		//pPlayer->Damage(GetDamage());	// ダメージを与える
+		pPlayer->Damage(GetDamage(), this);	// ダメージを与える
 		return true;					// 接触したのでtrueを返す
+	}
+
+	return false;	// 接触してないのでfalseを返す
+}
+
+/************************************************************/
+/*						ピン立て用の弾						*/
+/************************************************************/
+//==================================
+// 生成処理
+//==================================
+CBulletPin* CBulletPin::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nTeam, CScene *pScene)
+{
+	CBulletPin *pBullet = NULL;
+
+	pBullet = new CBulletPin;	// メモリを確保
+
+	if (NULL != pBullet)
+	{// メモリ確保成功
+		pBullet->m_pScene = pScene;
+		pBullet->m_nTeam = nTeam;
+		pBullet->Init(pos, fAngle, fAngleVertical);
+	}
+
+	return pBullet;
+}
+
+//=========================================
+// コンストラクタ
+//=========================================
+CBulletPin::CBulletPin(){}
+
+//=========================================
+// デストラクタ
+//=========================================
+CBulletPin::~CBulletPin(){}
+
+//=========================================
+// 初期化処理
+//=========================================
+HRESULT CBulletPin::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical)
+{
+	float fSpeed = 15.0f;	// 移動速度
+	float fSize = 3.0f;		// 大きさ
+	int nLife = 1000;		// 体力
+
+	CBullet::Init(pos);										// 位置の設定
+	CBullet::SetLighting(false);
+
+	CBullet::SetMove(D3DXVECTOR3(sinf(fAngle) * fSpeed, cosf(fAngleVertical) * fSpeed, cosf(fAngle) * fSpeed));
+	CBullet::SetLife(nLife);
+	CBullet::SetSize(D3DXVECTOR3(fSize, fSize, 0.0f));		// 大きさの設定
+	CBullet::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));	// 色の設定
+	CBullet::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_BULLET));
+
+	return S_OK;
+}
+
+//=========================================
+// 終了処理
+//=========================================
+void CBulletPin::Uninit(void)
+{
+	m_pScene = NULL;
+	CScene3DBill::Uninit();
+}
+
+//=========================================
+// 更新処理
+//=========================================
+void CBulletPin::Update(void)
+{
+	// 弾の更新処理
+	CBullet::Update();
+}
+
+//=========================================
+// 描画処理
+//=========================================
+void CBulletPin::Draw(void)
+{
+	CScene3DBill::Draw();
+}
+
+//=========================================
+// 弾の判定
+//=========================================
+bool CBulletPin::BulletCollision(void)
+{
+	// 敵を探す
+	CScene *pScene = CScene::GetSceneTop(PLAYER_PRIORITY);
+	CScene *pSceneNext = NULL;
+	while (pScene != NULL)
+	{// NULLになるまでループ
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
+
+		if (objType == CScene::OBJTYPE_PLAYER)
+		{// プレイヤー
+			CPlayer *pPlayer = (CPlayer*)pScene;
+			int nTeam = pPlayer->GetTeam();
+			if (m_nTeam != nTeam)
+			{// 同じチームじゃないとき
+				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f) && pPlayer->GetDeath() == false)
+				{// 接触している
+					m_HitPos = pPlayer->GetPos(); // 接触地点を登録
+					return true;		// 接触したのでtrueを返す
+				}
+			}
+		}
+		else if (objType == CScene::OBJTYPE_AI)
+		{// AI機体
+			CAIMecha *pAI = (CAIMecha*)pScene;
+			int nTeam = pAI->GetTeam();
+			if (m_nTeam != nTeam)
+			{// 同じチームじゃないとき
+				if (CScene3DBill::Collision(pAI->GetPos(), 50.0f) && pAI->GetDeath() == false)
+				{// 接触している
+					m_HitPos = pAI->GetPos(); // 接触地点を登録
+					return true;		// 接触したのでtrueを返す
+				}
+			}
+		}
+
+		// 次のオブジェクトを見る
+		pScene = pSceneNext;
+	}
+
+	// マップの当たり判定
+	D3DXVECTOR3 lengthMax = D3DXVECTOR3(CScene3DBill::GetWidth(), CScene3DBill::GetWidth(), CScene3DBill::GetWidth()) * 2.0f;
+	D3DXVECTOR3 lengthMin = D3DXVECTOR3(-CScene3DBill::GetWidth(), -CScene3DBill::GetWidth(), -CScene3DBill::GetWidth());
+
+	if (CCollision::Collision(&GetPos(), GetPosOld(), lengthMax, lengthMin) || CBullet::GetPos().y <= 0.0f)
+	{// 建物か地面に衝突している
+		m_HitPos = CBullet::GetPos(); // 接触地点を登録
+		return true;	// 接触しているのでtrueを返す
 	}
 
 	return false;	// 接触してないのでfalseを返す

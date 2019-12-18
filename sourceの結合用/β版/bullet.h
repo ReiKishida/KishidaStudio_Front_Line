@@ -85,12 +85,11 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,int nTeam,CScene *pScene);
+	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, int nTeam, CScene *pScene);
 
 	bool BulletCollision(void);
 
 private:
-	//CPlayer *m_pPlayer;		// プレイヤークラスのポインタ変数
 	CScene *m_pScene;			// オブジェクトクラスのポインタ変数
 	int		m_nTeam;			// チームの情報
 	float	m_fAngle;			// 進行方向の角度
@@ -123,6 +122,32 @@ private:
 	int	m_nCntAngle;	// 追尾する時間
 	float m_fAngle;		// プレイヤーへの角度
 	TYPE m_type;		// 種類
+};
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ピン立て用の弾
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class CBulletPin : public CBullet
+{
+public:
+	CBulletPin();
+	~CBulletPin();
+
+	HRESULT Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical);
+	void Uninit(void);
+	void Update(void);
+	void Draw(void);
+
+	static CBulletPin *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nTeam, CScene *pScene);
+
+	bool BulletCollision(void);
+
+	D3DXVECTOR3 &GetHitPos(void) { return m_HitPos; };
+
+private:
+	CScene *m_pScene;			// オブジェクトクラスのポインタ変数
+	D3DXVECTOR3 m_HitPos;		// 障害物に当たったときの位置
+	int		m_nTeam;			// チームの情報
 };
 
 #endif

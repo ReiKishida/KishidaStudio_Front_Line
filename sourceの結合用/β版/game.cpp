@@ -195,33 +195,31 @@ HRESULT CGame::Init(void)
 	// 武器フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(1100.0f, 650.0f, 0.0f), 350.0f, 120.0f, CUI_TEXTURE::UIFLAME_WEAPON);		// 武器
 
-	// プレイヤー体力フレーム
+																												// プレイヤー体力フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(180.0f, 650.0f, 0.0f), 350.0f, 125.0f, CUI_TEXTURE::UIFLAME_PLAYER_HP);	// 胴体
 
-	// AIチケット数フレーム
+																											// AIチケット数フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 530.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_DRONE);		// AI01
 	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 420.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_WORKER);	// AI02
 
-	// チームのチケット数フレーム
+																											// チームのチケット数フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
 	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
 
-	// パート切り替えテクスチャ
+																												// パート切り替えテクスチャ
 	//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);	// ストラテジーパート
 	//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);		// アクションパート
 
-	// パート切り替え（チェンジ）
+	//																											// パート切り替え（チェンジ）
 	//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 	//****************************************
 	// UI生成（数字）
 	//****************************************
+	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
+	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// プレイヤーライフ
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
-	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 530.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// ドローンライフ
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 420.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// ワーカーライフ
-	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// プレイヤーライフ
 
 	if (NULL == m_pDamageDirection)
 	{
@@ -567,12 +565,11 @@ void CGame::CreateActionUI(void)
 	//****************************************
 	// UI生成（数字）
 	//****************************************
+	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
+	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// プレイヤーライフ
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
-	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 530.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// ドローンライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 420.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// ワーカーライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// プレイヤーライフ
+
 }
 
 //=============================================================================
@@ -586,11 +583,15 @@ void CGame::CreateStrategyUI(void)
 	// 背景
 	CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH, SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_STRATEGY_BG);	// 背景
 
-	// パート切り替えテクスチャ
+																																				// チームのチケット数フレーム
+	CUI_TEXTURE::Create(D3DXVECTOR3(495.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
+	CUI_TEXTURE::Create(D3DXVECTOR3(1085.0f, 60.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
+
+	//																								// パート切り替えテクスチャ
 	//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);	// アクションパート
 	//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);		// ストラテジーパート
 
-	// パート切り替え（チェンジ）
+	//																												// パート切り替え（チェンジ）
 	//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 	// フレーム
@@ -599,13 +600,9 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(405.0f, 470.0f, 0.0f), 200.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// AI表示
 	CUI_TEXTURE::Create(D3DXVECTOR3(895.0f, 470.0f, 0.0f), 760.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// ロジック部分
 
-	// チームのチケット数フレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
-	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
-
-	//****************************************
-	// 1P小隊情報
-	//****************************************
+																												//****************************************
+																												// 1P小隊情報
+																												//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 325.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_1P_INFO);
 
 	// プレイヤー体力フレーム
@@ -615,13 +612,9 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 335.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 410.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 270.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// 1Pプレイヤーライフ
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 340.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 1Pワーカーライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 410.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// 1Pドローンライフの生成
-
-	//****************************************
-	// 2P小隊情報
-	//****************************************
+																											//****************************************
+																											// 2P小隊情報
+																											//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 590.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_2P_INFO);
 
 	// プレイヤー体力フレーム
@@ -631,15 +624,11 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 600.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 675.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 520.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// 2Pプレイヤーライフ
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 590.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 2Pワーカーライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 670.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 2Pドローンライフの生成
-
-	//****************************************
-	// UI生成（数字）
-	//****************************************
-	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
-	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
+																											//****************************************
+																											// UI生成（数字）
+																											//****************************************
+	CUI_NUMBER::Create(D3DXVECTOR3(630.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 1, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
+	CUI_NUMBER::Create(D3DXVECTOR3(920.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_RED, 2, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 
 	if (NULL == m_pButtonManager)
 	{// ボタン管理クラスの生成
@@ -892,9 +881,28 @@ void CGame::PrintData(void)
 					//発射していない情報を書き込む
 					pClient->Printf("0");
 					pClient->Printf(" ");
+				}
 			}
 
-		}
+			// ピンを使用しているかどうかを書き込む
+			if (m_pPlayer[pClient->GetPlayerIdx()]->GetPinUse() == true)
+			{// ピンを使用している場合
+				pClient->Printf("1");
+				pClient->Printf(" ");
+
+				// 位置を書き込む
+				pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().y, m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().z);
+				pClient->Printf(" ");
+
+				// 表示時間を書き込む
+				pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetPinLife());
+				pClient->Printf(" ");
+			}
+			else
+			{// ピンを使用していない場合
+				pClient->Printf("0");
+				pClient->Printf(" ");
+			}
 
 #if 0
 			//AIの位置を書き込む
@@ -1140,6 +1148,9 @@ char *CGame::ReadPlayerData(char *pStr)
 	int nNumShoot = 0;												//同時発射数
 	int nAttack = 0;												//攻撃力
 	bool bChat = false;												//チャットしているかどうか
+	bool bPinUse = false;											// ピンを使用しているかどうか
+	int nPinLife = 0;												// ピンの表示時間
+	D3DXVECTOR3 pinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				// ピンの位置
 	CPlayer::RADIOCHAT radioChat = CPlayer::RADIOCHAT_OK;			//ラジオチャット
 	int nBlueLinkEnergy = 0;										//ブルーチームのリンクエネルギー
 	int nRedLinkEnergy = 0;											//レッドチームのリンクエネルギー
@@ -1158,7 +1169,6 @@ char *CGame::ReadPlayerData(char *pStr)
 	float fAIAngleV[AI_MAX] = { 0.0f,0.0f };													//AI角度
 	int nAIAttack[AI_MAX] = { 0, 0 };															//AI攻撃力
 
-
 #if 0
 	D3DXVECTOR3 AIPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//AIの位置
 	D3DXVECTOR3 AIRot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//AIの向き
@@ -1166,7 +1176,7 @@ char *CGame::ReadPlayerData(char *pStr)
 	int nAIKillPlayerIdx = 0;										//AIキルプレイヤーの番号
 	TYPE AIPlayerType = TYPE_PLAYER;								//AIキルプレイヤーの種類
 #endif
-																	//クライアントの取得
+	//クライアントの取得
 	CClient *pClient = CManager::GetClient();
 	if (pClient != NULL)
 	{
@@ -1177,7 +1187,7 @@ char *CGame::ReadPlayerData(char *pStr)
 			nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 			pStr += nWord;										//頭出し
 
-																//チーム情報の代入
+			//チーム情報の代入
 			nTeam = CServerFunction::ReadInt(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
@@ -1353,7 +1363,31 @@ char *CGame::ReadPlayerData(char *pStr)
 				}
 
 			}
+			
+			//ピンを使用してるかどうかを代入
+			bPinUse = CServerFunction::ReadBool(pStr, "");
+			nWord = CServerFunction::PopString(pStr, "");
+			pStr += nWord;
 
+			if (bPinUse == true)
+			{// ピンを使用している場合
+				// ピンの位置を代入
+				pinPos.x = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				pinPos.y = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+				pinPos.z = CServerFunction::ReadFloat(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				// ピンの表示時間を代入
+				nPinLife = CServerFunction::ReadInt(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+			}
+			
 			if (nPlayerIdx == 0)
 			{//ホストの場合
 			 //現在の状態を代入
@@ -1528,7 +1562,7 @@ char *CGame::ReadPlayerData(char *pStr)
 					}
 
 					if (bShoot == true)
-					{//弾を発射していintる場合
+					{//弾を発射している場合
 						CreatePlayerBullet(nPlayerIdx, nNumShoot, nAttack, cameraRot, pAngle, pAngleV);
 					}
 
@@ -1536,6 +1570,13 @@ char *CGame::ReadPlayerData(char *pStr)
 					{//チャットしていてかつ同じチームの場合
 						SetChatData(nPlayerIdx, (int)radioChat);
 					}
+
+					if (bPinUse == true)
+					{// ピンを使用している場合
+						// ピンの更新
+						SetPinData(nPlayerIdx,pinPos, nPinLife);
+					}
+
 					if (nState == 1)
 					{//終了している場合
 						m_state = STATE_END;
@@ -1838,6 +1879,61 @@ void CGame::SetChatData(int nPlayerIdx, int radioChat)
 			m_pPlayer[2]->SetAllyChat(true);
 		}
 		break;
+	}
+}
+
+//=============================================================================
+// チャット情報の設置処理
+//=============================================================================
+void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos, int nLife)
+{
+	// プレイヤー番号別で処理分け
+	switch (nPlayerIdx)
+	{
+	case 0:
+		// プレイヤー0
+		if (m_pPlayer[1]->GetAllyPinUse() == false)
+		{// 仲間のピンが使用されているとき
+			m_pPlayer[1]->GetAllyPinPos() = pinPos;
+			m_pPlayer[1]->GetAllyPinLife() = nLife;
+			m_pPlayer[1]->GetAllyPinUse() = true;
+		}
+		//for (int nCntAI = 0; nCntAI < PLAYER_MAX * AI_MAX; nCntAI++)
+		//{// 味方AIの数だけ回る
+		//	if (m_pPlayer[1]->GetAIPinUse(nCntAI))
+		//	{// AIのピンが使用されているとき
+		//		m_pPlayer[0]->GetAIPinUse(nCntAI) = m_pPlayer[1]->GetAIPinUse(nCntAI);
+		//		m_pPlayer[0]->GetAIPin(nCntAI) = m_pPlayer[1]->GetAIPin(nCntAI);
+		//	}
+		//}
+		break;
+	case 1:
+		// プレイヤー1
+		if (m_pPlayer[0]->GetAllyPinUse() == false)
+		{// 仲間のピンが使用されているとき
+			m_pPlayer[0]->GetAllyPinPos() = pinPos;
+			m_pPlayer[0]->GetAllyPinUse() = true;
+		}
+		break;
+
+	case 2:
+		// プレイヤー2
+		if (m_pPlayer[3]->GetAllyPinUse() == false)
+		{// 仲間のピンが使用されているとき
+			m_pPlayer[3]->GetAllyPinPos() = pinPos;
+			m_pPlayer[3]->GetAllyPinUse() = true;
+		}
+		break;
+
+	case 3:
+		// プレイヤー3
+		if (m_pPlayer[2]->GetAllyPinUse() == false)
+		{// 仲間のピンが使用されているとき
+			m_pPlayer[2]->GetAllyPinPos() = pinPos;
+			m_pPlayer[2]->GetAllyPinUse() = true;
+		}
+		break;
+
 	}
 }
 

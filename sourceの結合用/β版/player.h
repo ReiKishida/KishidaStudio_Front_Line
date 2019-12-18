@@ -20,6 +20,7 @@
 #define COLLECTIONDATA_MAX	(12)	// 収集するデータの最大数
 #define RANDOM_MOVE_POINT	(11)	// ランダム移動の地点数
 #define ENEMY_PLAYER_MAX	(2)		// 敵プレイヤーの数
+#define PLAYER_MAX			(2)		// プレイヤーの数
 #define AI_MAX				(2)		// 一人当たりのAIの数
 
 // リロード
@@ -60,6 +61,8 @@ class CInputMouse;
 class CAIMecha;
 class CSearch;
 class CNodeDataFiler;
+class CPin;
+class CBulletPin;
 
 //*****************************************************************************
 // クラス定義
@@ -184,10 +187,29 @@ public:
 
 	bool GetReload(void) { return m_bReload; };
 
+	//==================
+	//   ピン関係
+	//==================
+	// 自分のピン情報
+	CPin *&GetPin(void) { return m_pPin; };
+	bool &GetPinUse(void) { return m_bPin; };
+	int &GetPinLife(void) { return m_nPinLife; };
+	D3DXVECTOR3 &GetPinPos(void) { return m_PinPos; };
+	// 味方のピン情報
+	CPin *&GetAllyPin(void) { return m_pAllyPin; };
+	bool &GetAllyPinUse(void) { return m_bAllyPin; };
+	int &GetAllyPinLife(void) { return m_nAllyPinLife; };
+	D3DXVECTOR3 &GetAllyPinPos(void) { return m_AllyPinPos; };
+	// AIのピン情報
+	CPin *&GetAIPin(int nValue) { return m_pAIPin[nValue]; };
+	bool &GetAIPinUse(int nValue) { return m_bAIPin[nValue]; };
+	int &GetAIPinLife(int nValue) { return m_nAIPinLife[nValue]; };
+	D3DXVECTOR3 &GetAIPinPos(int nValue) { return m_AIPinPos[nValue]; };
+
 	// ラジオチャット
 	RADIOCHAT GetRadioChat(void) { return m_radiochat; }									// ラジオチャット情報の取得
 	void SetRadioChat(RADIOCHAT radiochat) { m_radiochat = radiochat; }						// ラジオチャットの設定
-	void SetChat(bool bChat) { m_bChat = bChat; };											//チャット情報の設置処理
+	void SetChat(bool bChat) { m_bChat = bChat; };											// チャット情報の設置処理
 	bool GetChat(void) { return m_bChat; }													// チャット情報の取得
 	void SetAllyChat(bool bAllyChat) { m_bAllyChat = bAllyChat; }							// 味方のチャットが使用しているかどうかの設定
 	bool GetAllyChat(void) { return m_bAllyChat; };
@@ -195,10 +217,10 @@ public:
 	bool GetChatBotton(void) { return m_bChatBotton; }
 
 	// オプション
-	bool GetOption(void) { return m_bOption; }																// オプション状態の取得
-	void SetOption(bool bOption) { m_bOption = bOption; }											// オプション状態の設定
-	int GetSelectOption(void) { return m_nSelectOption; }												// 選択されたカメラ速度取得
-	void SetSelectOption(int nSelectOption) { m_nSelectOption = nSelectOption; }		// 選択されたカメラ速度設定
+	bool GetOption(void) { return m_bOption; }												// オプション状態の取得
+	void SetOption(bool bOption) { m_bOption = bOption; }									// オプション状態の設定
+	int GetSelectOption(void) { return m_nSelectOption; }									// 選択されたカメラ速度取得
+	void SetSelectOption(int nSelectOption) { m_nSelectOption = nSelectOption; }			// 選択されたカメラ速度設定
 
 	int GetKillPlayerIdx(void) { return m_nKillPlayerIdx; };
 	int GetNumParts(void) { return m_nNumParts; };
@@ -215,17 +237,19 @@ private:
 	void ChatMess(bool bChat);			// ボタンが押されて、メッセージ表示
 	void CreateRespawnPosIcon(void);
 	void AllyChatMess(void);
-	void Option(bool bOption);						// オプション設定
-	void UninitOption(void);							// オプションの破棄
-	void CreateRadioChatButton(void);		// チャットボタンの生成
-	void UninitRadioChatButton(void);			// チャットボタンの破棄
+	void Option(bool bOption);			// オプション設定
+	void UninitOption(void);			// オプションの破棄
+	void CreateRadioChatButton(void);	// チャットボタンの生成
+	void UninitRadioChatButton(void);	// チャットボタンの破棄
+	void PinUpdateSingle(void);			// シングル時のピン関係の更新
+	void PinUpdateMulti	(void);			// マルチ時のピン関係の更新
 
 	// 戦闘系AIの処理
-	void LoadBattleFile(void);	//戦闘用のテキストの読み込み
-	bool Distance(void);		//範囲探索
-	void Battle(void);			//戦闘
-	void BattleMovent(void);	//戦闘時の移動
-	void CpuShoot(void);		//弾発射
+	void LoadBattleFile(void);	// 戦闘用のテキストの読み込み
+	bool Distance(void);		// 範囲探索
+	void Battle(void);			// 戦闘
+	void BattleMovent(void);	// 戦闘時の移動
+	void CpuShoot(void);		// 弾発射
 
 	// 移動系AIの処理
 	void AIUpdate(void);	// AIの更新
@@ -255,7 +279,7 @@ private:
 	float			m_fCameraAngle;		// カメラの向き
 	int				m_nDamageTime;		// ダメージを受けた時の硬直時間
 	CScene3DBill	*m_pReticle;		// レティクル
-	int m_nTimer;						// タイマー
+	int				m_nTimer;			// タイマー
 
 	int				m_nPlayerIdx;		// プレイヤー番号
 	D3DXVECTOR3		m_posOld;			// 過去の位置
@@ -278,6 +302,23 @@ private:
 	int				m_nCntShoot;		// 発射間隔
 	bool			m_bShootButton;		// 弾の発射ボタン押下フラグ
 	bool			m_bConnect;			// 接続しているかどうか
+
+	// ピン
+	CPin			*m_pPin;			// ピンのポインタ
+	CBulletPin		*m_pPinBullet;		// ピン立て判定用の弾のポインタ
+	bool			m_bPin;				// ピンを立てているか
+	int				m_nPinLife;			// ピンの表示時間
+	D3DXVECTOR3		m_PinPos;			// ピンの位置
+	// 味方のピン
+	CPin			*m_pAllyPin;		// 味方のピンのポインタ
+	bool			m_bAllyPin;			// 味方がピンを立てているか
+	int				m_nAllyPinLife;		// 味方のピンの表示時間
+	D3DXVECTOR3		m_AllyPinPos;		// 味方のピンの位置
+	// AIのピン
+	CPin			*m_pAIPin[PLAYER_MAX * AI_MAX];		// AIのピンのポインタ
+	bool			m_bAIPin[PLAYER_MAX * AI_MAX];		// AIがピンを立てているか
+	int				m_nAIPinLife[PLAYER_MAX * AI_MAX];	// AIのピンの表示時間
+	D3DXVECTOR3		m_AIPinPos[PLAYER_MAX * AI_MAX];	// AIのピンの位置
 
 	// =============================================================
 	// UI関係
@@ -320,17 +361,17 @@ private:
 	int				m_moveSpeed;								// テクスチャ動くスピード
 	int				m_nTexTimer;								// テクスチャ表示タイマー
 	int				m_nAllyTimer;
-	int				m_nRadioChat;														// ラジオチャット切り替え
+	int				m_nRadioChat;								// ラジオチャット切り替え
 
 	// オプション
-	CButton2D			*m_pUIButtonOption;												// オプションUIポインタ
-	bool						m_bOption;																// オプション状態かどうか
-	CUI_TEXTURE		*m_pUITexOption;													// オプション設定で使用するUITex
-	CButton2D			*m_pUIButtonBack;													// 戻るボタンUIポインタ
-	CButton2D			*m_pUIButtonSelect[OPTION_SELECT];				// カメラの速度選択
-	int						m_nSelectOption;													//	カメラ速度の項目
+	CButton2D		*m_pUIButtonOption;							// オプションUIポインタ
+	bool			m_bOption;									// オプション状態かどうか
+	CUI_TEXTURE		*m_pUITexOption;							// オプション設定で使用するUITex
+	CButton2D		*m_pUIButtonBack;							// 戻るボタンUIポインタ
+	CButton2D		*m_pUIButtonSelect[OPTION_SELECT];			// カメラの速度選択
+	int				m_nSelectOption;							//	カメラ速度の項目
 
-	int m_nKillPlayerIdx;					//キルプレイヤーの番号
+	int				m_nKillPlayerIdx;							//キルプレイヤーの番号
 
 	// =============================================================
 	// 移動系AIの変数
@@ -339,6 +380,7 @@ private:
 	D3DXVECTOR3 m_collectionPos[COLLECTIONDATA_MAX];	// 収集したデータ
 	D3DXVECTOR3	m_posDest;				// 目標位置
 	D3DXVECTOR3	m_rotDest;				// 目標方向
+	D3DXVECTOR3	m_rotDestOld;			// 前回の目標方向
 	D3DXVECTOR3 m_totalCollectPos;		// 収集したデータの合計値
 	int m_nBreaktime;					// 休憩時間
 	int m_nStartNode;					// 開始ノード番号
@@ -364,22 +406,23 @@ private:
 	//AI戦闘系の変数
 	// =============================================================
 	//戦闘に必要な変数
-	CSearch **m_pSearch;					//探索のポインタクラス
+	CSearch **m_pSearch;			// 探索のポインタクラス
 
 	//認識系
-	float m_fSearchLength;					//認識距離
-	float m_fSearchAngle;					//認識角度
-	D3DXVECTOR3 m_SearchVec_0;				//認識用ベクトル１
-	D3DXVECTOR3 m_SearchVec_1;				//認識用ベクトル２
-	D3DXVECTOR3 m_SearchVec_2;				//認識用ベクトル２
-	bool m_bFind;							// 発見の状態
-	bool m_bFindOld;						// 前回の発見状態
+	CPlayer *m_pFindPlayer;			// 発見したプレイヤーのポインタ
+	float m_fSearchLength;			// 認識距離
+	float m_fSearchAngle;			// 認識角度
+	D3DXVECTOR3 m_SearchVec_0;		// 認識用ベクトル１
+	D3DXVECTOR3 m_SearchVec_1;		// 認識用ベクトル２
+	D3DXVECTOR3 m_SearchVec_2;		// 認識用ベクトル２
+	bool m_bFind;					// 発見の状態
+	bool m_bFindOld;				// 前回の発見状態
 
 	//攻撃系
-	float	m_fRange;						//範囲
+	float	m_fRange;				// 範囲
 
 	//移動系
-	D3DXVECTOR3 m_fRotDestUpper;			//上半身
+	D3DXVECTOR3 m_fRotDestUpper;	// 上半身
 };
 
 #endif

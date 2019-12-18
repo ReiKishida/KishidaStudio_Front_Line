@@ -1,13 +1,14 @@
 //=============================================================================
 //
 // AI処理 [AI.cpp]
-// Author : Takuto Ishida
+// Author : Komatsu Keisuke
 //
 //=============================================================================
 #define _CRT_SECURE_NO_WARNINGS
 #include "AI.h"
 #include "player.h"
 #include "manager.h"
+#include "camera.h"
 #include "renderer.h"
 #include "debugProc.h"
 #include "model.h"
@@ -20,30 +21,41 @@
 #include "button.h"
 #include "mouseCursor.h"
 #include "menu.h"
+#include "nodeDataFiler.h"
+#include "search.h"
 #include "particle.h"
 #include "game.h"
+#include "pin.h"
 
-//==================================
+//=============================================================================
 // マクロ定義
-//==================================
-#define WALKER_FILE	"data/TEXT/AI/walker/model_walker.txt"
+//=============================================================================
+#define WORKER_FILE	"data/TEXT/AI/worker/model_worker.txt"
 #define DRONE_FILE	"data/TEXT/AI/drone/model_drone.txt"
+#define AI_SPEED			(2.7f)		// 移動速度
 
-// ルート探索用
+// 移動系AI関連
 #define	LOAD_FILENAME		("data/TEXT/NODE_DATA/NodeData.txt")
+//#define	LOAD_FILENAME	("data/TEXT/NODE_DATA/NodeDataTutorial.txt")	// 読み込むファイルのパス
 #define ENEMY_BREAKTIME		(1)			// 休憩時間(フレーム)
 #define MOUSE_ACCEPTABLE	(20.0f)		// マウスの誤差の許容範囲
 #define MOVE_ACCEPTABLE		(25.0f)		// 移動の誤差の許容範囲
 #define POS_ACCEPTABLE		(100.0f)	// 位置の誤差の許容範囲
-#define AI_SPEED			(3.0f)		// 移動速度
 
-//==================================
+// 戦闘系AI関連
+#define ATTACK_DISPERTION	(100)			// 弾のブレ
+#define ATTACK_AREA			(70000.0f)		// 攻撃範囲
+#define MAX_CHAR			(254)			// 読み取る文字数
+#define MAX_SEARCH			(4)				// センサー数
+#define FIND_FIND_CHARACTER_PRIORITY (4)	// 探すプレイヤーの優先順位
+
+//=============================================================================
 // 静的メンバ変数宣言
-//==================================
+//=============================================================================
 
-//==================================
+//=============================================================================
 // 生成処理
-//==================================
+//=============================================================================
 CAIMecha* CAIMecha::Create(CPlayer *pPlayer, MECHATYPE mecha, D3DXVECTOR3 pos)
 {
 	CAIMecha *pAI;
@@ -61,9 +73,9 @@ CAIMecha* CAIMecha::Create(CPlayer *pPlayer, MECHATYPE mecha, D3DXVECTOR3 pos)
 	return pAI;
 }
 
-//=========================================
+//=============================================================================
 // コンストラクタ
-//=========================================
+//=============================================================================
 CAIMecha::CAIMecha(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType)
 {
 	m_pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
@@ -78,7 +90,7 @@ CAIMecha::CAIMecha(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_nLife = 0;
 	m_fSpeed = 0.0f;
 	m_nAttack = 0;
-	m_mechaType = MECHATYPE_WALKER;
+	m_mechaType = MECHATYPE_WORKER;
 	m_nCapacity = 0;
 	m_nCurMotion = 0;
 	m_nLifeMax = 0;
@@ -87,19 +99,26 @@ CAIMecha::CAIMecha(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_nTeam = 0;
 	m_bDeath = false;
 	m_nKillPlayerIdx = 0;
-
+	m_posCanon = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_fAngle = 0.0f;
+	m_fAngleV = 0.0f;
+	m_bShoot = false;
+	m_bPin = false;
+	m_PinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 }
 
-//=========================================
+//=============================================================================
 // デストラクタ
-//=========================================
+//=============================================================================
 CAIMecha::~CAIMecha() {}
 
-//=========================================
+//=============================================================================
 // 初期化処理
-//=========================================
+//=============================================================================
 HRESULT CAIMecha::Init(void)
 {
+	srand((unsigned int)time(0));
+
 	// デバイスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
 	LPDIRECT3DDEVICE9 pDevice;
@@ -114,7 +133,7 @@ HRESULT CAIMecha::Init(void)
 	char **pModelName = NULL;
 	char *pFileName = "";
 
-	if (MECHATYPE_WALKER == m_mechaType) { pFileName = WALKER_FILE; }
+	if (MECHATYPE_WORKER == m_mechaType) { pFileName = WORKER_FILE; }
 	else if (MECHATYPE_DRONE == m_mechaType) { pFileName = DRONE_FILE; }
 
 	// ファイルを開く
@@ -338,8 +357,13 @@ HRESULT CAIMecha::Init(void)
 		m_nTeam = 1;
 	}
 
-	// 数値の初期化==============================================================================
-	// パート関係
+	// 戦闘系AI数値の初期化
+	m_bFind = false;
+
+	// 移動系AI数値の初期化
+	m_pNodeData = CGame::GetNodeFiler();	// ファイル情報の取得
+
+											// パート関係
 	m_bPartSwitch = CGame::PART_ACTION;
 	m_bPartSwitchOld = CGame::PART_ACTION;
 
@@ -391,14 +415,14 @@ HRESULT CAIMecha::Init(void)
 	}
 
 	// マップデータファイルの読み込み
-	CAIMecha::FileLoad(LOAD_FILENAME);
+	m_pNodeData->FileLoad(LOAD_FILENAME);
 
 	// 開始時点のノードの初期化
 	float fMinLength = 100000, fLength = 100000;	// 差分系
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
 	 // 差分を求める
-		fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
+		fLength = (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) * (m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) + (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) * (m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
 
 		if (fMinLength > fLength)
 		{// 差分の最小値を求める
@@ -414,9 +438,9 @@ HRESULT CAIMecha::Init(void)
 	return S_OK;
 }
 
-//=========================================
+//=============================================================================
 // 終了処理
-//=========================================
+//=============================================================================
 void CAIMecha::Uninit(void)
 {
 	if (NULL != m_pMotion)
@@ -446,15 +470,26 @@ void CAIMecha::Uninit(void)
 	CScene::Release();
 }
 
-//=========================================
+//=============================================================================
 // 更新処理
-//=========================================
+//=============================================================================
 void CAIMecha::Update(void)
 {
-	if (NULL != m_pMotion && MECHATYPE_WALKER == m_mechaType)
+	if (NULL != m_pMotion && MECHATYPE_WORKER == m_mechaType)
 	{// モーション
-		m_pMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+
+		if (m_pos != m_posOld)
+		{
+			m_pMotion->SetMotion(CMotionManager::TYPE_BACK);
+		}
+		else
+		{
+			m_pMotion->SetMotion(CMotionManager::TYPE_NEUTRAL);
+		}
 	}
+
+	m_posOld = m_pos;
+
 
 	if (MECHATYPE_DRONE == m_mechaType)
 	{// ドローンのプロペラを回す
@@ -463,13 +498,32 @@ void CAIMecha::Update(void)
 		m_pModel[1]->SetRot(rot);
 	}
 
-	// AI関係の更新処理
-	CAIMecha::AIUpdate();
+	if (m_bDeath == false)
+	{
+		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+		{//表示する
+			m_pModel[nCntModel]->SetDisp(true);
+		}
+
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{
+			if (CManager::GetClient()->GetPlayerIdx() == m_pPlayer->GetPlayerIdx())
+			{
+				// AI関係の更新処理
+				CAIMecha::AIUpdate();
+			}
+		}
+		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+		{
+			// AI関係の更新処理
+			CAIMecha::AIUpdate();
+		}
+	}
 }
 
-//=========================================
+//=============================================================================
 // 描画処理
-//=========================================
+//=============================================================================
 void CAIMecha::Draw(void)
 {
 	// デバイスの取得
@@ -499,7 +553,6 @@ void CAIMecha::Draw(void)
 	}
 }
 
-
 //=============================================================================
 // ダメージ処理
 //=============================================================================
@@ -509,16 +562,16 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 	{//シングルプレイの場合
 		if (m_nLife > 0 && m_bDeath == false)
 		{
-			m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+			m_state = STATE_DAMAGE;	// ダメージを受けている状態にする
 
-			m_nLife -= nDamage;									//体力の減算
+			m_nLife -= nDamage;	//体力の減算
 
 			if (0 >= m_nLife)
 			{//体力が０以下の場合
 				m_nLife = 0;			//体力を０にする
 				m_bDeath = true;		//死亡状態にする
 
-				if (m_bDeath == true)
+				if (m_bDeath == true && CManager::GetMode() == CManager::MODE_GAME)
 				{//死亡している場合
 					for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
 					{
@@ -534,7 +587,9 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 									CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());			//キルプレイヤーの番号を設置処理
 									CManager::GetGame()->SetDeathIdx(nCntKill, m_pPlayer->GetPlayerIdx());		//デスプレイヤーの番号を設置処理
 									CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);					//プレイヤーの種類を設置処理
-									CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);					//プレイヤーの種類を設置処理
+									//プレイヤーの種類を設置処理
+									if(m_mechaType == MECHATYPE_DRONE){ CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+									else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 									CManager::GetGame()->SetLog(nCntKill, true);								//ログの設置処理
 								}
 							}
@@ -549,13 +604,17 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 									if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
 									{//オブジェクトの種類がドローンの場合
 										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
-										CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
+										//プレイヤーの種類を設置処理
+										if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+										else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 										CManager::GetGame()->SetLog(nCntKill, true);										//ログの設置処理
 									}
-									else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WALKER)
+									else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 									{//オブジェクトの種類がワーカーの場合
-										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WALKER);							//プレイヤーの種類を設置処理
-										CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
+										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);							//プレイヤーの種類を設置処理
+										//プレイヤーの種類を設置処理
+										if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+										else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 										CManager::GetGame()->SetLog(nCntKill, true);										//ログの設置処理
 									}
 								}
@@ -578,10 +637,10 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 				switch (m_nTeam)
 				{
 				case 0:
-					CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 20);
+					CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 10);
 					break;
 				case 1:
-					CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 20);
+					CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 10);
 					break;
 				}
 			}
@@ -604,7 +663,7 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 						m_nLife = 0;		//体力を０にする
 						m_bDeath = true;	//死亡状態にする
 
-						if (m_bDeath == true)
+						if (m_bDeath == true && CManager::GetMode() == CManager::MODE_GAME)
 						{//死亡している場合
 							for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
 							{
@@ -620,7 +679,9 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 											CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());		//キルプレイヤーの番号を設置処理
 											CManager::GetGame()->SetDeathIdx(nCntKill, m_pPlayer->GetPlayerIdx());	//デスプレイヤーの番号を設置処理
 											CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);				//プレイヤーの種類を設置処理
-											CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);				//プレイヤーの種類を設置処理
+											//プレイヤーの種類を設置処理
+											if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+											else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 											CManager::GetGame()->SetLog(nCntKill, true);							//ログの設置処理
 										}
 									}
@@ -635,13 +696,17 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 											if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
 											{//オブジェクトの種類がドローンの場合
 												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
-												CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
+												//プレイヤーの種類を設置処理
+												if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+												else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 											}
-											else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WALKER)
+											else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 											{//オブジェクトの種類がワーカーの場合
-												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WALKER);						//プレイヤーの種類を設置処理
-												CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
+												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);						//プレイヤーの種類を設置処理
+												//プレイヤーの種類を設置処理
+												if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+												else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
 											}
 										}
@@ -665,10 +730,10 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 						switch (m_nTeam)
 						{
 						case 0:
-							CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 20);
+							CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 10);
 							break;
 						case 1:
-							CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 20);
+							CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 10);
 							break;
 						}
 					}
@@ -742,10 +807,12 @@ void CAIMecha::AIUpdate()
 	//	CDebugProc::Print("\n");
 	//}
 
-	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
+	//CDebugProc::Print("m_bFind : %s\n", m_bFind ? "true" : "false");
+
+	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
-																// 前回のパート情報の保存
+	// 前回のパート情報の保存
 	m_bPartSwitchOld = m_bPartSwitch;
 	// 現在のパート情報を取得
 	m_bPartSwitch = CManager::GetGame()->GetPart();
@@ -753,6 +820,49 @@ void CAIMecha::AIUpdate()
 	// 中断処理
 	Cancel();
 
+	// AI行動設定
+	AIActionSet(pMouse);
+
+	// 攻撃関係処理
+	Attack();
+
+	if (m_bPartSwitch == CGame::PART_ACTION)
+	{// アクションパートの場合
+		m_nRallyCount = 0;
+
+		// 自動移動処理
+		CAIMecha::AutoMove();
+	}
+	else if (m_bPartSwitch == CGame::PART_STRATEGY)
+	{// ストラテジーパートの場合
+		if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
+		{// AIの行動が決定している状態で左クリックされた場合
+			m_nPoint = 0;
+			m_nCountPoint = -1;
+
+			// 経路探索方法
+			if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)// 往復移動時
+			{// ポイント間を徘徊する経路探索
+				CAIMecha::RootSearch();
+				CAIMecha::PatrolRootSearch();
+			}
+			else if (m_AIAction[2] == AI_ACTION_RALLY)// ラリー時
+			{// ラリーポイントによる経路探索
+				CAIMecha::RallyRootSearch();
+			}
+			if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)// 目標優先時
+			{// ポイントへの経路探索
+				CAIMecha::RootSearch();
+			}
+		}
+	}
+}
+
+//=============================================================================
+//	AI行動設定処理
+//=============================================================================
+void CAIMecha::AIActionSet(CInputMouse *pMouse)
+{
 	if (m_bPartSwitch == CGame::PART_STRATEGY && CManager::GetGame()->GetButtonManager() != NULL)
 	{// ストラテジーパート時でボタンマネージャーがNULLじゃない場合
 		if (CManager::GetGame()->GetButtonManager()->GetSelectFinish() == true)
@@ -857,6 +967,7 @@ void CAIMecha::AIUpdate()
 		}
 	}
 
+	// 行動ごとの処理
 	if (m_AIAction[0] == AI_ACTION_NONE)
 	{// AIの行動が決定していない場合
 	 // 追従モードに設定する
@@ -902,35 +1013,116 @@ void CAIMecha::AIUpdate()
 		}
 	}
 
-	if (m_bPartSwitch == CGame::PART_ACTION)
-	{// アクションパートの場合
-		m_nRallyCount = 0;
-
-		// 自動移動処理
-		CAIMecha::AutoMove();
+	// 索敵範囲の設定
+	if (m_AIAction[1] = AI_ACTION_FOLLOW)
+	{// 追従型の場合
+		m_fSearchArea = ATTACK_AREA - (ATTACK_AREA / 5.0f);
 	}
-	else if (m_bPartSwitch == CGame::PART_STRATEGY)
-	{// ストラテジーパートの場合
-		if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
-		{// AIの行動が決定している状態で左クリックされた場合
-			m_nPoint = 0;
-			m_nCountPoint = -1;
+	else
+	{// その他の場合
+		m_fSearchArea = ATTACK_AREA;
+	}
+}
 
-			// 経路探索方法
-			if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)// 往復移動時
-			{// ポイント間を徘徊する経路探索
-				CAIMecha::RootSearch();
-				CAIMecha::PatrolRootSearch();
-			}
-			else if (m_AIAction[2] == AI_ACTION_RALLY)// ラリー時
-			{// ラリーポイントによる経路探索
-				CAIMecha::RallyRootSearch();
-			}
-			if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)// 目標優先時
-			{// ポイントへの経路探索
-				CAIMecha::RootSearch();
+//=============================================================================
+//	攻撃関係処理
+//=============================================================================
+void CAIMecha::Attack()
+{
+	CScene *pScene = CScene::GetSceneTop(PLAYER_PRIORITY);
+	CScene *pSceneNext = NULL;
+	int nCntEnemyPlayer = 0;	// 敵プレイヤーのカウント
+	float fAttackLength = 0.0f;	// 差分
+	bool bFind[2] = { false, false };	// 発見状態
+
+	while (pScene != NULL)
+	{// NULLになるまでループ
+		pSceneNext = pScene->GetSceneNext();
+		CScene::OBJTYPE objType = pScene->GetObjType();
+
+		if (CScene::OBJTYPE_PLAYER == objType)
+		{// プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pScene;
+			int nTeam = pPlayer->GetTeam();
+
+			//if(nCntEnemyPlayer < ENEMY_PLAYER_MAX)
+			if (m_nTeam != nTeam)
+			{// チームが違うとき
+				m_pEnemyPlayer[nCntEnemyPlayer] = pPlayer;
+				nCntEnemyPlayer++;
 			}
 		}
+
+		// 次のオブジェクトを見る
+		pScene = pSceneNext;
+	}
+
+	for (int nCntPlayer = 0; nCntPlayer < nCntEnemyPlayer; nCntPlayer++)
+	{// 敵プレイヤーの数分回る
+		if (m_pEnemyPlayer[nCntPlayer] != NULL)
+		{// NULLチェック
+			fAttackLength =
+				(m_pEnemyPlayer[nCntPlayer]->GetPos().x - m_pos.x) *
+				(m_pEnemyPlayer[nCntPlayer]->GetPos().x - m_pos.x) +
+				(m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z) *
+				(m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z);
+
+			if (fAttackLength < ATTACK_AREA)
+			{// 範囲内に敵が入った場合
+
+				// 発見状態にする
+				bFind[nCntPlayer] = true;
+
+				// 見つけた敵の方向を向く
+				m_rotDest.y = atan2f(m_pEnemyPlayer[nCntPlayer]->GetPos().x - m_pos.x, m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z) + D3DX_PI;
+
+				// ピンの配置
+				m_PinPos = m_pEnemyPlayer[nCntPlayer]->GetPos();
+				m_bPin = true;
+
+				// 射出口の位置の取得
+				D3DXMATRIX mtxCanon = m_pModel[0]->GetMtxWorld();
+				D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
+
+				if (rand() % 30 == 0)
+				{// ランダムなタイミングで攻撃
+
+					// 左右攻撃方向の設定
+					m_fAngle = m_rot.y + D3DX_PI;
+
+					// 上下攻撃方向の設定
+					m_fAngleV =
+						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) *
+						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) +
+						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y) *
+						(m_pos.y - m_pEnemyPlayer[nCntPlayer]->GetPos().y);
+
+					// 弾をばらつかせる
+					m_fAngle += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.005f;
+					m_fAngleV += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.003f;
+
+					// 弾の生成
+					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this);
+
+					//撃っている状態にする
+					m_bShoot = true;
+				}
+			}
+			else
+			{// 範囲内に敵がいない場合
+				bFind[nCntPlayer] = false;
+			}
+		}
+	}
+
+	// 発見状態の遷移
+	if (bFind[0] || bFind[1])
+	{// どちらか一方でも発見している
+		m_bFind = true;
+	}
+	else if (!bFind[0] && !bFind[1])
+	{// どっちも発見していない
+		m_bFind = false;
 	}
 }
 
@@ -939,7 +1131,6 @@ void CAIMecha::AIUpdate()
 //=============================================================================
 void CAIMecha::AutoMove()
 {
-
 	if (m_bPatrol)
 	{// 往復移動時
 		m_posDest = m_patrolWaypoint[m_nPoint];
@@ -958,7 +1149,11 @@ void CAIMecha::AutoMove()
 	{// 差分が許容値内に収まるまで目的地に移動する
 		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * AI_SPEED;
 		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * AI_SPEED;
-		m_rotDest.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
+
+		if (!m_bFind)
+		{// 未発見時
+			m_rotDest.y = atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z) + D3DX_PI;
+		}
 	}
 	else if (m_nBreaktime < 0)
 	{// 移動後休憩
@@ -995,12 +1190,22 @@ void CAIMecha::AutoMove()
 	if (m_rot.y > D3DX_PI) { m_rot.y -= D3DX_PI * 2.0f; }
 	if (m_rot.y < -D3DX_PI) { m_rot.y += D3DX_PI * 2.0f; }
 
-	// 目標方向へ向く
-	m_rot.y += (m_rotDest.y - m_rot.y) * 0.1f;
+	if (m_rotDest.y - m_rot.y > D3DX_PI || m_rotDest.y - m_rot.y < -D3DX_PI)
+	{// 差分が1周以上ある場合
+		m_rot.y -= (m_rotDest.y - m_rot.y) * 0.1f;
+	}
+	else
+	{
+		// 目標方向へ向く
+		m_rot.y += (m_rotDest.y - m_rot.y) * 0.1f;
+	}
 
 	// 位置の更新
 	m_pos.x += m_move.x;
 	m_pos.z += m_move.z;
+
+	//CDebugProc::Print("m_rot.y : %.1f ", m_rot.y);
+	//CDebugProc::Print("m_rotDest.y : %.1f ", m_rotDest.y);
 }
 
 //=============================================================================
@@ -1012,12 +1217,16 @@ void CAIMecha::Follow()
 	int nNearNode = 0;
 
 	// 自分の位置に最も近いノードを検索する
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
 	 // 差分を求める
 		if (m_pPlayer != NULL)
 		{// プレイヤーのNULLチェック
-			fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
+			fLength =
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) +
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -1035,12 +1244,16 @@ void CAIMecha::Follow()
 	nNearNode = 0;
 
 	// 自分の主人の位置に最も近いノードを検索する
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
 	 // 差分を求める
 		if (m_pPlayer != NULL)
 		{// プレイヤーのNULLチェック
-			fLength = (m_NodeData.pos[nCntNode].x - m_pPlayer->GetPos().x) * (m_NodeData.pos[nCntNode].x - m_pPlayer->GetPos().x) + (m_NodeData.pos[nCntNode].z - m_pPlayer->GetPos().z) * (m_NodeData.pos[nCntNode].z - m_pPlayer->GetPos().z);
+			fLength =
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pPlayer->GetPos().x) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pPlayer->GetPos().x) +
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pPlayer->GetPos().z) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pPlayer->GetPos().z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -1061,9 +1274,9 @@ void CAIMecha::Follow()
 		m_nPoint = 0;
 		m_nCountPoint = -1;
 
-		for (int nCntAll = 0; nCntAll < m_NodeData.nodeMax; nCntAll++)
+		for (int nCntAll = 0; nCntAll < m_pNodeData->GetLoadData().nodeMax; nCntAll++)
 		{// ノードの数だけ回る
-			m_waypoint[nCntAll] = m_NodeData.pos[nNearNode];
+			m_waypoint[nCntAll] = m_pNodeData->GetLoadData().pos[nNearNode];
 		}
 	}
 
@@ -1073,9 +1286,13 @@ void CAIMecha::Follow()
 		m_nCountPoint = -1;
 
 		// 今自分が向かってるノードを検索する
-		for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// ノードの数だけ回る
-			fLength = (m_NodeData.pos[nCntNode].x - m_posDest.x) * (m_NodeData.pos[nCntNode].x - m_posDest.x) + (m_NodeData.pos[nCntNode].z - m_posDest.z) * (m_NodeData.pos[nCntNode].z - m_posDest.z);
+			fLength =
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_posDest.x) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_posDest.x) +
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_posDest.z) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_posDest.z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -1087,9 +1304,9 @@ void CAIMecha::Follow()
 		// 今自分が向かってるノードをスタート地点にする
 		m_nStartNode = nNearNode;
 
-		for (int nCntAll = 0; nCntAll < m_NodeData.nodeMax; nCntAll++)
+		for (int nCntAll = 0; nCntAll < m_pNodeData->GetLoadData().nodeMax; nCntAll++)
 		{// ノードの数だけ回る
-			m_waypoint[nCntAll] = m_NodeData.pos[m_nStartNode];
+			m_waypoint[nCntAll] = m_pNodeData->GetLoadData().pos[m_nStartNode];
 		}
 
 		// ポイントへの経路探索
@@ -1112,12 +1329,16 @@ void CAIMecha::NodeSearch(bool node)
 		nNearNode = 0;
 
 		// 自分の位置に最も近いノードを検索する
-		for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// ノードの数だけ回る
 		 // 差分を求める
 			if (m_pPlayer != NULL)
 			{// プレイヤーのNULLチェック
-				fLength = (m_NodeData.pos[nCntNode].x - m_pos.x) * (m_NodeData.pos[nCntNode].x - m_pos.x) + (m_NodeData.pos[nCntNode].z - m_pos.z) * (m_NodeData.pos[nCntNode].z - m_pos.z);
+				fLength =
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) +
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
 
 				if (fMinLength > fLength)
 				{// 差分の最小値を求める
@@ -1138,10 +1359,14 @@ void CAIMecha::NodeSearch(bool node)
 		nNearNode = 0;
 
 		// 指定された位置に最も近いノードを検索する
-		for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// ノードの数だけ回る
 		 // 差分を求める
-			fLength = (m_NodeData.pos[nCntNode].x - CManager::GetGame()->GetMouse()->Getsetpos().x) * (m_NodeData.pos[nCntNode].x - CManager::GetGame()->GetMouse()->Getsetpos().x) + (m_NodeData.pos[nCntNode].z - CManager::GetGame()->GetMouse()->Getsetpos().z) * (m_NodeData.pos[nCntNode].z - CManager::GetGame()->GetMouse()->Getsetpos().z);
+			fLength =
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - CManager::GetGame()->GetMouse()->Getsetpos().x) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - CManager::GetGame()->GetMouse()->Getsetpos().x) +
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - CManager::GetGame()->GetMouse()->Getsetpos().z) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - CManager::GetGame()->GetMouse()->Getsetpos().z);
 
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
@@ -1180,22 +1405,26 @@ void CAIMecha::RootSearch()
 	std::vector<int> path;			// 最短経路の情報を保持するvector
 
 									//======= エッジコストの算出 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++, nCntWeight++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
-		weight[nCntWeight] = sqrt((m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) * (m_NodeData.pos[m_nStartNode].x - m_NodeData.pos[nCntNode].x) + (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z) * (m_NodeData.pos[m_nStartNode].z - m_NodeData.pos[nCntNode].z));
+		weight[nCntWeight] = sqrt(
+			(m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) *
+			(m_pNodeData->GetLoadData().pos[m_nStartNode].x - m_pNodeData->GetLoadData().pos[nCntNode].x) +
+			(m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z) *
+			(m_pNodeData->GetLoadData().pos[m_nStartNode].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
 	}
 
 	//======= エッジ追加 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[nCntNode]; nCntConnect++)
+		for (int nCntConnect = 0; nCntConnect < m_pNodeData->GetLoadData().connectNum[nCntNode]; nCntConnect++)
 		{// 繋がってるノードの数だけ回る
-			CAIMecha::AddEdge(nCntNode, m_NodeData.connectIndex[nCntNode][nCntConnect], weight[nCntNode], node);
+			CAIMecha::AddEdge(nCntNode, m_pNodeData->GetLoadData().connectIndex[nCntNode][nCntConnect], weight[nCntNode], node);
 		}
 	}
 
 	//======= 最短経路を調べる =========================================================================
-	CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nStartNode, m_nEndNode, node);
+	CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nStartNode, m_nEndNode, node);
 
 	for (int nCntNode = m_nEndNode; nCntNode != m_nStartNode; nCntNode = node[nCntNode].from)
 	{// 最短経路をゴールから順にスタートまでたどる
@@ -1213,11 +1442,11 @@ void CAIMecha::RootSearch()
 	}
 
 	//======= 目標地点の設定 =========================================================================
-	for (int nCntNodeMax = 0; nCntNodeMax < m_NodeData.nodeMax; )
+	for (int nCntNodeMax = 0; nCntNodeMax < m_pNodeData->GetLoadData().nodeMax; )
 	{// ノードの数だけ回る
 		for (int nCntNode = path.size() - 1; nCntNode >= 0; nCntNode--, nCntNodeMax++)
 		{
-			m_waypoint[nCntNodeMax] = m_NodeData.pos[path[nCntNode]];
+			m_waypoint[nCntNodeMax] = m_pNodeData->GetLoadData().pos[path[nCntNode]];
 		}
 	}
 }
@@ -1232,32 +1461,32 @@ void CAIMecha::RallyRootSearch()
 	std::vector<int> path;	// 最短経路の情報を保持するvector
 
 							//======= エッジコストの算出 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++, nCntWeight++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		if (m_nRallyCount != 0)
 		{// 2ポイント目以降
 			weight[nCntWeight] = sqrt(
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount - 1]].x - m_NodeData.pos[nCntNode].x) *
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount - 1]].x - m_NodeData.pos[nCntNode].x) +
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount - 1]].z - m_NodeData.pos[nCntNode].z) *
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount - 1]].z - m_NodeData.pos[nCntNode].z));
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount - 1]].x - m_pNodeData->GetLoadData().pos[nCntNode].x) *
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount - 1]].x - m_pNodeData->GetLoadData().pos[nCntNode].x) +
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount - 1]].z - m_pNodeData->GetLoadData().pos[nCntNode].z) *
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount - 1]].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
 		}
 		else
 		{// 1ポイント目
 			weight[nCntWeight] = sqrt(
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount]].x - m_NodeData.pos[nCntNode].x) *
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount]].x - m_NodeData.pos[nCntNode].x) +
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount]].z - m_NodeData.pos[nCntNode].z) *
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount]].z - m_NodeData.pos[nCntNode].z));
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount]].x - m_pNodeData->GetLoadData().pos[nCntNode].x) *
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount]].x - m_pNodeData->GetLoadData().pos[nCntNode].x) +
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount]].z - m_pNodeData->GetLoadData().pos[nCntNode].z) *
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount]].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
 		}
 	}
 
 	//======= エッジ追加 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[nCntNode]; nCntConnect++)
+		for (int nCntConnect = 0; nCntConnect < m_pNodeData->GetLoadData().connectNum[nCntNode]; nCntConnect++)
 		{// 繋がってるノードの数だけ回る
-			CAIMecha::AddEdge(nCntNode, m_NodeData.connectIndex[nCntNode][nCntConnect], weight[nCntNode], m_node[m_nRallyCount]);
+			CAIMecha::AddEdge(nCntNode, m_pNodeData->GetLoadData().connectIndex[nCntNode][nCntConnect], weight[nCntNode], m_node[m_nRallyCount]);
 		}
 	}
 
@@ -1267,7 +1496,7 @@ void CAIMecha::RallyRootSearch()
 		for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
 		{// 2ポイント以降の数だけ回る
 		 // ダイクストラ法で最短経路を求める
-			CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nRallyEndNode[m_nRallyCount - nCntRally], m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)], m_node[m_nRallyCount - (nCntRally - 1)]);
+			CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nRallyEndNode[m_nRallyCount - nCntRally], m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)], m_node[m_nRallyCount - (nCntRally - 1)]);
 
 			for (int nCntNode = m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)]; nCntNode != m_nRallyEndNode[m_nRallyCount - nCntRally]; nCntNode = m_node[m_nRallyCount - (nCntRally - 1)][nCntNode].from)
 			{// 最短経路をゴールから順にスタートまでたどる
@@ -1280,7 +1509,7 @@ void CAIMecha::RallyRootSearch()
 	if (m_nRallyCount > 0)
 	{// 1ポイント目
 	 // ダイクストラ法で最短経路を求める
-		CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nStartNode, m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)], m_node[m_nRallyCount - (m_nRallyCount - 1)]);
+		CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nStartNode, m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)], m_node[m_nRallyCount - (m_nRallyCount - 1)]);
 
 		for (int nCntNode = m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)]; nCntNode != m_nStartNode; nCntNode = m_node[m_nRallyCount - (m_nRallyCount - 1)][nCntNode].from)
 		{// 最短経路をゴールから順にスタートまでたどる
@@ -1292,7 +1521,7 @@ void CAIMecha::RallyRootSearch()
 	if (m_nRallyCount == 0)
 	{// スタート位置
 	 //ダイクストラ法で最短経路を求める
-		CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nStartNode, m_nRallyEndNode[m_nRallyCount], m_node[m_nRallyCount]);
+		CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nStartNode, m_nRallyEndNode[m_nRallyCount], m_node[m_nRallyCount]);
 
 		for (int nCntNode = m_nRallyEndNode[m_nRallyCount]; nCntNode != m_nStartNode; nCntNode = m_node[m_nRallyCount][nCntNode].from)
 		{// 最短経路をゴールから順にスタートまでたどる
@@ -1311,11 +1540,11 @@ void CAIMecha::RallyRootSearch()
 	}
 
 	//======= 目標地点の設定 =========================================================================
-	for (int nCntNodeMax = 0; nCntNodeMax < m_NodeData.nodeMax; )
+	for (int nCntNodeMax = 0; nCntNodeMax < m_pNodeData->GetLoadData().nodeMax; )
 	{// ノードの数だけ回る
 		for (int nCntNode = path.size() - 1; nCntNode >= 0; nCntNode--, nCntNodeMax++)
 		{// ゴールから辿る
-			m_waypoint[nCntNodeMax] = m_NodeData.pos[path[nCntNode]];
+			m_waypoint[nCntNodeMax] = m_pNodeData->GetLoadData().pos[path[nCntNode]];
 		}
 	}
 }
@@ -1330,33 +1559,33 @@ void CAIMecha::PatrolRootSearch()
 	std::vector<int> path;	// 最短経路の情報を保持するvector
 
 							//======= エッジコストの算出 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++, nCntWeight++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		if (m_nRallyCount != 0)
 		{// 2ポイント目以降
 			weight[nCntWeight] = sqrt(
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount - 1]].x - m_NodeData.pos[nCntNode].x) *
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount - 1]].x - m_NodeData.pos[nCntNode].x) +
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount - 1]].z - m_NodeData.pos[nCntNode].z) *
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount - 1]].z - m_NodeData.pos[nCntNode].z));
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount - 1]].x - m_pNodeData->GetLoadData().pos[nCntNode].x) *
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount - 1]].x - m_pNodeData->GetLoadData().pos[nCntNode].x) +
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount - 1]].z - m_pNodeData->GetLoadData().pos[nCntNode].z) *
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount - 1]].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
 		}
 		else
 		{// 1ポイント目
 			weight[nCntWeight] = sqrt(
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount]].x - m_NodeData.pos[nCntNode].x) *
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount]].x - m_NodeData.pos[nCntNode].x) +
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount]].z - m_NodeData.pos[nCntNode].z) *
-				(m_NodeData.pos[m_nRallyEndNode[m_nRallyCount]].z - m_NodeData.pos[nCntNode].z));
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount]].x - m_pNodeData->GetLoadData().pos[nCntNode].x) *
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount]].x - m_pNodeData->GetLoadData().pos[nCntNode].x) +
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount]].z - m_pNodeData->GetLoadData().pos[nCntNode].z) *
+				(m_pNodeData->GetLoadData().pos[m_nRallyEndNode[m_nRallyCount]].z - m_pNodeData->GetLoadData().pos[nCntNode].z));
 		}
 
 	}
 
 	//======= エッジ追加 =========================================================================
-	for (int nCntNode = 0; nCntNode < m_NodeData.nodeMax; nCntNode++)
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
-		for (int nCntConnect = 0; nCntConnect < m_NodeData.connectNum[nCntNode]; nCntConnect++)
+		for (int nCntConnect = 0; nCntConnect < m_pNodeData->GetLoadData().connectNum[nCntNode]; nCntConnect++)
 		{// 繋がってるノードの数だけ回る
-			CAIMecha::AddEdge(nCntNode, m_NodeData.connectIndex[nCntNode][nCntConnect], weight[nCntNode], m_node[m_nRallyCount]);
+			CAIMecha::AddEdge(nCntNode, m_pNodeData->GetLoadData().connectIndex[nCntNode][nCntConnect], weight[nCntNode], m_node[m_nRallyCount]);
 		}
 	}
 
@@ -1364,7 +1593,7 @@ void CAIMecha::PatrolRootSearch()
 	if (m_nRallyCount == 0)
 	{// スタート位置
 	 //ダイクストラ法で最短経路を求める
-		CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nRallyEndNode[m_nRallyCount], m_nPatrolStartNode, m_node[m_nRallyCount]);
+		CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nRallyEndNode[m_nRallyCount], m_nPatrolStartNode, m_node[m_nRallyCount]);
 
 		for (int nCntNode = m_nPatrolStartNode; nCntNode != m_nRallyEndNode[m_nRallyCount]; nCntNode = m_node[m_nRallyCount][nCntNode].from)
 		{// 最短経路をスタートから順にゴールまでたどる
@@ -1376,7 +1605,7 @@ void CAIMecha::PatrolRootSearch()
 	if (m_nRallyCount > 0)
 	{// 1ポイント目
 	 // ダイクストラ法で最短経路を求める
-		CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)], m_nPatrolStartNode, m_node[m_nRallyCount - (m_nRallyCount - 1)]);
+		CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)], m_nPatrolStartNode, m_node[m_nRallyCount - (m_nRallyCount - 1)]);
 
 		for (int nCntNode = m_nPatrolStartNode; nCntNode != m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)]; nCntNode = m_node[m_nRallyCount - (m_nRallyCount - 1)][nCntNode].from)
 		{// 最短経路をスタートから順にゴールまでたどる
@@ -1390,7 +1619,7 @@ void CAIMecha::PatrolRootSearch()
 		for (int nCntRally = m_nRallyCount - 1; nCntRally >= 1; nCntRally--)
 		{// 2ポイント以降の数だけ回る
 		 // ダイクストラ法で最短経路を求める
-			CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)], m_nRallyEndNode[m_nRallyCount - nCntRally], m_node[m_nRallyCount - (nCntRally - 1)]);
+			CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)], m_nRallyEndNode[m_nRallyCount - nCntRally], m_node[m_nRallyCount - (nCntRally - 1)]);
 
 			for (int nCntNode = m_nRallyEndNode[m_nRallyCount - nCntRally]; nCntNode != m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)]; nCntNode = m_node[m_nRallyCount - (nCntRally - 1)][nCntNode].from)
 			{// 最短経路をスタートから順にゴールまでたどる
@@ -1406,7 +1635,7 @@ void CAIMecha::PatrolRootSearch()
 		for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
 		{// 2ポイント以降の数だけ回る
 		 // ダイクストラ法で最短経路を求める
-			CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nRallyEndNode[m_nRallyCount - nCntRally], m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)], m_node[m_nRallyCount - (nCntRally - 1)]);
+			CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nRallyEndNode[m_nRallyCount - nCntRally], m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)], m_node[m_nRallyCount - (nCntRally - 1)]);
 
 			for (int nCntNode = m_nRallyEndNode[m_nRallyCount - (nCntRally - 1)]; nCntNode != m_nRallyEndNode[m_nRallyCount - nCntRally]; nCntNode = m_node[m_nRallyCount - (nCntRally - 1)][nCntNode].from)
 			{// 最短経路をゴールから順にスタートまでたどる
@@ -1419,7 +1648,7 @@ void CAIMecha::PatrolRootSearch()
 	if (m_nRallyCount > 0)
 	{// 1ポイント目
 	 // ダイクストラ法で最短経路を求める
-		CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nPatrolStartNode, m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)], m_node[m_nRallyCount - (m_nRallyCount - 1)]);
+		CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nPatrolStartNode, m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)], m_node[m_nRallyCount - (m_nRallyCount - 1)]);
 
 		for (int nCntNode = m_nRallyEndNode[m_nRallyCount - (m_nRallyCount - 1)]; nCntNode != m_nPatrolStartNode; nCntNode = m_node[m_nRallyCount - (m_nRallyCount - 1)][nCntNode].from)
 		{// 最短経路をゴールから順にスタートまでたどる
@@ -1431,7 +1660,7 @@ void CAIMecha::PatrolRootSearch()
 	if (m_nRallyCount == 0)
 	{// スタート位置
 	 //ダイクストラ法で最短経路を求める
-		CAIMecha::Dijkstra(m_NodeData.nodeMax, m_nPatrolStartNode, m_nRallyEndNode[m_nRallyCount], m_node[m_nRallyCount]);
+		CAIMecha::Dijkstra(m_pNodeData->GetLoadData().nodeMax, m_nPatrolStartNode, m_nRallyEndNode[m_nRallyCount], m_node[m_nRallyCount]);
 
 		for (int nCntNode = m_nRallyEndNode[m_nRallyCount]; nCntNode != m_nPatrolStartNode; nCntNode = m_node[m_nRallyCount][nCntNode].from)
 		{// 最短経路をゴールから順にスタートまでたどる
@@ -1450,11 +1679,11 @@ void CAIMecha::PatrolRootSearch()
 	}
 
 	//======= 目標地点の設定 =========================================================================
-	for (int nCntNodeMax = 0; nCntNodeMax < m_NodeData.nodeMax; )
+	for (int nCntNodeMax = 0; nCntNodeMax < m_pNodeData->GetLoadData().nodeMax; )
 	{// ノードの数だけ回る
 		for (int nCntNode = path.size() - 1; nCntNode >= 0; nCntNode--, nCntNodeMax++)
 		{// ゴールから辿る
-			m_patrolWaypoint[nCntNodeMax] = m_NodeData.pos[path[nCntNode]];
+			m_patrolWaypoint[nCntNodeMax] = m_pNodeData->GetLoadData().pos[path[nCntNode]];
 		}
 	}
 }
@@ -1468,9 +1697,14 @@ void CAIMecha::Cancel()
 	{// ストラテジーへ変更した場合
 		int nNear = 0;
 		float fMinLength = 100000, fLength = 100000;
-		for (int nCntAll = 0; nCntAll < m_NodeData.nodeMax; nCntAll++)
+		for (int nCntAll = 0; nCntAll < m_pNodeData->GetLoadData().nodeMax; nCntAll++)
 		{// 全てのノードとプレイヤーとの差分を出す
-			fLength = (m_pos.x - m_NodeData.pos[nCntAll].x) * (m_pos.x - m_NodeData.pos[nCntAll].x) + (m_pos.z - m_NodeData.pos[nCntAll].z) * (m_pos.z - m_NodeData.pos[nCntAll].z);
+			fLength =
+				(m_pos.x - m_pNodeData->GetLoadData().pos[nCntAll].x) *
+				(m_pos.x - m_pNodeData->GetLoadData().pos[nCntAll].x) +
+				(m_pos.z - m_pNodeData->GetLoadData().pos[nCntAll].z) *
+				(m_pos.z - m_pNodeData->GetLoadData().pos[nCntAll].z);
+
 			if (fMinLength > fLength)
 			{// 差分の最小値を求める
 				fMinLength = fLength;
@@ -1497,11 +1731,11 @@ void CAIMecha::Cancel()
 			}
 		}
 
-		for (int nCntAll = 0; nCntAll < m_NodeData.nodeMax; nCntAll++)
+		for (int nCntAll = 0; nCntAll < m_pNodeData->GetLoadData().nodeMax; nCntAll++)
 		{// ノードの数だけ回る
 			m_nRallyEndNode[nCntAll] = nNear;
-			m_waypoint[nCntAll] = m_NodeData.pos[nNear];
-			m_patrolWaypoint[nCntAll] = m_NodeData.pos[nNear];
+			m_waypoint[nCntAll] = m_pNodeData->GetLoadData().pos[nNear];
+			m_patrolWaypoint[nCntAll] = m_pNodeData->GetLoadData().pos[nNear];
 		}
 
 		for (int nCntAction = 0; nCntAction < 4; nCntAction++)
@@ -1509,7 +1743,7 @@ void CAIMecha::Cancel()
 			m_AIAction[nCntAction] = AI_ACTION_NONE;
 			m_LogicTree[nCntAction] = -1;
 		}
-		m_posDest = m_NodeData.pos[nNear];
+		m_posDest = m_pNodeData->GetLoadData().pos[nNear];
 	}
 }
 
@@ -1582,113 +1816,4 @@ void CAIMecha::Dijkstra(int nodeMax, int start, int end, Node *node)
 			}
 		}
 	}
-}
-
-//=============================================================================
-// ルート探索用ファイルの読み込み
-//=============================================================================
-void CAIMecha::FileLoad(char* pFileName)
-{
-	FILE* pFile = NULL;		// ファイルポインタ
-	char ReadText[256];		// 読み込んだ文字列を入れておく
-	char HeadText[256];		// 比較用
-	char DustBox[256];		// 使用しないものを入れておく
-	int nCount = 0;
-	int nCntIndex = 0;
-
-	// 一時データベース
-	std::vector<NodeState> LoadState; LoadState.clear();
-
-	// 初期化
-	NodeState OneState = {};
-
-	// ファイルオープン
-	pFile = fopen(LOAD_FILENAME, "r");
-
-	if (pFile != NULL)
-	{// ファイルが開かれていれば
-		while (strcmp(HeadText, "START_LOAD") != 0)
-		{// "START_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-			fgets(ReadText, sizeof(ReadText), pFile);
-			sscanf(ReadText, "%s", &HeadText);
-		}
-		if (strcmp(HeadText, "START_LOAD") == 0)
-		{// "START_LOAD" が読み取れた場合、処理開始
-			while (strcmp(HeadText, "END_LOAD") != 0)
-			{// "END_LOAD" が読み込まれるまで繰り返し文字列を読み取る
-				fgets(ReadText, sizeof(ReadText), pFile);
-				sscanf(ReadText, "%s", &HeadText);
-
-				if (strcmp(HeadText, "\n") == 0)
-				{// 文字列の先頭が [\n](改行) の場合処理しない
-
-				}
-				else if (strcmp(HeadText, "START_DATA") == 0)
-				{// "START_DATA" が読み取れた場合
-					nCount = 0;
-					while (strcmp(HeadText, "END_DATA") != 0)
-					{// "END_DATA" が読み込まれるまで繰り返し文字列を読み取る
-						fgets(ReadText, sizeof(ReadText), pFile);
-						sscanf(ReadText, "%s", &HeadText);
-
-						if (strcmp(HeadText, "\n") == 0)
-						{// 文字列の先頭が [\n](改行) の場合処理しない
-
-						}
-						else if (strcmp(HeadText, "NODESET") == 0)
-						{// "NODESET" が読み取れた場合
-							while (strcmp(HeadText, "END_NODESET") != 0)
-							{// "END_NODESET" が読み込まれるまで繰り返し文字列を読み取る
-								fgets(ReadText, sizeof(ReadText), pFile);
-								sscanf(ReadText, "%s", &HeadText);
-
-								if (strcmp(HeadText, "\n") == 0)
-								{// 文字列の先頭が [\n](改行) の場合処理しない
-
-								}
-								else if (strcmp(HeadText, "NODE_POS") == 0)	// ノードの位置
-								{
-									sscanf(ReadText, "%s %c %f %f %f",
-										&DustBox, &DustBox,
-										&OneState.pos[nCount].x,
-										&OneState.pos[nCount].y,
-										&OneState.pos[nCount].z);
-								}
-								else if (strcmp(HeadText, "CONNECT_NUM") == 0)	// 接続ノードの数
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectNum[nCount]);
-								}
-								else if (strcmp(HeadText, "CONNECT_INDEX") == 0)	// 接続ノードの番号
-								{
-									sscanf(ReadText, "%s %c %d",
-										&DustBox, &DustBox,
-										&OneState.connectIndex[nCount][nCntIndex]);
-									nCntIndex++;
-								}
-							}
-
-							OneState.index[nCount] = nCount;
-							nCntIndex = 0;
-							nCount++;
-						}
-					}
-					OneState.nodeMax = nCount; // ノードの総数
-
-											   // 一つのデータを読み込んだ後,一時データベースに格納
-					LoadState.emplace_back(OneState);
-				}
-			}
-		}
-
-		// ファイルクローズ
-		if (pFile != NULL)
-		{
-			fclose(pFile);
-			pFile = NULL;
-		}
-	}
-
-	m_NodeData = OneState;	// データの代入
 }
