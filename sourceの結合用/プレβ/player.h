@@ -49,7 +49,6 @@
 //*****************************************************************************
 class CModel;
 class CMotion;
-class CShadow;
 class CScene3DBill;
 class CUI_TEXTURE;
 class CGauge2D;
@@ -148,6 +147,8 @@ public:
 
 	CModel *GetModel(int nIdx) { return m_pModel[nIdx]; };
 
+	CMechaSelect::MECHATYPE	GetMechaType(void) { return m_mecha; };
+
 	int GetPlayerIdx(void) { return m_nPlayerIdx; };
 	void SetPlayerIdx(int nIdx) { m_nPlayerIdx = nIdx; };
 
@@ -184,8 +185,8 @@ public:
 
 	bool GetReload(void) { return m_bReload; };
 
-	CMechaSelect::MECHATYPE	GetMechaType(void) { return m_mecha; };
-	
+	float GetBulletSpeed(void) { return m_fBulletSpeed; };
+
 	// ラジオチャット
 	RADIOCHAT GetRadioChat(void) { return m_radiochat; }									// ラジオチャット情報の取得
 	void SetRadioChat(RADIOCHAT radiochat) { m_radiochat = radiochat; }						// ラジオチャットの設定
@@ -249,7 +250,6 @@ private:
 	CModel			**m_pModel;			// モデルクラスのポインタ変数
 	CMotion			*m_pUpperMotion;	// 上半身モーションクラスのポインタ変数
 	CMotion			*m_pLowerMotion;	// 下半身モーションクラスのポインタ変数
-	//CShadow			*m_pShadow;			// 影のポインタ変数
 	float			m_fRotDest;			// 目的の角度
 	int				m_nCntState;		// ステートのカウンタ
 	int				m_nNumParts;		// パーツ数
@@ -269,6 +269,7 @@ private:
 	int				m_nNumShoot;		// 同時発射数
 	int				m_nDispertion;		// ばらつき
 	int				m_nReload;			// リロード時間
+	float			m_fBulletSpeed;		// 弾速
 	int				m_nLifeMax;			// 耐久力
 	float			m_fSpeed;			// 移動量
 
@@ -333,8 +334,6 @@ private:
 	int						m_nSelectOption;													//	カメラ速度の項目
 
 	int m_nKillPlayerIdx;					//キルプレイヤーの番号
-
-	CUI_NUMBER *m_pUINumAI[AI_MAX];			// AIライフ表示
 
 	// =============================================================
 	// 移動系AIの変数

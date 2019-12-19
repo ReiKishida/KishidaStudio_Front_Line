@@ -42,8 +42,6 @@
 #include "scene3D.h"
 #include "menu.h"
 
-#include "shadow.h"
-
 #include "particle.h"
 
 #include "AI.h"
@@ -54,8 +52,9 @@
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
-#define FIELD_MODEL_NAME	"data/MODEL/map_UV_bill.x"
-#define SKY_MODEL_NAME		"data/MODEL/sky_dome.x"
+#define FIELD_MODEL_NAME	"data/MODEL/floor.x"
+#define BILL_MODEL_NAME		"data/MODEL/pillar_000.x"
+#define SKY_MODEL_NAME		"data/MODEL/skydome.x"
 #define NUMTEX_UV_X		(1)
 #define NUMTEX_UV_Y		(3)
 #define GAME_INI			"data/TEXT/game.ini"
@@ -98,6 +97,7 @@ CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType
 	m_pField = NULL;
 	m_nBlueLinkEnergy = 0;
 	m_nRedLinkEnergy = 0;
+	m_pMapBill = NULL;
 
 	for (int nCntConnect = 0; nCntConnect < MAX_PLAYER_CONNECT; nCntConnect++)
 	{
@@ -164,11 +164,19 @@ HRESULT CGame::Init(void)
 	CMotionManager::Load();
 
 	m_pField = CModel::Create();
-	m_pField->SetModel(FIELD_MODEL_NAME);
+	m_pField->SetModel(FIELD_MODEL_NAME, false);
 	m_pField->SetPos(D3DXVECTOR3(-15.0f, 0.0f, 30.0f));
 
-	//m_pSky = CModel::Create();
-	//m_pSky->SetModel(SKY_MODEL_NAME);
+	m_pSky = CModel::Create();
+	m_pSky->SetModel(SKY_MODEL_NAME, false);
+	m_pSky->SetPos(D3DXVECTOR3(0.0f, 0.0f, 0.0f));
+
+	// マップの影
+	m_pMapBill = CModel::Create();
+	m_pMapBill->SetModel(BILL_MODEL_NAME);
+	m_pMapBill->SetPos(D3DXVECTOR3(-15.0f, 0.0f, 30.0f));
+	m_pMapBill->SetShader();
+	m_pMapBill->Init();
 
 	//=====================================================================================
 	// マップデータファイラーの生成
@@ -181,13 +189,11 @@ HRESULT CGame::Init(void)
 	// プレイヤーの生成
 	CreatePlayer();
 
-	//CShadow::Create();
-
 	// 弾の当たり判定クラスの生成
 	CBulletCollision::Create();
 
 	// マップの当たり判定の読み込み
-	CCollision::Load();
+	//CCollision::Load();
 
 	//****************************************
 	// 2DUI生成（フレーム）
@@ -221,9 +227,6 @@ HRESULT CGame::Init(void)
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 530.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// ドローンライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 420.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// ワーカーライフの生成
-
 	if (NULL == m_pDamageDirection)
 	{
 		m_pDamageDirection = CDamageDirection::Create();
@@ -240,7 +243,6 @@ void CGame::Uninit(void)
 	// データの破棄
 	CMotionManager::Unload();
 	CModelSetManager::Unload();
-	//CEnemy::Unload();
 
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
@@ -293,6 +295,13 @@ void CGame::Uninit(void)
 	{// マップデータファイラーの破棄
 		m_pNodeFiler->Uninit();
 		m_pNodeFiler = NULL;
+	}
+
+	if (NULL != m_pMapBill)
+	{// ビルの破棄
+		m_pMapBill->Uninit();
+		delete m_pMapBill;
+		m_pMapBill = NULL;
 	}
 
 	// オブジェクトを破棄
@@ -455,6 +464,11 @@ void CGame::Draw(void)
 		m_pField->Draw();
 	}
 
+	if (NULL != m_pMapBill)
+	{// ビルの描画
+		m_pMapBill->Draw();
+	}
+
 	// デバイスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
 	LPDIRECT3DDEVICE9 pDevice;
@@ -573,9 +587,6 @@ void CGame::CreateActionUI(void)
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 530.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// ドローンライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 420.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// ワーカーライフの生成
-
 }
 
 //=============================================================================
@@ -606,9 +617,9 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(405.0f, 470.0f, 0.0f), 200.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// AI表示
 	CUI_TEXTURE::Create(D3DXVECTOR3(895.0f, 470.0f, 0.0f), 760.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// ロジック部分
 
-	//****************************************
-	// 1P小隊情報
-	//****************************************
+																												//****************************************
+																												// 1P小隊情報
+																												//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 325.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_1P_INFO);
 
 	// プレイヤー体力フレーム
@@ -618,9 +629,9 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 335.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 410.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-	//****************************************
-	// 2P小隊情報
-	//****************************************
+																											//****************************************
+																											// 2P小隊情報
+																											//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 590.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_2P_INFO);
 
 	// プレイヤー体力フレーム
@@ -630,14 +641,11 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 600.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 675.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-	//****************************************
-	// UI生成（数字）
-	//****************************************
+																											//****************************************
+																											// UI生成（数字）
+																											//****************************************
 	CUI_NUMBER::Create(D3DXVECTOR3(630.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 1, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(920.0f, 60.0f, 0.0f), 120.0f, 80.0f, 55.0f, CUI_NUMBER::UI_NUMTYPE_RED, 2, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
-
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 340.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// ワーカーライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 410.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// ドローンライフの生成
 
 	if (NULL == m_pButtonManager)
 	{// ボタン管理クラスの生成
@@ -1519,7 +1527,7 @@ char *CGame::ReadPlayerData(char *pStr)
 
 							D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
 							// 弾の生成
-							CBulletPlayer::Create(posCanon, fAIAngle[nCntAI], fAIAngleV[nCntAI], nAIAttack[nCntAI], nTeam, m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI));
+							CBulletPlayer::Create(posCanon, fAIAngle[nCntAI], fAIAngleV[nCntAI], nAIAttack[nCntAI], nTeam, m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI), m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetBulletSpeed());
 
 							m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetShoot(false);
 						}
@@ -1790,10 +1798,10 @@ void CGame::CreatePlayerBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXV
 		// 弾の生成
 		D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
 		D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx]);
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed());
 		mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
 		posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx]);
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed());
 
 		//弾を発射しているかどうかの設置処理
 		m_pPlayer[nPlayerIdx]->SetShoot(false);
@@ -1860,10 +1868,10 @@ void CGame::CreateCPUBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECT
 		// 弾の生成
 		D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
 		D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx]);
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed());
 		mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
 		posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx]);
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed());
 
 		//弾を発射しているかどうかの設置処理
 		m_pPlayer[nPlayerIdx]->SetShoot(false);
