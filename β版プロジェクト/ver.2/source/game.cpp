@@ -522,36 +522,27 @@ void CGame::StartingFadeInUpdate(void)
 			// 武器フレーム
 			CUI_TEXTURE::Create(D3DXVECTOR3(1100.0f, 650.0f, 0.0f), 350.0f, 120.0f, CUI_TEXTURE::UIFLAME_WEAPON);		// 武器
 
-																														// プレイヤー体力フレーム
+			// プレイヤー体力フレーム
 			CUI_TEXTURE::Create(D3DXVECTOR3(180.0f, 650.0f, 0.0f), 350.0f, 125.0f, CUI_TEXTURE::UIFLAME_PLAYER_HP);	// 胴体
 
-																													// AIチケット数フレーム
+			// AIチケット数フレーム
 			CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 530.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_DRONE);		// AI01
 			CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 420.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_WORKER);	// AI02
 
-																													// チームのチケット数フレーム
+			// チームのチケット数フレーム
 			CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
 			CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
-
-			// パート切り替えテクスチャ
-			//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);	// ストラテジーパート
-			//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);		// アクションパート
-
-			// パート切り替え（チェンジ）
-			//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 			//****************************************
 			// UI生成（数字）
 			//****************************************
 			CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 			CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
-			CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
-			CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 530.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// ドローンライフ
-			CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 420.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// ワーカーライフ
-			CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// プレイヤーライフ
-
+			CUI_NUMBER::Create(D3DXVECTOR3(1120.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
+			CUI_NUMBER::Create(D3DXVECTOR3(260.0f, 530.0f, 0.0f), 100.0f, 60.0f, 40.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// ドローンライフ
+			CUI_NUMBER::Create(D3DXVECTOR3(260.0f, 420.0f, 0.0f), 100.0f, 60.0f, 40.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// ワーカーライフ
+			CUI_NUMBER::Create(D3DXVECTOR3(385.0f, 650.0f, 0.0f), 150.0f, 100.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// プレイヤーライフ
 		}
-
 	}
 }
 
@@ -846,34 +837,26 @@ void CGame::CreateActionUI(void)
 	// 武器フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(1100.0f, 650.0f, 0.0f), 350.0f, 120.0f, CUI_TEXTURE::UIFLAME_WEAPON);		// 武器
 
-																												// プレイヤー体力フレーム
+	// プレイヤー体力フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(180.0f, 650.0f, 0.0f), 350.0f, 125.0f, CUI_TEXTURE::UIFLAME_PLAYER_HP);	// 胴体
 
-																											// AIチケット数フレーム
+	// AIチケット数フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 530.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_DRONE);		// AI01
 	CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 420.0f, 0.0f), 230.0f, 100.0f, CUI_TEXTURE::UIFLAME_WORKER);	// AI02
 
-																											// チームのチケット数フレーム
+	// チームのチケット数フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
 	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
-
-	//																											// パート切り替えテクスチャ
-	//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);	// ストラテジーパート
-	//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);		// アクションパート
-
-	//																											// パート切り替え（チェンジ）
-	//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
 
 	//****************************************
 	// UI生成（数字）
 	//****************************************
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
-	CUI_NUMBER::Create(D3DXVECTOR3(970.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 530.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// ドローンライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(110.0f, 420.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// ワーカーライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(195.0f, 650.0f, 0.0f), 170.0f, 110.0f, 70.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// プレイヤーライフ
-
+	CUI_NUMBER::Create(D3DXVECTOR3(1120.0f, 660.0f, 0.0f), 150.0f, 90.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_REMAINBULLET, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 残弾
+	CUI_NUMBER::Create(D3DXVECTOR3(260.0f, 530.0f, 0.0f), 100.0f, 60.0f, 40.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// ドローンライフ
+	CUI_NUMBER::Create(D3DXVECTOR3(260.0f, 420.0f, 0.0f), 100.0f, 60.0f, 40.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// ワーカーライフ
+	CUI_NUMBER::Create(D3DXVECTOR3(385.0f, 650.0f, 0.0f), 150.0f, 100.0f, 60.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// プレイヤーライフ
 }
 
 //=============================================================================
@@ -887,26 +870,19 @@ void CGame::CreateStrategyUI(void)
 	// 背景
 	CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH, SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_STRATEGY_BG);	// 背景
 
-																																				// パート切り替えテクスチャ
-																																				//CUI_TEXTURE::Create(D3DXVECTOR3(125.0f, 50.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_ACTION_PART);	// アクションパート
-																																				//CUI_TEXTURE::Create(D3DXVECTOR3(165.0f, 90.0f, 0.0f), 200.0f, 90.0f, CUI_TEXTURE::UIFLAME_STRATEGY_PART);		// ストラテジーパート
-
-																																				// パート切り替え（チェンジ）
-																																				//CUI_TEXTURE::Create(D3DXVECTOR3(50.0f, 135.0f, 0.0f), 100.0f, 110.0f, CUI_TEXTURE::UIFLAME_CHANGE);
-
-																																				// フレーム
+	// フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(785.0f, 420.0f, 0.0f), 990.0f, 590.0f, CUI_TEXTURE::UIFLAME_FLAME_BLUE);	// 大枠
 	CUI_TEXTURE::Create(D3DXVECTOR3(790.0f, 190.0f, 0.0f), 970.0f, 100.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// ロジックライン
 	CUI_TEXTURE::Create(D3DXVECTOR3(405.0f, 470.0f, 0.0f), 200.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// AI表示
 	CUI_TEXTURE::Create(D3DXVECTOR3(895.0f, 470.0f, 0.0f), 760.0f, 450.0f, CUI_TEXTURE::UIFLAME_FLAME_WHITE);	// ロジック部分
 
-																												// チームのチケット数フレーム
+	// チームのチケット数フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 40.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_BLUE);	// BLUE
 	CUI_TEXTURE::Create(D3DXVECTOR3(80.0f, 100.0f, 0.0f), 120.0f, 50.0f, CUI_TEXTURE::UIFLAME_TEAM_RED);	// RED
 
-																											//****************************************
-																											// 1P小隊情報
-																											//****************************************
+	//****************************************
+	// 1P小隊情報
+	//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 325.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_1P_INFO);
 
 	// プレイヤー体力フレーム
@@ -916,29 +892,34 @@ void CGame::CreateStrategyUI(void)
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 335.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 410.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 270.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// 1Pプレイヤーライフ
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 340.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 1Pワーカーライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 410.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// 1Pドローンライフの生成
+	// 各ライフの数字生成
+	CUI_NUMBER::Create(D3DXVECTOR3(305.0f, 260.0f, 0.0f), 115.0f, 70.0f, 45.0f, CUI_NUMBER::UI_NUMTYPE_PLAYER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// 1Pプレイヤー
+	CUI_NUMBER::Create(D3DXVECTOR3(305.0f, 335.0f, 0.0f), 115.0f, 70.0f, 45.0f, CUI_NUMBER::UI_NUMTYPE_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 1Pワーカー
+	CUI_NUMBER::Create(D3DXVECTOR3(305.0f, 410.0f, 0.0f), 115.0f, 70.0f, 45.0f, CUI_NUMBER::UI_NUMTYPE_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);			// 1Pドローン
 
-																																						//****************************************
-																																						// 2P小隊情報
-																																						//****************************************
+	//****************************************
+	// 2P小隊情報
+	//****************************************
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 590.0f, 0.0f), 280.0f, 260.0f, CUI_TEXTURE::UIFLAME_2P_INFO);
 
 	// プレイヤー体力フレーム
-	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 525.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_PLAYER_HP);
+	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 525.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_ALLY_HP);
 
 	// AIチケット数フレーム
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 600.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_WORKER);		// ワーカー
 	CUI_TEXTURE::Create(D3DXVECTOR3(150.0f, 675.0f, 0.0f), 255.0f, 80.0f, CUI_TEXTURE::UIFLAME_DRONE);		// ドローン
 
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 520.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// 2Pプレイヤーライフ
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 590.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 2Pワーカーライフの生成
-	CUI_NUMBER::Create(D3DXVECTOR3(120.0f, 670.0f, 0.0f), 130.0f, 70.0f, 50.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 2Pドローンライフの生成
+	// 各ライフの数字生成
+	CUI_NUMBER::Create(D3DXVECTOR3(305.0f, 525.0f, 0.0f), 115.0f, 70.0f, 45.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);				// 2Pプレイヤー
+	CUI_NUMBER::Create(D3DXVECTOR3(305.0f, 600.0f, 0.0f), 115.0f, 70.0f, 45.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_WORKER_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 2Pワーカー
+	CUI_NUMBER::Create(D3DXVECTOR3(305.0f, 675.0f, 0.0f), 115.0f, 70.0f, 45.0f, CUI_NUMBER::UI_NUMTYPE_ALLY_DRONE_HP, 0, NUMTEX_UV_X, NUMTEX_UV_Y);		// 2Pドローン
 
-																																						//****************************************
-																																						// UI生成（数字）
-																																						//****************************************
+	// ストラテジー操作説明
+	CUI_TEXTURE::Create(D3DXVECTOR3(940.0f, 70.0f, 0.0f), 640.0f, 80.0f, CUI_TEXTURE::UIFLAME_STRATEGY_INST);
+
+	//****************************************
+	// UI生成（数字）
+	//****************************************
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 40.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_BLUE, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// BLUEチームチケット
 	CUI_NUMBER::Create(D3DXVECTOR3(370.0f, 100.0f, 0.0f), 430.0f, 30.0f, 0.0f, CUI_NUMBER::UI_NUMTYPE_RED, 0, NUMTEX_UV_X, NUMTEX_UV_Y);							// REDチームチケット
 

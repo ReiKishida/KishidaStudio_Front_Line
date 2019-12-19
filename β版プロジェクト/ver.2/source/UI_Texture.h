@@ -49,6 +49,7 @@ public:
 		UIFLAME_TEAM_BLUE,				// BLUEチーム
 		UIFLAME_TEAM_RED,				// REDチーム
 		UIFLAME_PLAYER_HP,				// プレイヤーの体力
+		UIFLAME_ALLY_HP,					// 味方体力
 		UIFLAME_DRONE,						// ドローン
 		UIFLAME_WORKER,					// AI01
 		UIFLAME_WEAPON,					// 武器
@@ -79,7 +80,7 @@ public:
 		UIFLAME_FLAME_WHITE,			// ただの白フレーム
 		UIFLAME_FLAME_BLUE,				// ただの青フレーム
 		UIFLAME_STRATEGY_BG,			// ストラテジーパートの背景
-
+		UIFLAME_STRATEGY_INST,		// ストラテジー操作説明
 		UI_FLAME_RESPAWNPOS,			//リスポーン位置
 
 		// メニュー

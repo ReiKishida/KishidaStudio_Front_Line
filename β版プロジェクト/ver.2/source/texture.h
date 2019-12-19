@@ -59,6 +59,7 @@ public:
 		TEXTURE_WORKER_BUTTON,		// ウォーカーのアイコン
 		TEXTURE_DRONE_BUTTON,			// ドローンのアイコン
 		TEXTURE_STRATEGY_ICON,			// ストラテジーのアイコン
+		TEXTURE_STRATEGY_INST,			// ストラテジー操作方法
 
 		// nechaSelect
 		TEXTURE_LOGO,							// メインメニュー、メカセレクトロゴ

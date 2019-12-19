@@ -13,6 +13,9 @@
 #include "fade.h"
 #include "UI_Number.h"
 #include "menu.h"
+#include "game.h"
+#include "mechaSelect.h"
+#include "player.h"
 
 //*****************************************************************************
 // ƒ}ƒNƒ’è‹`
@@ -164,8 +167,59 @@ HRESULT CUI_TEXTURE::Init(void)
 
 	case UIFLAME_PLAYER_HP:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_PLAYER_FLAME));
-		CScene2D::SetTex(0,1,4);
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+		if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+		{
+			CMechaSelect::MECHATYPE mechatype = CGame::GetMechaType(0);
+			CScene2D::SetTex(mechatype, 1, 4);
+		}
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{
+			if (CManager::GetClient() != NULL)
+			{
+				CMechaSelect::MECHATYPE mechatype = CGame::GetMechaType(CManager::GetClient()->GetPlayerIdx());
+				CScene2D::SetTex(mechatype, 1, 4);
+			}
+		}
+		break;
+
+	case UIFLAME_ALLY_HP:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_PLAYER_FLAME));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+		if (CMenu::GetMode() == CMenu::MODE_SINGLE)
+		{
+			CMechaSelect::MECHATYPE mechatype = CGame::GetMechaType(1);
+			CScene2D::SetTex(mechatype, 1, 4);
+		}
+		if (CMenu::GetMode() == CMenu::MODE_MULTI)
+		{
+			if (CManager::GetClient() != NULL)
+			{
+				int nPlayerIdx = 0;
+				switch (CManager::GetClient()->GetPlayerIdx())
+				{
+				case 0:
+					nPlayerIdx = 1;
+					break;
+
+				case 1:
+					nPlayerIdx = 0;
+					break;
+
+				case 2:
+					nPlayerIdx = 3;
+					break;
+
+				case 3:
+					nPlayerIdx = 2;
+					break;
+				}
+				CMechaSelect::MECHATYPE mechatype = CGame::GetMechaType(nPlayerIdx);
+				CScene2D::SetTex(mechatype, 1, 4);
+			}
+		}
 		break;
 
 	case UIFLAME_DRONE:
@@ -313,6 +367,11 @@ HRESULT CUI_TEXTURE::Init(void)
 	case UIFLAME_STRATEGY_BG:
 		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY_BG));
 		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 0.7f));
+		break;
+
+	case UIFLAME_STRATEGY_INST:
+		CScene2D::BindTexture(CTexture::GetTexture(CTexture::TEXTURE_STRATEGY_INST));
+		CScene2D::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 		break;
 
 		//****************************************
