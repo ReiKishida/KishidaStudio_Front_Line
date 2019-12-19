@@ -179,12 +179,14 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_pPin = NULL;
 	m_pPinBullet = NULL;
 	m_pAllyPin = NULL;
+	m_pAllyPosPin = NULL;
 	m_bPin = false;
 	m_bAllyPin = false;
 	m_nPinLife = 0;
 	m_nAllyPinLife = 0;
 	m_PinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_AllyPinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	m_AllyPosPinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
 	{// AIの数だけ回る
 		// 自分のAIの初期化
@@ -675,6 +677,39 @@ void CPlayer::Uninit(void)
 	{// ピンの破棄
 		m_pPin->Uninit();
 		m_pPin = NULL;
+	}
+
+	if (m_pPinBullet != NULL)
+	{// ピン立て弾の破棄
+		m_pPinBullet->Uninit();
+		m_pPinBullet = NULL;
+	}
+
+	if (m_pAllyPin != NULL)
+	{// 味方ピンの破棄
+		m_pAllyPin->Uninit();
+		m_pAllyPin = NULL;
+	}
+
+	if (m_pAllyPosPin != NULL)
+	{// 味方位置ピンの破棄
+		m_pAllyPosPin->Uninit();
+		m_pAllyPosPin = NULL;
+	}
+
+	for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+	{
+		if (m_pAIPin[nCntAI] != NULL)
+		{// AIピンの破棄
+			m_pAIPin[nCntAI]->Uninit();
+			m_pAIPin[nCntAI] = NULL;
+		}
+
+		if (m_pAllyAIPin[nCntAI] != NULL)
+		{// 味方AIピンの破棄
+			m_pAllyAIPin[nCntAI]->Uninit();
+			m_pAllyAIPin[nCntAI] = NULL;
+		}
 	}
 
 	for (int nCntType = 0; nCntType < AI_MAX; nCntType++)
@@ -2577,11 +2612,12 @@ void CPlayer::PinUpdateSingle()
 		{// プレイヤーオブジェクトのとき
 			CPlayer *pPlayer = (CPlayer*)pAllyPlayerScene;
 			if (m_nTeam == pPlayer->GetTeam() && pPlayer != this)
-			{// チームが同じときで自分自身じゃないとき
+			{// チームが同じで自分自身じゃないとき
 
 				// 味方のピン情報を取得する
 				m_bAllyPin = pPlayer->GetPinUse();
 				AllyPlayerPinPos = pPlayer->GetPinPos();
+				m_AllyPosPinPos = pPlayer->GetPos();
 
 				if (m_bAllyPin)
 				{// 味方のピンが使われている場合
@@ -2618,6 +2654,18 @@ void CPlayer::PinUpdateSingle()
 			m_nPinLife--;
 			m_pAllyPin->GetPos() = AllyPlayerPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
 		}
+	}
+
+	if (m_pAllyPosPin == NULL)
+	{// 味方の位置ピンが生成されていない場合
+	 // ピンの配置
+		m_pAllyPosPin = m_pAllyPosPin->Create(m_AllyPosPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+		m_pAllyPosPin->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_RETICLE);
+	}
+	else
+	{// 味方の位置ピンが生成されている場合
+	 // ピンの更新
+		m_pAllyPosPin->GetPos() = m_AllyPosPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
 	}
 
 	//===================================
@@ -2873,6 +2921,43 @@ void CPlayer::PinUpdateMulti()
 				}
 			}
 		}
+	}
+
+	//===================================
+	// 味方の位置ピン配置
+	//===================================
+	CScene *pAllyPlayerScene = CScene::GetSceneTop(PLAYER_PRIORITY);
+	CScene *pAllyPlayerSceneNext = NULL;
+	D3DXVECTOR3 AllyPlayerPinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	while (pAllyPlayerScene != NULL)
+	{// NULLになるまでループ
+		pAllyPlayerSceneNext = pAllyPlayerScene->GetSceneNext();
+		CScene::OBJTYPE objType = pAllyPlayerScene->GetObjType();
+
+		if (objType == CScene::OBJTYPE_PLAYER)
+		{// プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pAllyPlayerScene;
+			if (m_nTeam == pPlayer->GetTeam() && pPlayer != this)
+			{// チームが同じで自分自身じゃないとき
+				m_AllyPosPinPos = pPlayer->GetPos();
+			}
+		}
+
+		// 次のオブジェクトを見る
+		pAllyPlayerScene = pAllyPlayerSceneNext;
+	}
+
+	if (m_pAllyPosPin == NULL)
+	{// 味方のピンが生成されていない場合
+		// ピンの配置
+		m_pAllyPosPin = m_pAllyPosPin->Create(m_AllyPosPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+		m_pAllyPosPin->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
+	}
+	else
+	{// 味方のピンが生成されている場合
+		// ピンの更新
+		m_pAllyPosPin->GetPos() = m_AllyPosPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
 	}
 }
 

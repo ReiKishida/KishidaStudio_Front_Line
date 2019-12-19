@@ -325,6 +325,9 @@ private:
 	bool			m_bAllyAIPin[AI_MAX];		// 味方AIがピンを立てているか
 	int				m_nAllyAIPinLife[AI_MAX];	// 味方AIのピンの表示時間
 	D3DXVECTOR3		m_AllyAIPinPos[AI_MAX];		// 味方AIのピンの位置
+	// 味方の位置ピン
+	CPin			*m_pAllyPosPin;				// 味方の位置ピンのポインタ
+	D3DXVECTOR3		m_AllyPosPinPos;			// 味方の位置
 
 	// =============================================================
 	// UI関係
