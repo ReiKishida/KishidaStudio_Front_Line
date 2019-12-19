@@ -75,6 +75,7 @@ void CTexture::Load(void)
 		{ "data/TEXTURE/strategy/worker_button.png" },			// ワーカー
 		{ "data/TEXTURE/strategy/drone_button.png" },				// ドローン
 		{ "data/TEXTURE/strategy/strategy_icon.png" },				// ストラテジーのアイコン
+		{ "data/TEXTURE/strategy/strategy_inst.png" },				// 操作説明
 
 		// mechaSelect
 		{ "data/TEXTURE/mechaSelect/meun_title.png" },			// メインメニュー、メカセレクトロゴ
