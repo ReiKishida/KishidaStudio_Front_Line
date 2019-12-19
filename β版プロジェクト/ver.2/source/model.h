@@ -7,7 +7,7 @@
 #ifndef _MODEL_H_
 #define _MODEL_H_
 
-#include "main.h"
+#include "scene.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -16,6 +16,7 @@
 //*****************************************************************************
 // 前方宣言
 //*****************************************************************************
+class CShadow;
 
 //*****************************************************************************
 // クラス定義
@@ -30,7 +31,7 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	static CModel *Create(D3DXMATRIX *pParent = NULL);
+	static CModel *Create(CScene *pObject = NULL, D3DXMATRIX *pParent = NULL);
 
 	D3DXVECTOR3 GetPos(void) { return m_pos; };					// 位置の取得
 	void SetPos(D3DXVECTOR3 pos) { m_pos = pos; };				// 位置の設定
@@ -44,13 +45,15 @@ public:
 	void SetMtxWorld(D3DXMATRIX mtxWorld) { m_mtxWorld = mtxWorld; };	// ワールドマトリックスの設定
 
 	int GetModel(void) { return m_nIdxModel; };					// 位置の取得
-	void SetModel(char *pModelName);							// モデルの設定
+	void SetModel(char *pModelName, bool bShadow = true);	// モデルの設定
 
 	CModel *GetParent(void) { return m_pParent; };					// 親の取得
 	void SetParent(CModel *parent) { m_pParent = parent; };	// 親の設定
 
 	D3DXVECTOR3 GetVtxMax(void) { return m_vtxMax; };				// 頂点座標の最大
 	D3DXVECTOR3 GetVtxMin(void) { return m_vtxMin; };				// 頂点座標の最小
+
+	D3DXVECTOR3 GetVtxDiff(void) { return m_vtxMax - m_vtxMin; };	// 頂点座標の最小と最大の差
 
 	LPD3DXMESH GetMesh(void) { return m_pMesh; };					// メッシュ情報の取得
 
@@ -63,6 +66,11 @@ public:
 
 	bool GetDisp(void) { return m_bDisp; };
 	void SetDisp(bool bDisp) { m_bDisp = bDisp; };
+
+	float GetShadowHeight(void) { return m_fShadowHeight; };
+	void SetShadowHeight(float fShadowHeight) { m_fShadowHeight = fShadowHeight; };
+
+	void SetShader(void);
 
 protected:
 
@@ -81,5 +89,12 @@ private:
 	D3DXVECTOR3			m_rot;				// 回転
 	int					m_nIdxModel;		// 使うモデル
 	bool				m_bDisp;			// 描画するかどうか
+	CShadow				*m_pShadow;			// 影のポインタ変数
+	float				m_fShadowHeight;	// 影の高さ
+
+	LPD3DXEFFECT		m_pShader;			// シェーダ
+	LPDIRECT3DTEXTURE9	m_rampTexture;		// ランプテクスチャ
+
+	CScene				*m_pObject;			// 生成元のオブジェクトのポインタ
 };
 #endif

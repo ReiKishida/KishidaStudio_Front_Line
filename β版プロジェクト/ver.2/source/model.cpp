@@ -12,6 +12,7 @@
 #include "debugProc.h"
 #include "light.h"
 #include "camera.h"
+#include "shadow.h"
 
 #include <stdio.h>
 
@@ -26,7 +27,7 @@
 //=========================================
 // モデルの生成
 //=========================================
-CModel *CModel::Create(D3DXMATRIX *pParent)
+CModel *CModel::Create(CScene *pObject, D3DXMATRIX *pParent)
 {
 	CModel *pModel = NULL;
 
@@ -34,6 +35,7 @@ CModel *CModel::Create(D3DXMATRIX *pParent)
 	{// メモリを確保する
 		pModel = new CModel;	// メモリ確保
 		pModel->m_pMtxParent = pParent;
+		pModel->m_pObject = pObject;
 	}
 
 	return pModel;
@@ -55,6 +57,11 @@ CModel::CModel()
 	m_nNumMat = 0;
 	m_pParent = NULL;
 	m_bDisp = true;
+	m_pShadow = NULL;
+	m_fShadowHeight = 1.0f;
+	m_rampTexture = NULL;
+	m_pShader = NULL;
+	m_pObject = NULL;
 }
 
 //=========================================
@@ -165,6 +172,24 @@ void CModel::Uninit(void)
 	{// マテリアルの数を破棄
 		m_nNumMat = NULL;
 	}
+
+	if (NULL != m_pShadow)
+	{// 影がNULLじゃない
+		m_pShadow->Uninit();
+		m_pShadow = NULL;
+	}
+
+	if (NULL != m_pShader)
+	{// シェーダの開放
+		m_pShader->Release();
+		m_pShader = NULL;
+	}
+
+	if (NULL != m_rampTexture)
+	{// ランプテクスチャの破棄
+		m_rampTexture->Release();
+		m_rampTexture = NULL;
+	}
 }
 
 //=========================================
@@ -189,6 +214,15 @@ void CModel::Draw(void)
 	D3DXMATRIX mtxRot, mtxTrans, mtxParent;	// 計算用マトリックス
 	D3DMATERIAL9 matDef;					// 現在のマテリアル保存用
 	D3DXMATERIAL *pMat;						// マテリアルデータへのポインタ
+
+	if (NULL != m_pShader)
+	{
+		// テクニックの設定
+		m_pShader->SetTechnique("StandardShader");
+
+		// シェーダ開始
+		m_pShader->Begin(0, 0);
+	}
 
 	if (m_pParent != NULL)
 	{// 親のマトリックスを取得
@@ -218,6 +252,18 @@ void CModel::Draw(void)
 	// ワールドマトリックスの設定
 	pDevice->SetTransform(D3DTS_WORLD, &m_mtxWorld);
 
+	if (NULL != m_pShader)
+	{
+		// ビューマトリックスを設定
+		D3DXMATRIX matrix = m_mtxWorld
+			* CManager::GetCamera()->GetView()
+			* CManager::GetCamera()->GetProjection();
+		m_pShader->SetMatrix("g_matrix", &matrix);
+
+		// パスの描画開始
+		m_pShader->BeginPass(0);	// 0番目のパスを指定
+	}
+
 	// 現在のマテリアルを取得
 	pDevice->GetMaterial(&matDef);
 
@@ -232,12 +278,29 @@ void CModel::Draw(void)
 		//オブジェクトのテクスチャーをステージ０にセットする
 		pDevice->SetTexture(0, m_pTexture[nCntMat]);
 
+		// ランプテクスチャの設定(1番にランプテクスチャを設定)
+		if (NULL != m_pShader) { pDevice->SetTexture(1, m_rampTexture); }
+
 		// モデルの描画
 		m_pMesh->DrawSubset(nCntMat);
 	}
 
 	// マテリアルをデフォルトに戻す
 	pDevice->SetMaterial(&matDef);
+
+	if (NULL != m_pShader)
+	{
+		// パスの描画終了
+		m_pShader->EndPass();
+
+		// シェーダの終了
+		m_pShader->End();
+	}
+
+	if (m_pShadow != NULL)
+	{// 使われている
+		m_pShadow->Set(m_mtxWorld, m_pMesh, (int)m_nNumMat, m_vtxMin - m_vtxMin + m_vtxMax, m_fShadowHeight);
+	}
 }
 
 //=========================================
@@ -284,7 +347,7 @@ void CModel::MatrixCalculation(void)
 //=========================================
 // 使うモデルの設定
 //=========================================
-void CModel::SetModel(char *pModelName)
+void CModel::SetModel(char *pModelName, bool bShadow)
 {
 	// デバイスの取得
 	CRenderer *pRenderer = CManager::GetRenderer();
@@ -310,6 +373,58 @@ void CModel::SetModel(char *pModelName)
 	{// テクスチャの生成
 		m_pTexture[nCntMat] = NULL;
 		D3DXCreateTextureFromFile(pDevice, pMat[nCntMat].pTextureFilename, &m_pTexture[nCntMat]);
+	}
+
+	if (NULL == m_pShadow && bShadow)
+	{// 影の生成
+		m_pShadow = CShadow::Create(m_pObject);
+	}
+}
+
+//=========================================
+// シェーダを使用する
+//=========================================
+void CModel::SetShader(void)
+{
+	if (NULL == m_pShader)
+	{// シェーダの生成
+		// デバイスの取得
+		CRenderer *pRenderer = CManager::GetRenderer();
+		LPDIRECT3DDEVICE9 pDevice;
+		pDevice = pRenderer->GetDevice();
+
+		if (FAILED(D3DXCreateEffectFromFile(pDevice,	// 描画デバイス
+			TEXT("data/shader/ShadowShader.hlsl"),			// シェーダファイルの相対パス
+			NULL,										// プリプロセッサを行う構造体
+			NULL,										// include操作を行うインターフェース
+			D3DXSHADER_DEBUG,							// 読み込み時のオプション
+			0,											// シェーダ間でやり取りする変数
+			&m_pShader,									// シェーダ情報の変数
+			NULL)))										// エラー情報
+		{
+			MessageBox(0, "シェーダファイルがありません", "ShadowShader.hlsl", MB_OK);
+		}
+
+		// テクスチャの設定
+		D3DXCreateTextureFromFile(pDevice, "data/TEXTURE/ramp1.jpg", &m_rampTexture);
+
+		// ライトの設定
+		m_pShader->SetVector("g_lightDir",
+			&D3DXVECTOR4(CManager::GetLight()->GetDirection(), 1.0f));
+	}
+	else
+	{// シェーダの破棄
+		if (NULL != m_pShader)
+		{// シェーダの開放
+			m_pShader->Release();
+			m_pShader = NULL;
+		}
+
+		if (NULL != m_rampTexture)
+		{// ランプテクスチャの破棄
+			m_rampTexture->Release();
+			m_rampTexture = NULL;
+		}
 	}
 }
 

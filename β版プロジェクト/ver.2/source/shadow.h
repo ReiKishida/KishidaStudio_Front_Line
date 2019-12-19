@@ -8,10 +8,6 @@
 #define _SHADOW_H_
 
 #include "scene.h"
-#include "shadow/ZTexCreator.h"
-#include "shadow/comptr.h"
-#include "shadow/DepthBufShadowEffect.h"
-#include "shadow/EffectResource.h"
 
 //*****************************************************************************
 // マクロ定義
@@ -35,22 +31,17 @@ public:
 	void Update(void);
 	void Draw(void);
 
-	D3DXVECTOR3 GetPos(void) { return m_pos; };
-	void SetPos(D3DXVECTOR3 pos) { m_pos = pos; };
+	static CShadow *Create(CScene *pParent);
 
-	static CShadow *Create(void);
+	void Set(D3DXMATRIX mtxWorld, LPD3DXMESH mesh, int nNumMat, D3DXVECTOR3 _pos, float fHeight = 1.0f);
+
+	static bool RangeShadow(D3DXVECTOR3 pos, CScene *pObject, D3DXVECTOR3 vtxDiff);
 
 private:
-	IKD::Com_ptr<ID3DXMesh>			m_pMesh;			// メッシュ情報へのポインタ
-	IKD::Com_ptr<ID3DXBuffer>		m_pBuffMat;			// マテリアル情報へのポインタ
-	DWORD							m_nNumMat;			// マテリアル情報の数
-
-	D3DXMATRIX						m_mtxWorld;			// ワールドマトリックス
-	D3DXVECTOR3						m_pos;				// 位置
-	D3DXVECTOR3						m_rot;				// 回転
-	IKD::CZTexCreator				m_ZTexCreator;		// Z値テクスチャ作成オブジェクト
-	IKD::CDepthBufShadowEffect		m_DepthBS;			// 深度バッファシャドウオブジェクト
-	IKD::Com_ptr<IDirect3DTexture9> m_cpShadowMapTex;	// Z値テクスチャ
+	D3DXMATRIX	m_mtxShadow;		// シャドウマトリックス
+	D3DXPLANE	m_planeField;		// 地面の平面
+	CScene		*m_pParent;			// オブジェクトのポインタ
+	D3DXVECTOR3	m_ObjPos;			// オブジェクトの位置
 };
 
 #endif
