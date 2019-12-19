@@ -32,7 +32,6 @@
 //=============================================================================
 #define WORKER_FILE	"data/TEXT/AI/worker/model_worker.txt"
 #define DRONE_FILE	"data/TEXT/AI/drone/model_drone.txt"
-#define AI_SPEED			(2.7f)		// 移動速度
 
 // 移動系AI関連
 #define	LOAD_FILENAME		("data/TEXT/NODE_DATA/NodeData.txt")
@@ -751,7 +750,7 @@ void CAIMecha::AIUpdate()
 	// パート情報
 	//CDebugProc::Print("========AI========\n");
 	//CDebugProc::Print("ゴールに到着%s。\n", m_bGoal ? "しました" : "してません");
-	//CDebugProc::Print("AIPos :%.1f, %.1f\n", m_pos.x, m_pos.z);
+	//CDebugProc::Print("AIPos : %.1f, %.1f, %.1f\n", m_pos.x, m_pos.y, m_pos.z);
 	//CDebugProc::Print("\n");
 
 	//CDebugProc::Print("クリック回数 : %d\n", m_nRallyCount);
@@ -1034,6 +1033,8 @@ void CAIMecha::Attack()
 	int nCntEnemyPlayer = 0;	// 敵プレイヤーのカウント
 	float fAttackLength = 0.0f;	// 差分
 	bool bFind[2] = { false, false };	// 発見状態
+	D3DXMATRIX mtxCanon;
+	D3DXVECTOR3 posCanon = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 
 	while (pScene != NULL)
 	{// NULLになるまでループ
@@ -1067,7 +1068,7 @@ void CAIMecha::Attack()
 				(m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z) *
 				(m_pEnemyPlayer[nCntPlayer]->GetPos().z - m_pos.z);
 
-			if (fAttackLength < ATTACK_AREA)
+			if (fAttackLength < m_fSearchArea)
 			{// 範囲内に敵が入った場合
 
 				// 発見状態にする
@@ -1081,14 +1082,13 @@ void CAIMecha::Attack()
 				m_bPin = true;
 
 				// 射出口の位置の取得
-				D3DXMATRIX mtxCanon = m_pModel[0]->GetMtxWorld();
-				D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
-
-				if (rand() % 30 == 0)
-				{// ランダムなタイミングで攻撃
+				if (m_mechaType == MECHATYPE_DRONE)
+				{// ドローンタイプのとき
+					mtxCanon = m_pModel[0]->GetMtxWorld();
+					posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
 
 					// 左右攻撃方向の設定
-					m_fAngle = m_rot.y + D3DX_PI;
+					m_fAngle = atan2f(m_pos.x - m_pEnemyPlayer[nCntPlayer]->GetPos().x, m_pos.z - m_pEnemyPlayer[nCntPlayer]->GetPos().z) + D3DX_PI;
 
 					// 上下攻撃方向の設定
 					m_fAngleV =
@@ -1100,6 +1100,29 @@ void CAIMecha::Attack()
 					// 弾をばらつかせる
 					m_fAngle += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.005f;
 					m_fAngleV += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.003f;
+				}
+				else if (m_mechaType == MECHATYPE_WORKER)
+				{// ワーカータイプの時
+					mtxCanon = m_pModel[2]->GetMtxWorld();
+					posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
+
+					// 左右攻撃方向の設定
+					m_fAngle = atan2f(m_pos.x - m_pEnemyPlayer[nCntPlayer]->GetPos().x, m_pos.z - m_pEnemyPlayer[nCntPlayer]->GetPos().z) + D3DX_PI;
+
+					// 上下攻撃方向の設定
+					m_fAngleV =
+						(m_pos.y - (m_pEnemyPlayer[nCntPlayer]->GetPos().y + 50.0f)) *
+						(m_pos.y - (m_pEnemyPlayer[nCntPlayer]->GetPos().y + 50.0f)) +
+						(m_pos.y - (m_pEnemyPlayer[nCntPlayer]->GetPos().y + 50.0f)) *
+						(m_pos.y - (m_pEnemyPlayer[nCntPlayer]->GetPos().y + 50.0f));
+
+					// 弾をばらつかせる
+					m_fAngle += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.002f;
+					m_fAngleV += (float)(ATTACK_DISPERTION - (rand() % ATTACK_DISPERTION * 2)) * 0.002f;
+				}
+
+				if (rand() % 30 == 0)
+				{// ランダムなタイミングで攻撃
 
 					// 弾の生成
 					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this);
@@ -1147,8 +1170,8 @@ void CAIMecha::AutoMove()
 
 	if (fLength > MOVE_ACCEPTABLE)
 	{// 差分が許容値内に収まるまで目的地に移動する
-		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * AI_SPEED;
-		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * AI_SPEED;
+		m_move.x = sinf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
+		m_move.z = cosf(atan2f(m_posDest.x - m_pos.x, m_posDest.z - m_pos.z)) * m_fSpeed;
 
 		if (!m_bFind)
 		{// 未発見時
