@@ -1,0 +1,125 @@
+#==============================================================================
+#
+# 『モーションビューワ』スクリプトファイル [motion.txt]
+# Author : REIKISHIDA
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# モデル数
+#------------------------------------------------------------------------------
+NUM_MODEL = 10
+
+#------------------------------------------------------------------------------
+# モデルファイル名
+#------------------------------------------------------------------------------
+MODEL_FILENAME = data/MODEL/heavy/0_belly.x		# [0]腰
+MODEL_FILENAME = data/MODEL/heavy/1_body.x		# [1]胴体
+MODEL_FILENAME = data/MODEL/heavy/2_arm_r.x		# [2]右腕
+MODEL_FILENAME = data/MODEL/heavy/3_arm_l.x		# [3]左腕
+MODEL_FILENAME = data/MODEL/heavy/4_thigh_r.x	# [4]右腿
+MODEL_FILENAME = data/MODEL/heavy/5_leg_r.x		# [5]右脚
+MODEL_FILENAME = data/MODEL/heavy/6_foot_r.x	# [6]右足
+MODEL_FILENAME = data/MODEL/heavy/7_thigh_l.x	# [7]左腿
+MODEL_FILENAME = data/MODEL/heavy/8_leg_l.x		# [8]右脚
+MODEL_FILENAME = data/MODEL/heavy/9_foot_l.x	# [9]右足
+
+
+#------------------------------------------------------------------------------
+# キャラクター情報
+#------------------------------------------------------------------------------
+CHARACTERSET
+	MOVE = 1.5						# 移動量
+	JUMP = 15.0						# ジャンプ量
+	NUM_PARTS = 10					# パーツ数
+
+	# 弾の設定
+	CAPACITY = 2					# 装弾数
+	ATTACK = 15						# 攻撃力
+	SHOOTS = 2						# 同時発射数
+	DISPERTION = 40					# ばらつき
+	RELOAD = 100						# リロード時間
+	BULLETSPEED = 15.0				# 弾速
+
+	LIFE = 580						# 耐久力
+	SPEED = 4.3					# 移動量
+
+	FOOT = 4						# 足の始まり番号
+
+	PARTSSET						# [0]腰
+		INDEX = 0
+		PARENT = -1					# (親)NULL, もし-1なら親がいない。
+		POS = 0.0 26.0 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+	
+	PARTSSET						# [1]胴体
+		INDEX = 1
+		PARENT = 0					# (親)NULL, もし-1なら親がいない。
+		POS = 0.0 0.0 1.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+
+	PARTSSET						# [2]右腕
+		INDEX = 2
+		PARENT = 1					# (親)胴体
+		POS = -6.0 6.5 -0.5
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+
+	PARTSSET						# [3]左腕
+		INDEX = 3
+		PARENT = 1					# (親)腹部
+		POS = 6.0 6.5 -0.5
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+
+	PARTSSET						# [4]右腿
+		INDEX = 4
+		PARENT = 0					# (親)腰
+		POS = -3.5 -3.5 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET						# [5]右脚
+		INDEX = 5
+		PARENT = 4					# (親)右腿
+		POS = -4.0 -8.0 6.5
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET						# [6]右足
+		INDEX = 6
+		PARENT = 5					# (親)右脚
+		POS = 0.0 -10.5 -5.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET						# [7]左腿
+		INDEX = 7
+		PARENT = 0					# (親)腰
+		POS = 3.5 -3.5 0.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+	PARTSSET						# [8]左脚
+		INDEX = 8
+		PARENT = 7					# (親)左腿
+		POS = 4.0 -8.0 6.5
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+
+
+	PARTSSET						# [9]左足
+		INDEX = 9
+		PARENT = 8				# (親)左腿
+		POS = 0.0 -10.5 -5.0
+		ROT = 0.0 0.0 0.0
+	END_PARTSSET
+END_CHARACTERSET
+
+END_SCRIPT
