@@ -191,20 +191,21 @@ public:
 	//   ピン関係
 	//==================
 	// 自分のピン情報
-	CPin *&GetPin(void) { return m_pPin; };
 	bool &GetPinUse(void) { return m_bPin; };
 	int &GetPinLife(void) { return m_nPinLife; };
 	D3DXVECTOR3 &GetPinPos(void) { return m_PinPos; };
-	// 味方のピン情報
-	CPin *&GetAllyPin(void) { return m_pAllyPin; };
-	bool &GetAllyPinUse(void) { return m_bAllyPin; };
-	int &GetAllyPinLife(void) { return m_nAllyPinLife; };
-	D3DXVECTOR3 &GetAllyPinPos(void) { return m_AllyPinPos; };
 	// AIのピン情報
-	CPin *&GetAIPin(int nValue) { return m_pAIPin[nValue]; };
 	bool &GetAIPinUse(int nValue) { return m_bAIPin[nValue]; };
 	int &GetAIPinLife(int nValue) { return m_nAIPinLife[nValue]; };
 	D3DXVECTOR3 &GetAIPinPos(int nValue) { return m_AIPinPos[nValue]; };
+	// 味方のピン情報
+	bool &GetAllyPinUse(void) { return m_bAllyPin; };
+	int &GetAllyPinLife(void) { return m_nAllyPinLife; };
+	D3DXVECTOR3 &GetAllyPinPos(void) { return m_AllyPinPos; };
+	// 味方AIのピン情報
+	bool &GetAllyAIPinUse(int nValue) { return m_bAllyAIPin[nValue]; };
+	int &GetAllyAIPinLife(int nValue) { return m_nAllyAIPinLife[nValue]; };
+	D3DXVECTOR3 &GetAllyAIPinPos(int nValue) { return m_AllyAIPinPos[nValue]; };
 
 	// ラジオチャット
 	RADIOCHAT GetRadioChat(void) { return m_radiochat; }									// ラジオチャット情報の取得
@@ -304,21 +305,26 @@ private:
 	bool			m_bConnect;			// 接続しているかどうか
 
 	// ピン
-	CPin			*m_pPin;			// ピンのポインタ
-	CBulletPin		*m_pPinBullet;		// ピン立て判定用の弾のポインタ
-	bool			m_bPin;				// ピンを立てているか
-	int				m_nPinLife;			// ピンの表示時間
-	D3DXVECTOR3		m_PinPos;			// ピンの位置
-	// 味方のピン
-	CPin			*m_pAllyPin;		// 味方のピンのポインタ
-	bool			m_bAllyPin;			// 味方がピンを立てているか
-	int				m_nAllyPinLife;		// 味方のピンの表示時間
-	D3DXVECTOR3		m_AllyPinPos;		// 味方のピンの位置
+	CPin			*m_pPin;					// ピンのポインタ
+	CBulletPin		*m_pPinBullet;				// ピン立て判定用の弾のポインタ
+	bool			m_bPin;						// ピンを立てているか
+	int				m_nPinLife;					// ピンの表示時間
+	D3DXVECTOR3		m_PinPos;					// ピンの位置
 	// AIのピン
-	CPin			*m_pAIPin[PLAYER_MAX * AI_MAX];		// AIのピンのポインタ
-	bool			m_bAIPin[PLAYER_MAX * AI_MAX];		// AIがピンを立てているか
-	int				m_nAIPinLife[PLAYER_MAX * AI_MAX];	// AIのピンの表示時間
-	D3DXVECTOR3		m_AIPinPos[PLAYER_MAX * AI_MAX];	// AIのピンの位置
+	CPin			*m_pAIPin[AI_MAX];			// AIのピンのポインタ
+	bool			m_bAIPin[AI_MAX];			// AIがピンを立てているか
+	int				m_nAIPinLife[AI_MAX];		// AIのピンの表示時間
+	D3DXVECTOR3		m_AIPinPos[AI_MAX];			// AIのピンの位置
+	// 味方のピン
+	CPin			*m_pAllyPin;				// 味方のピンのポインタ
+	bool			m_bAllyPin;					// 味方がピンを立てているか
+	int				m_nAllyPinLife;				// 味方のピンの表示時間
+	D3DXVECTOR3		m_AllyPinPos;				// 味方のピンの位置
+	// 味方AIのピン
+	CPin			*m_pAllyAIPin[AI_MAX];		// 味方AIのピンのポインタ
+	bool			m_bAllyAIPin[AI_MAX];		// 味方AIがピンを立てているか
+	int				m_nAllyAIPinLife[AI_MAX];	// 味方AIのピンの表示時間
+	D3DXVECTOR3		m_AllyAIPinPos[AI_MAX];		// 味方AIのピンの位置
 
 	// =============================================================
 	// UI関係

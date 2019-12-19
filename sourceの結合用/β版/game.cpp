@@ -904,6 +904,29 @@ void CGame::PrintData(void)
 				pClient->Printf(" ");
 			}
 
+			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+			{// AIの数だけ回る
+				// AIがピンを使用しているかどうかを書き込む
+				if (m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinUse(nCntAI) == true)
+				{// AIがピンを使用している場合
+					pClient->Printf("1");
+					pClient->Printf(" ");
+
+					// 位置を書き込む
+					pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinPos(nCntAI).x, m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinPos(nCntAI).y, m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinPos(nCntAI).z);
+					pClient->Printf(" ");
+
+					// 表示時間を書き込む
+					pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinLife(nCntAI));
+					pClient->Printf(" ");
+				}
+				else
+				{// ピンを使用していない場合
+					pClient->Printf("0");
+					pClient->Printf(" ");
+				}
+			}
+
 #if 0
 			//AIの位置を書き込む
 			pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().y, m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(0)->GetPos().z);
@@ -1148,9 +1171,6 @@ char *CGame::ReadPlayerData(char *pStr)
 	int nNumShoot = 0;												//同時発射数
 	int nAttack = 0;												//攻撃力
 	bool bChat = false;												//チャットしているかどうか
-	bool bPinUse = false;											// ピンを使用しているかどうか
-	int nPinLife = 0;												// ピンの表示時間
-	D3DXVECTOR3 pinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				// ピンの位置
 	CPlayer::RADIOCHAT radioChat = CPlayer::RADIOCHAT_OK;			//ラジオチャット
 	int nBlueLinkEnergy = 0;										//ブルーチームのリンクエネルギー
 	int nRedLinkEnergy = 0;											//レッドチームのリンクエネルギー
@@ -1158,6 +1178,13 @@ char *CGame::ReadPlayerData(char *pStr)
 	int nLife = 0;													//体力情報
 	int nKillPlayerIdx = 0;											//キルプレイヤーの番号
 	TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
+
+	bool bPinUse = false;											// ピンを使用しているかどうか
+	int nPinLife = 0;												// ピンの表示時間
+	D3DXVECTOR3 pinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				// ピンの位置
+	bool bAIPinUse[AI_MAX] = { false, false };						// AIがピンを使用しているかどうか
+	int nAIPinLife[AI_MAX] = { 0, 0 };								// AIのピンの表示時間
+	D3DXVECTOR3 AIPinPos[AI_MAX] = { D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3(0.0f, 0.0f, 0.0f) };// AIのピンの位置
 
 	D3DXVECTOR3 AIPos[AI_MAX] = {D3DXVECTOR3(0.0f,0.0f,0.0f),D3DXVECTOR3(0.0f,0.0f,0.0f)};		//AIの位置
 	D3DXVECTOR3 AIRot[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f) ,D3DXVECTOR3(0.0f,0.0f,0.0f) };	//AIの向き
@@ -1388,6 +1415,33 @@ char *CGame::ReadPlayerData(char *pStr)
 				pStr += nWord;
 			}
 			
+			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+			{// AIの数だけ回る
+				// AIがピンを使用してるかどうかを代入
+				bAIPinUse[nCntAI] = CServerFunction::ReadBool(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				if (bAIPinUse[nCntAI] == true)
+				{// AIがピンを使用している場合
+					// AIのピンの位置を代入
+					AIPinPos[nCntAI].x = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+					AIPinPos[nCntAI].y = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+					AIPinPos[nCntAI].z = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					// AIのピンの表示時間を代入
+					nAIPinLife[nCntAI] = CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+				}
+			}
+
 			if (nPlayerIdx == 0)
 			{//ホストの場合
 			 //現在の状態を代入
@@ -1574,7 +1628,16 @@ char *CGame::ReadPlayerData(char *pStr)
 					if (bPinUse == true)
 					{// ピンを使用している場合
 						// ピンの更新
-						SetPinData(nPlayerIdx,pinPos, nPinLife);
+						SetPinData(nPlayerIdx, pinPos, nPinLife);
+					}
+
+					for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+					{// AIの数だけ回る
+						if (bAIPinUse[nCntAI] == true)
+						{// AIがピンを使用している場合
+							// AIピンの更新
+							SetAIPinData(nPlayerIdx, nCntAI, AIPinPos[nCntAI], nAIPinLife[nCntAI]);
+						}
 					}
 
 					if (nState == 1)
@@ -1883,7 +1946,7 @@ void CGame::SetChatData(int nPlayerIdx, int radioChat)
 }
 
 //=============================================================================
-// チャット情報の設置処理
+// ピン情報の設置処理
 //=============================================================================
 void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos, int nLife)
 {
@@ -1892,48 +1955,63 @@ void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos, int nLife)
 	{
 	case 0:
 		// プレイヤー0
-		if (m_pPlayer[1]->GetAllyPinUse() == false)
-		{// 仲間のピンが使用されているとき
-			m_pPlayer[1]->GetAllyPinPos() = pinPos;
-			m_pPlayer[1]->GetAllyPinLife() = nLife;
-			m_pPlayer[1]->GetAllyPinUse() = true;
-		}
-		//for (int nCntAI = 0; nCntAI < PLAYER_MAX * AI_MAX; nCntAI++)
-		//{// 味方AIの数だけ回る
-		//	if (m_pPlayer[1]->GetAIPinUse(nCntAI))
-		//	{// AIのピンが使用されているとき
-		//		m_pPlayer[0]->GetAIPinUse(nCntAI) = m_pPlayer[1]->GetAIPinUse(nCntAI);
-		//		m_pPlayer[0]->GetAIPin(nCntAI) = m_pPlayer[1]->GetAIPin(nCntAI);
-		//	}
-		//}
+		m_pPlayer[1]->GetAllyPinPos() = pinPos;
+		m_pPlayer[1]->GetAllyPinLife() = nLife;
+		m_pPlayer[1]->GetAllyPinUse() = true;
 		break;
 	case 1:
 		// プレイヤー1
-		if (m_pPlayer[0]->GetAllyPinUse() == false)
-		{// 仲間のピンが使用されているとき
-			m_pPlayer[0]->GetAllyPinPos() = pinPos;
-			m_pPlayer[0]->GetAllyPinUse() = true;
-		}
+		m_pPlayer[0]->GetAllyPinPos() = pinPos;
+		m_pPlayer[0]->GetAllyPinLife() = nLife;
+		m_pPlayer[0]->GetAllyPinUse() = true;
 		break;
-
 	case 2:
 		// プレイヤー2
-		if (m_pPlayer[3]->GetAllyPinUse() == false)
-		{// 仲間のピンが使用されているとき
-			m_pPlayer[3]->GetAllyPinPos() = pinPos;
-			m_pPlayer[3]->GetAllyPinUse() = true;
-		}
+		m_pPlayer[3]->GetAllyPinPos() = pinPos;
+		m_pPlayer[3]->GetAllyPinLife() = nLife;
+		m_pPlayer[3]->GetAllyPinUse() = true;
 		break;
-
 	case 3:
 		// プレイヤー3
-		if (m_pPlayer[2]->GetAllyPinUse() == false)
-		{// 仲間のピンが使用されているとき
-			m_pPlayer[2]->GetAllyPinPos() = pinPos;
-			m_pPlayer[2]->GetAllyPinUse() = true;
-		}
+		m_pPlayer[2]->GetAllyPinPos() = pinPos;
+		m_pPlayer[2]->GetAllyPinLife() = nLife;
+		m_pPlayer[2]->GetAllyPinUse() = true;
 		break;
+	}
+}
 
+//=============================================================================
+// ピン情報の設置処理
+//=============================================================================
+void CGame::SetAIPinData(int nPlayerIdx, int AIInd, D3DXVECTOR3 AIPinPos, int nAILife)
+{
+	// プレイヤー番号別で処理分け
+	switch (nPlayerIdx)
+	{
+	case 0:
+		// プレイヤー0
+		m_pPlayer[1]->GetAllyAIPinPos(AIInd) = AIPinPos;
+		m_pPlayer[1]->GetAllyAIPinLife(AIInd) = nAILife;
+		m_pPlayer[1]->GetAllyAIPinUse(AIInd) = true;
+		break;
+	case 1:
+		// プレイヤー1
+		m_pPlayer[0]->GetAllyAIPinPos(AIInd) = AIPinPos;
+		m_pPlayer[0]->GetAllyAIPinLife(AIInd) = nAILife;
+		m_pPlayer[0]->GetAllyAIPinUse(AIInd) = true;
+		break;
+	case 2:
+		// プレイヤー2
+		m_pPlayer[3]->GetAllyAIPinPos(AIInd) = AIPinPos;
+		m_pPlayer[3]->GetAllyAIPinLife(AIInd) = nAILife;
+		m_pPlayer[3]->GetAllyAIPinUse(AIInd) = true;
+		break;
+	case 3:
+		// プレイヤー3
+		m_pPlayer[2]->GetAllyAIPinPos(AIInd) = AIPinPos;
+		m_pPlayer[2]->GetAllyAIPinLife(AIInd) = nAILife;
+		m_pPlayer[2]->GetAllyAIPinUse(AIInd) = true;
+		break;
 	}
 }
 

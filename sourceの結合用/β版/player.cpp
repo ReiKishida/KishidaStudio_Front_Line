@@ -185,12 +185,19 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_nAllyPinLife = 0;
 	m_PinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	m_AllyPinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	for (int nCntAI = 0; nCntAI < PLAYER_MAX * AI_MAX; nCntAI++)
-	{// 味方AIの数だけ回る
+	for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+	{// AIの数だけ回る
+		// 自分のAIの初期化
 		m_pAIPin[nCntAI] = NULL;
 		m_bAIPin[nCntAI] = false;
 		m_nAIPinLife[nCntAI] = 0;
 		m_AIPinPos[nCntAI] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+		// 味方のAIの初期化
+		m_pAllyAIPin[nCntAI] = NULL;
+		m_bAllyAIPin[nCntAI] = false;
+		m_nAllyAIPinLife[nCntAI] = 0;
+		m_AllyAIPinPos[nCntAI] = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	}
 
 	//AI戦闘系の変数
@@ -599,9 +606,10 @@ HRESULT CPlayer::Init(void)
 	// ピンの表示時間の初期化
 	m_nPinLife = PIN_LIFE;
 	m_nAllyPinLife = PIN_LIFE;
-	for (int nCnt = 0; nCnt < PLAYER_MAX * AI_MAX; nCnt++)
+	for (int nCnt = 0; nCnt < AI_MAX; nCnt++)
 	{// 味方AIの数だけ回る
 		m_nAIPinLife[nCnt] = PIN_LIFE;
+		m_nAllyAIPinLife[nCnt] = PIN_LIFE;
 	}
 
 	// 移動系AI変数の初期化
@@ -2419,11 +2427,11 @@ void CPlayer::Option(bool bOption)
 //=============================================================================
 void CPlayer::PinUpdateSingle()
 {
-	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
+	CInputMouse *pMouse = CManager::GetInputMouse(); // マウスの入力を取得
 
-	//=============================================================================
+	//===================================
 	// 自分のピン配置
-	//=============================================================================
+	//===================================
 	if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_2) == true)
 	{// ホイールクリック
 		// カメラの角度と注視点を取得
@@ -2492,99 +2500,26 @@ void CPlayer::PinUpdateSingle()
 		}
 	}
 
-	//=============================================================================
-	// 味方プレイヤーのピン配置
-	//=============================================================================
-	CScene *pAllyPlayerScene = CScene::GetSceneTop(PLAYER_PRIORITY);
-	CScene *pAllyPlayerSceneNext = NULL;
-	D3DXVECTOR3 AllyPlayerPinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-
-	while (pAllyPlayerScene != NULL)
-	{// NULLになるまでループ
-		pAllyPlayerSceneNext = pAllyPlayerScene->GetSceneNext();
-		CScene::OBJTYPE objType = pAllyPlayerScene->GetObjType();
-
-		if (objType == CScene::OBJTYPE_PLAYER)
-		{// プレイヤーオブジェクトのとき
-			CPlayer *pPlayer = (CPlayer*)pAllyPlayerScene;
-			if (pPlayer != this)
-			{// 自分自身じゃないとき
-				if (m_nTeam == pPlayer->GetTeam())
-				{// チームが同じとき
-
-					// 仲間のピン情報を取得する
-					m_bAllyPin = pPlayer->GetPinUse();
-					AllyPlayerPinPos = pPlayer->GetPinPos();
-
-					if (m_bAllyPin)
-					{// 仲間のピンが使われている場合
-						if (m_pAllyPin != NULL)
-						{// ピンが生成されている場合
-							if (m_nPinLife <= 0)
-							{// 一定時間経過でピンを削除
-								pPlayer->GetPinUse() = false;
-								m_bAllyPin = false;
-								m_pAllyPin->Uninit();
-								m_pAllyPin = NULL;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// 次のオブジェクトを見る
-		pAllyPlayerScene = pAllyPlayerSceneNext;
-	}
-
-	if (m_bAllyPin)
-	{// 仲間のピンが使われている場合
-		if (m_pAllyPin == NULL)
-		{// ピンが生成されていない場合
-			// ピンの配置
-			m_nAllyPinLife = PIN_LIFE;
-			m_pAllyPin = m_pAllyPin->Create(AllyPlayerPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
-			m_pAllyPin->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
-		}
-		else
-		{// ピンが生成されている場合
-			// ピンの更新
-			m_nPinLife--;
-			m_pAllyPin->GetPos() = AllyPlayerPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
-		}
-	}
-
-	//=============================================================================
-	// 味方AIのピン配置
-	//=============================================================================
-	CScene *pAllyAIScene = CScene::GetSceneTop(AI_PRIORITY);
-	CScene *pAllyAISceneNext = NULL;
-	D3DXVECTOR3 AllyAIPinPos[PLAYER_MAX * AI_MAX] = {};
-	CAIMecha::MECHATYPE MechaType[PLAYER_MAX * AI_MAX] = {};
+	//===================================
+	// AIのピン配置
+	//===================================
+	CScene *pAIScene = CScene::GetSceneTop(AI_PRIORITY);
+	CScene *pAISceneNext = NULL;
 	int nCntAIMax = 0;
 
-	while (pAllyAIScene != NULL)
+	while (pAIScene != NULL)
 	{// NULLになるまでループ
-		pAllyAISceneNext = pAllyAIScene->GetSceneNext();
-		CScene::OBJTYPE objType = pAllyAIScene->GetObjType();
+		pAISceneNext = pAIScene->GetSceneNext();
+		CScene::OBJTYPE objType = pAIScene->GetObjType();
 
 		if (objType == CScene::OBJTYPE_AI)
 		{// AIオブジェクトのとき
-			CAIMecha *pAI = (CAIMecha*)pAllyAIScene;
+			CAIMecha *pAI = (CAIMecha*)pAIScene;
 
-			if (m_nTeam == pAI->GetTeam())
-			{// チームが同じとき
-				if (pAI->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
-				{// ドローンタイプの場合
-					MechaType[nCntAIMax] = CAIMecha::MECHATYPE_DRONE;
-				}
-				else if (pAI->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
-				{// ワーカータイプの場合
-					MechaType[nCntAIMax] = CAIMecha::MECHATYPE_WORKER;
-				}
-
-				// 仲間のピン情報を取得する
-				AllyAIPinPos[nCntAIMax] = pAI->GetPinPos();
+			if (m_nTeam == pAI->GetTeam() && pAI->GetPlayer() == this)
+			{// 自分のAIとき
+				// AIのピン情報を取得する
+				m_AIPinPos[nCntAIMax] = pAI->GetPinPos();
 				m_bAIPin[nCntAIMax] = pAI->GetPinUse();
 
 				if (m_pAIPin[nCntAIMax] != NULL)
@@ -2602,25 +2537,145 @@ void CPlayer::PinUpdateSingle()
 		}
 
 		// 次のオブジェクトを見る
+		pAIScene = pAISceneNext;
+	}
+
+	for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+	{// AI機の数だけ回る
+		if (m_bAIPin[nCntAI])
+		{// AIのピンが使われている場合
+			if (m_pAIPin[nCntAI] == NULL)
+			{// ピンが生成されていない場合
+			 // ピンの配置
+				m_nAIPinLife[nCntAI] = PIN_LIFE;
+				m_pAIPin[nCntAI] = m_pAIPin[nCntAI]->Create(m_AIPinPos[nCntAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+				m_pAIPin[nCntAI]->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
+				m_bAIPin[nCntAI] = true;
+			}
+			else
+			{// ピンが生成されている場合
+			 // ピンの更新
+				m_nAIPinLife[nCntAI]--;
+				m_pAIPin[nCntAI]->GetPos() = m_AIPinPos[nCntAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
+			}
+		}
+	}
+
+	//===================================
+	// 味方プレイヤーのピン配置
+	//===================================
+	CScene *pAllyPlayerScene = CScene::GetSceneTop(PLAYER_PRIORITY);
+	CScene *pAllyPlayerSceneNext = NULL;
+	D3DXVECTOR3 AllyPlayerPinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	while (pAllyPlayerScene != NULL)
+	{// NULLになるまでループ
+		pAllyPlayerSceneNext = pAllyPlayerScene->GetSceneNext();
+		CScene::OBJTYPE objType = pAllyPlayerScene->GetObjType();
+
+		if (objType == CScene::OBJTYPE_PLAYER)
+		{// プレイヤーオブジェクトのとき
+			CPlayer *pPlayer = (CPlayer*)pAllyPlayerScene;
+			if (m_nTeam == pPlayer->GetTeam() && pPlayer != this)
+			{// チームが同じときで自分自身じゃないとき
+
+				// 味方のピン情報を取得する
+				m_bAllyPin = pPlayer->GetPinUse();
+				AllyPlayerPinPos = pPlayer->GetPinPos();
+
+				if (m_bAllyPin)
+				{// 味方のピンが使われている場合
+					if (m_pAllyPin != NULL)
+					{// ピンが生成されている場合
+						if (m_nPinLife <= 0)
+						{// 一定時間経過でピンを削除
+							pPlayer->GetPinUse() = false;
+							m_bAllyPin = false;
+							m_pAllyPin->Uninit();
+							m_pAllyPin = NULL;
+						}
+					}
+				}
+			}
+		}
+
+		// 次のオブジェクトを見る
+		pAllyPlayerScene = pAllyPlayerSceneNext;
+	}
+
+	if (m_bAllyPin)
+	{// 味方のピンが使われている場合
+		if (m_pAllyPin == NULL)
+		{// 味方のピンが生成されていない場合
+			// ピンの配置
+			m_nAllyPinLife = PIN_LIFE;
+			m_pAllyPin = m_pAllyPin->Create(AllyPlayerPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+			m_pAllyPin->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
+		}
+		else
+		{// 味方のピンが生成されている場合
+			// ピンの更新
+			m_nPinLife--;
+			m_pAllyPin->GetPos() = AllyPlayerPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
+		}
+	}
+
+	//===================================
+	// 味方AIのピン配置
+	//===================================
+	CScene *pAllyAIScene = CScene::GetSceneTop(AI_PRIORITY);
+	CScene *pAllyAISceneNext = NULL;
+	int nCntAllyAIMax = 0;
+
+	while (pAllyAIScene != NULL)
+	{// NULLになるまでループ
+		pAllyAISceneNext = pAllyAIScene->GetSceneNext();
+		CScene::OBJTYPE objType = pAllyAIScene->GetObjType();
+
+		if (objType == CScene::OBJTYPE_AI)
+		{// AIオブジェクトのとき
+			CAIMecha *pAllyAI = (CAIMecha*)pAllyAIScene;
+
+			if (m_nTeam == pAllyAI->GetTeam() && pAllyAI->GetPlayer() != this)
+			{// チームが同じで自分のAIじゃないとき
+				// 仲間のピン情報を取得する
+				m_AllyAIPinPos[nCntAllyAIMax] = pAllyAI->GetPinPos();
+				m_bAllyAIPin[nCntAllyAIMax] = pAllyAI->GetPinUse();
+
+				if (m_pAllyAIPin[nCntAllyAIMax] != NULL)
+				{// ピンが生成されている場合
+					if (m_nAllyAIPinLife[nCntAllyAIMax] <= 0)
+					{// 一定時間経過でピンを削除
+						pAllyAI->GetPinUse() = false;
+						m_bAllyAIPin[nCntAllyAIMax] = false;
+						m_pAllyAIPin[nCntAllyAIMax]->Uninit();
+						m_pAllyAIPin[nCntAllyAIMax] = NULL;
+					}
+				}
+				nCntAllyAIMax++;
+			}
+		}
+
+		// 次のオブジェクトを見る
 		pAllyAIScene = pAllyAISceneNext;
 	}
 
-	for (int nCntAI = 0; nCntAI < PLAYER_MAX * AI_MAX; nCntAI++)
+	for (int nCntAllyAI = 0; nCntAllyAI < AI_MAX; nCntAllyAI++)
 	{// 味方AI機の数だけ回る
-		if (m_bAIPin[nCntAI])
+		if (m_bAllyAIPin[nCntAllyAI])
 		{// 味方AIのピンが使われている場合
-			if (m_pAIPin[nCntAI] == NULL)
+			if (m_pAllyAIPin[nCntAllyAI] == NULL)
 			{// ピンが生成されていない場合
 				// ピンの配置
-				m_nAIPinLife[nCntAI] = PIN_LIFE;
-				m_pAIPin[nCntAI] = m_pAIPin[nCntAI]->Create(AllyAIPinPos[nCntAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
-				m_pAIPin[nCntAI]->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
+				m_nAllyAIPinLife[nCntAllyAI] = PIN_LIFE;
+				m_pAllyAIPin[nCntAllyAI] = m_pAllyAIPin[nCntAllyAI]->Create(m_AllyAIPinPos[nCntAllyAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+				m_pAllyAIPin[nCntAllyAI]->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
 			}
 			else
 			{// ピンが生成されている場合
 				// ピンの更新
-				m_nAIPinLife[nCntAI]--;
-				m_pAIPin[nCntAI]->GetPos() = AllyAIPinPos[nCntAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
+				m_nAllyAIPinLife[nCntAllyAI]--;
+				m_pAllyAIPin[nCntAllyAI]->GetPos() = m_AllyAIPinPos[nCntAllyAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
 			}
 		}
 	}
@@ -2633,9 +2688,9 @@ void CPlayer::PinUpdateMulti()
 {
 	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
 
-	//=============================================================================
+	//===================================
 	// 自分のピン配置
-	//=============================================================================
+	//===================================
 	if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_2) == true)
 	{// ホイールクリック
 	 // カメラの角度と注視点を取得
@@ -2704,22 +2759,83 @@ void CPlayer::PinUpdateMulti()
 		}
 	}
 
-	//=============================================================================
+	//===================================
+	// 自分のAIのピン配置
+	//===================================
+	CScene *pAIScene = CScene::GetSceneTop(AI_PRIORITY);
+	CScene *pAISceneNext = NULL;
+	int nCntAIMax = 0;
+
+	while (pAIScene != NULL)
+	{// NULLになるまでループ
+		pAISceneNext = pAIScene->GetSceneNext();
+		CScene::OBJTYPE objType = pAIScene->GetObjType();
+
+		if (objType == CScene::OBJTYPE_AI)
+		{// AIオブジェクトのとき
+			CAIMecha *pAI = (CAIMecha*)pAIScene;
+
+			if (m_nTeam == pAI->GetTeam() && pAI->GetPlayer() == this)
+			{// 自分のAIの時
+				// 仲間のピン情報を取得する
+				m_AIPinPos[nCntAIMax] = pAI->GetPinPos();
+				m_bAIPin[nCntAIMax] = pAI->GetPinUse();
+
+				if (m_pAIPin[nCntAIMax] != NULL)
+				{// ピンが生成されている場合
+					if (m_nAIPinLife[nCntAIMax] <= 0)
+					{// 一定時間経過でピンを削除
+						pAI->GetPinUse() = false;
+						m_bAIPin[nCntAIMax] = false;
+						m_pAIPin[nCntAIMax]->Uninit();
+						m_pAIPin[nCntAIMax] = NULL;
+					}
+				}
+				nCntAIMax++;
+			}
+		}
+
+		// 次のオブジェクトを見る
+		pAIScene = pAISceneNext;
+	}
+
+	for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+	{// AI機の数だけ回る
+		if (m_bAIPin[nCntAI])
+		{// AIのピンが使われている場合
+			if (m_pAIPin[nCntAI] == NULL)
+			{// ピンが生成されていない場合
+			 // ピンの配置
+				m_nAIPinLife[nCntAI] = PIN_LIFE;
+				m_pAIPin[nCntAI] = m_pAIPin[nCntAI]->Create(m_AIPinPos[nCntAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+				m_pAIPin[nCntAI]->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
+				m_bAIPin[nCntAI] = true;
+			}
+			else
+			{// ピンが生成されている場合
+			 // ピンの更新
+				m_nAIPinLife[nCntAI]--;
+				m_pAIPin[nCntAI]->GetPos() = m_AIPinPos[nCntAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
+			}
+		}
+	}
+
+	//===================================
 	// 味方プレイヤーのピン配置
-	//=============================================================================
+	//===================================
 	if (m_bAllyPin)
 	{// 仲間のピンが使われている場合
 		if (m_pAllyPin == NULL)
 		{// ピンが生成されていない場合
 			// ピンの配置
-			m_pAllyPin = m_pAllyPin->Create(m_AllyPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+			m_pAllyPin = m_pAllyPin->Create(m_AllyPinPos + D3DXVECTOR3(0.0f, 30.0f, 0.0f));
 			m_pAllyPin->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_GOAL_PIN);
 		}
 		else
 		{// ピンが生成されている場合
 			// ピンの更新
 			m_nAllyPinLife--;
-			m_pAllyPin->GetPos() = m_AllyPinPos + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
+			m_pAllyPin->GetPos() = m_AllyPinPos + D3DXVECTOR3(0.0f, 30.0f, 0.0f);
 
 			if (m_nAllyPinLife <= 0)
 			{// 一定時間経過でピンを削除
@@ -2730,32 +2846,30 @@ void CPlayer::PinUpdateMulti()
 		}
 	}
 
-	//=============================================================================
+	//===================================
 	// 味方AIのピン配置
-	//=============================================================================			
-	for (int nCntAI = 0; nCntAI < PLAYER_MAX * AI_MAX; nCntAI++)
+	//===================================
+	for (int nCntAllyAI = 0; nCntAllyAI < AI_MAX; nCntAllyAI++)
 	{// 味方AI機の数だけ回る
-		if (m_bAIPin[nCntAI])
+		if (m_bAllyAIPin[nCntAllyAI])
 		{// 味方AIのピンが使われている場合
-			if (m_pAIPin[nCntAI] == NULL)
+			if (m_pAllyAIPin[nCntAllyAI] == NULL)
 			{// ピンが生成されていない場合
 				// ピンの配置
-				m_nAIPinLife[nCntAI] = PIN_LIFE;
-				m_pAIPin[nCntAI] = m_pAIPin[nCntAI]->Create(m_AIPinPos[nCntAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
-				m_pAIPin[nCntAI]->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
+				m_pAllyAIPin[nCntAllyAI] = m_pAllyAIPin[nCntAllyAI]->Create(m_AllyAIPinPos[nCntAllyAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f));
+				m_pAllyAIPin[nCntAllyAI]->GetTexture() = CTexture::GetTexture(CTexture::TEXTURE_LOOKON_PIN);
 			}
 			else
 			{// ピンが生成されている場合
 				// ピンの更新
-				m_nAIPinLife[nCntAI]--;
-				m_pAIPin[nCntAI]->GetPos() = m_AIPinPos[nCntAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
+				m_nAllyAIPinLife[nCntAllyAI]--;
+				m_pAllyAIPin[nCntAllyAI]->GetPos() = m_AllyAIPinPos[nCntAllyAI] + D3DXVECTOR3(0.0f, 70.0f, 0.0f);
 
-				if (m_nAIPinLife[nCntAI] <= 0)
+				if (m_nAllyAIPinLife[nCntAllyAI] <= 0)
 				{// 一定時間経過でピンを削除
-					m_nAIPinLife[nCntAI] = PIN_LIFE;
-					m_bAIPin[nCntAI] = false;
-					m_pAIPin[nCntAI]->Uninit();
-					m_pAIPin[nCntAI] = NULL;
+					m_bAllyAIPin[nCntAllyAI] = false;
+					m_pAllyAIPin[nCntAllyAI]->Uninit();
+					m_pAllyAIPin[nCntAllyAI] = NULL;
 				}
 			}
 		}
