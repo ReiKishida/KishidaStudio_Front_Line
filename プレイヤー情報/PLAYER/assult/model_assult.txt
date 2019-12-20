@@ -36,7 +36,7 @@ CHARACTERSET
 	
 	# ’e‚ÌÝ’è
 	CAPACITY = 3					# ‘•’e”
-	ATTACK = 3						# UŒ‚—Í
+	ATTACK = 4						# UŒ‚—Í
 	SHOOTS = 8						# “¯Žž”­ŽË”
 	DISPERTION = 110				# ‚Î‚ç‚Â‚«
 	RELOAD = 100					# ƒŠƒ[ƒhŽžŠÔ

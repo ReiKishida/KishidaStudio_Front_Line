@@ -26,7 +26,7 @@ CHARACTERSET
 
 	# ’e‚ÌÝ’è
 	CAPACITY = 3					# ‘•’e”
-	ATTACK = 4						# UŒ‚—Í
+	ATTACK = 8						# UŒ‚—Í
 	SHOOTS = 5						# ”­ŽË”
 	BULLETSPEED = 20.0				# ’e‘¬
 
