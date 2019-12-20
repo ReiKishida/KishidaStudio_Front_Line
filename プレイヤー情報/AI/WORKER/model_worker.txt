@@ -14,113 +14,109 @@ NUM_MODEL = 10
 #------------------------------------------------------------------------------
 # モデルファイル名
 #------------------------------------------------------------------------------
-MODEL_FILENAME = data/MODEL/light/0_belly.x		# [0]腰
-MODEL_FILENAME = data/MODEL/light/1_body.x			# [1]胴体
-MODEL_FILENAME = data/MODEL/light/2_arm_r.x		# [2]右腕
-MODEL_FILENAME = data/MODEL/light/3_arm_l.x		# [3]左腕
-MODEL_FILENAME = data/MODEL/light/4_thigh_r.x		# [4]右腿
-MODEL_FILENAME = data/MODEL/light/5_leg_r.x		# [5]右脚
-MODEL_FILENAME = data/MODEL/light/6_foot_r.x		# [6]右足
-MODEL_FILENAME = data/MODEL/light/7_thigh_l.x		# [7]左腿
-MODEL_FILENAME = data/MODEL/light/8_leg_l.x		# [8]右脚
-MODEL_FILENAME = data/MODEL/light/9_foot_l.x		# [9]右足
+MODEL_FILENAME = data/MODEL/worker/0_waist.x			# [0]腰
+MODEL_FILENAME = data/MODEL/worker/1_body.x			# [1]胴体
+MODEL_FILENAME = data/MODEL/worker/2_rightarm.x		# [2]右腕
+MODEL_FILENAME = data/MODEL/worker/3_leftarm.x		# [3]左腕
+MODEL_FILENAME = data/MODEL/worker/4_rightthigh.x	# [4]右腿
+MODEL_FILENAME = data/MODEL/worker/5_rightleg.x		# [5]右脚
+MODEL_FILENAME = data/MODEL/worker/6_rightfoot.x		# [6]右足
+MODEL_FILENAME = data/MODEL/worker/7_leftthigh.x		# [7]左腿
+MODEL_FILENAME = data/MODEL/worker/8_leftleg.x		# [8]右脚
+MODEL_FILENAME = data/MODEL/worker/9_leftfoot.x		# [9]右足
 
 
 #------------------------------------------------------------------------------
 # キャラクター情報
 #------------------------------------------------------------------------------
 CHARACTERSET
-	MOVE = 1.5						# 移動量
-	JUMP = 15.0						# ジャンプ量
 	NUM_PARTS = 10					# パーツ数
 
 	# 弾の設定
-	CAPACITY = 60					# 装弾数
-	ATTACK = 2						# 攻撃力
-	SHOOTS = 1						# 同時発射数
-	DISPERTION = 70					# ばらつき
-	RELOAD = 200					# リロード時間
+	CAPACITY = 3					# 装弾数
+	ATTACK = 4						# 攻撃力
+	SHOOTS = 5						# 発射数
 	BULLETSPEED = 30.0				# 弾速
 
-	LIFE = 350						# 耐久力
-	SPEED = 5.2						# 移動量
-	
-	FOOT = 4						# 足の始まり番号
+	LIFE = 420						# 耐久力
+	SPEED = 2.5						# 移動量
 
 	PARTSSET						# [0]腰
 		INDEX = 0
 		PARENT = -1					# (親)NULL, もし-1なら親がいない。
-		POS = 0.0 23.0 0.0
+		POS = 0.0 22.0 0.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 	
 	PARTSSET						# [1]胴体
 		INDEX = 1
 		PARENT = 0					# (親)NULL, もし-1なら親がいない。
-		POS = 0.0 -1.0 1.0
+		POS = 2.0 -0.5 1.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
 
-	PARTSSET						# [2]右腕
+	PARTSSET						# [2]右肩二の腕
 		INDEX = 2
 		PARENT = 1					# (親)胴体
-		POS = -8.0 8.5 0.5
+		POS = -22.5 7.0 -8.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
 
-	PARTSSET						# [3]左腕
+	PARTSSET						# [4]左肩二の腕
 		INDEX = 3
 		PARENT = 1					# (親)腹部
-		POS = 8.0 8.5 0.5
+		POS = 6.0 7.0 -10.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
 
-	PARTSSET						# [4]右腿
+	PARTSSET						# [6]右腿
 		INDEX = 4
 		PARENT = 0					# (親)腰
-		POS = -3.5 -3.5 0.0
+		POS = -6.0 -2.5 2.5
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
-	PARTSSET						# [5]右脚
+	PARTSSET						# [7]右脚
 		INDEX = 5
 		PARENT = 4					# (親)右腿
-		POS = -4.0 -5.0 6.5
+		POS = 1.0 -6.0 -3.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
-	PARTSSET						# [6]右足
+	PARTSSET						# [8]右足
 		INDEX = 6
 		PARENT = 5					# (親)右脚
-		POS = -0.5 -11.0 -8.0
+		POS = -3.0 -10.0 -1.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
-	PARTSSET						# [7]左腿
+	PARTSSET						# [9]左腿
 		INDEX = 7
 		PARENT = 0					# (親)腰
-		POS = 3.5 -3.5 0.0
+		POS = 6.0 -2.5 -2.5
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
-	PARTSSET						# [8]左脚
+	PARTSSET						# [10]左脚
 		INDEX = 8
 		PARENT = 7					# (親)左腿
-		POS = 4.0 -5.0 6.5
+		POS = -0.5 -7.0 2.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
 
-	PARTSSET						# [9]左足
+	PARTSSET						# [11]左足
 		INDEX = 9
-		PARENT = 8				# (親)左腿
-		POS = -0.5 -11.0 -8.0
+		PARENT = 8					# (親)左腿
+		POS = -2.0 -9.0 -1.0
 		ROT = 0.0 0.0 0.0
 	END_PARTSSET
 
 END_CHARACTERSET
 
-END_SCRIPT
+
+
+END_SCRIPT		# この行は絶対消さないこと！
