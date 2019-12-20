@@ -36,9 +36,10 @@ CHARACTERSET
 	CAPACITY = 3					# ‘•’e”
 	ATTACK = 4						# UŒ‚—Í
 	SHOOTS = 5						# ”­ŽË”
+	BULLETSPEED = 30.0				# ’e‘¬
 
-	LIFE = 210						# ‘Ï‹v—Í
-	SPEED = 5.0						# ˆÚ“®—Ê
+	LIFE = 420						# ‘Ï‹v—Í
+	SPEED = 2.5						# ˆÚ“®—Ê
 
 	PARTSSET						# [0]˜
 		INDEX = 0
