@@ -20,6 +20,16 @@
 class CCamera : public CScene
 {
 public:
+	typedef enum
+	{
+		STAGE_CAMERA_STRAIGHT = 0,
+		STAGE_CAMERA_TURN,
+		STAGE_CAMERA_OVERLOOK,
+		STAGE_CAMERA_STOP,
+
+		STAGE_CAMERA_MAX,
+	}STAGE_CAMERA;
+
 	CCamera();
 	~CCamera();
 	HRESULT Init(void);
@@ -52,22 +62,26 @@ public:
 	void GetInfo(D3DVIEWPORT9 *pViewport, D3DXMATRIX *pMtxProjection, D3DXMATRIX *pMtxView);
 	float GetZoom(void) { return m_fZoom; };
 
+	STAGE_CAMERA GetStageCamera(void) { return m_stageCamera; };
+
 private:
-	D3DXVECTOR3		m_posV;				// 視点
-	D3DXVECTOR3		m_posR;				// 注視点
-	D3DXVECTOR3		m_posVDest;			// 目的の視点
-	D3DXVECTOR3		m_posRDest;			// 目的の注視点
-	D3DXVECTOR3		m_vecU;				// 上方向ベクトル
-	D3DXMATRIX		m_mtxProjection;	// プロジェクションマトリックス	（テレビ）
-	D3DXMATRIX		m_mtxView;			// ビューマトリックス			（カメラマン）
-	D3DXVECTOR3		m_rot;				// 向き
-	D3DXVECTOR3		m_rotDest;			// 目的の向き
-	float			m_fLength;			// 注視点との距離
-	float			m_fAngle;			// 角度
-	float			m_fLookHeight;		// カメラの高さ
-	float			m_fZoom;			// ズームの倍率
-	D3DVIEWPORT9	m_viewport;			// ビューポート
-	float						m_fCameraSpeed;
+	D3DXVECTOR3		m_posV;								// 視点
+	D3DXVECTOR3		m_posR;								// 注視点
+	D3DXVECTOR3		m_posVDest;							// 目的の視点
+	D3DXVECTOR3		m_posRDest;							// 目的の注視点
+	D3DXVECTOR3		m_vecU;								// 上方向ベクトル
+	D3DXMATRIX		m_mtxProjection;					// プロジェクションマトリックス	（テレビ）
+	D3DXMATRIX		m_mtxView;							// ビューマトリックス			（カメラマン）
+	D3DXVECTOR3		m_rot;								// 向き
+	D3DXVECTOR3		m_rotDest;							// 目的の向き
+	float			m_fLength;							// 注視点との距離
+	float			m_fAngle;							// 角度
+	float			m_fLookHeight;						// カメラの高さ
+	float			m_fZoom;							// ズームの倍率
+	D3DVIEWPORT9	m_viewport;							// ビューポート
+	float			m_fCameraSpeed;
+	int				m_nCntStarting;						//開始前のカウンター
+	STAGE_CAMERA	m_stageCamera;
 };
 
 #endif
