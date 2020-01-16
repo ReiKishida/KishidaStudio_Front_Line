@@ -2040,11 +2040,8 @@ char *CGame::ReadPlayerData(char *pStr)
 						SetChatData(nPlayerIdx, (int)radioChat);
 					}
 
-					if (bPinUse == true)
-					{// ピンを使用している場合
-					 // ピンの更新
-						SetPinData(nPlayerIdx, pinPos);
-					}
+					// ピンの更新
+					SetPinData(nPlayerIdx, pinPos, bPinUse);
 
 					for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
 					{// AIの数だけ回る
@@ -2589,7 +2586,7 @@ void CGame::SetChatData(int nPlayerIdx, int radioChat)
 //=============================================================================
 // ピン情報の設置処理
 //=============================================================================
-void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos)
+void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos, bool use)
 {
 	// プレイヤー番号別で処理分け
 	switch (nPlayerIdx)
@@ -2597,22 +2594,22 @@ void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos)
 	case 0:
 		// プレイヤー0
 		m_pPlayer[1]->GetAllyPinPos() = pinPos;
-		m_pPlayer[1]->GetAllyPinUse() = true;
+		m_pPlayer[1]->GetAllyPinUse() = use;
 		break;
 	case 1:
 		// プレイヤー1
 		m_pPlayer[0]->GetAllyPinPos() = pinPos;
-		m_pPlayer[0]->GetAllyPinUse() = true;
+		m_pPlayer[0]->GetAllyPinUse() = use;
 		break;
 	case 2:
 		// プレイヤー2
 		m_pPlayer[3]->GetAllyPinPos() = pinPos;
-		m_pPlayer[3]->GetAllyPinUse() = true;
+		m_pPlayer[3]->GetAllyPinUse() = use;
 		break;
 	case 3:
 		// プレイヤー3
 		m_pPlayer[2]->GetAllyPinPos() = pinPos;
-		m_pPlayer[2]->GetAllyPinUse() = true;
+		m_pPlayer[2]->GetAllyPinUse() = use;
 		break;
 	}
 }
