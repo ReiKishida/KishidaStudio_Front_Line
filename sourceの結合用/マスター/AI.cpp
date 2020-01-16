@@ -1328,6 +1328,7 @@ void CAIMecha::Attack()
 	int nCntEnemyPlayer = 0;	// 敵プレイヤーのカウント
 	float fAttackLength = 0.0f;	// 差分
 	bool bFind[2] = { false, false };	// 発見状態
+	bool bPin[2] = { false, false };	// ピン立て状態
 	D3DXMATRIX mtxCanon;
 	D3DXVECTOR3 posCanon = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 
@@ -1374,6 +1375,7 @@ void CAIMecha::Attack()
 
 				// ピンの配置
 				m_PinPos = m_pEnemyPlayer[nCntPlayer]->GetPos();
+				bPin[nCntPlayer] = true;
 
 				// 射出口の位置の取得
 				if (m_mechaType == MECHATYPE_DRONE)
@@ -1427,6 +1429,7 @@ void CAIMecha::Attack()
 			}
 			else
 			{// 範囲内に敵がいない場合
+				bPin[nCntPlayer] = false;
 				bFind[nCntPlayer] = false;
 			}
 		}
@@ -1436,11 +1439,19 @@ void CAIMecha::Attack()
 	if (bFind[0] || bFind[1])
 	{// どちらか一方でも発見している
 		m_bFind = true;
-		m_bPin = true;
 	}
 	else if (!bFind[0] && !bFind[1])
 	{// どっちも発見していない
 		m_bFind = false;
+	}
+
+	// ピン立て状態の遷移
+	if (bPin[0] || bPin[1])
+	{// どちらか一方でもピンを立てている
+		m_bPin = true;
+	}
+	else if (!bPin[0] && !bPin[1])
+	{// どっちもピンを立てていない
 		m_bPin = false;
 	}
 }
