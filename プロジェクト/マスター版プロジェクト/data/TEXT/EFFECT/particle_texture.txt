@@ -1,0 +1,7 @@
+5
+
+data/TEXTURE/EFFECT/smoke.png
+data/TEXTURE/EFFECT/shadow000.jpg
+data/TEXTURE/EFFECT/flash.jpg
+data/TEXTURE/EFFECT/sparks.jpg
+data/TEXTURE/EFFECT/fire.jpg

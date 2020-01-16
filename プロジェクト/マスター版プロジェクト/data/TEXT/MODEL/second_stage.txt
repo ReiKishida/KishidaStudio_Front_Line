@@ -1,0 +1,243 @@
+#==============================================================================
+#
+# モデル配置スクリプトファイル [model.txt]
+# Author : TAKUTO ISHIDA
+#
+#==============================================================================
+SCRIPT			# この行は絶対消さないこと！
+
+#------------------------------------------------------------------------------
+# 読み込むモデルの種類ごとの総数
+#------------------------------------------------------------------------------
+TYPE_MODEL = 3		# モデル
+TYPE_START = 2		# スタート地点
+TYPE_ENEMY = 1		# 敵
+TYPE_ITEM = 1		# アイテム
+
+#------------------------------------------------------------------------------
+# 読み込むモデルファイル名
+#------------------------------------------------------------------------------
+LOAD
+	OBJECT_TYPE = TYPE_MODEL	MODEL_FILENAME = data/MODEL/tree.x				# 木
+	OBJECT_TYPE = TYPE_MODEL	MODEL_FILENAME = data/MODEL/player/01_head.x	# 草
+	OBJECT_TYPE = TYPE_MODEL	MODEL_FILENAME = data/MODEL/signboard.x			# 看板
+	OBJECT_TYPE = TYPE_START	MODEL_FILENAME = data/MODEL/player/00_body.x	# スタート
+	OBJECT_TYPE = TYPE_START	MODEL_FILENAME = data/MODEL/player/00_body.x	# ゴール
+	OBJECT_TYPE = TYPE_ENEMY	MODEL_FILENAME = data/TEXT/ENEMY/model.txt		# 敵
+	OBJECT_TYPE = TYPE_ITEM		MODEL_FILENAME = data/MODEL/player/00_body.x	# 回復アイテム
+END_LOAD
+
+#------------------------------------------------------------------------------
+# 表示するモデルの配置情報
+#------------------------------------------------------------------------------
+MODELSET
+	OBJ = TYPE_MODEL		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -7962.5 4447.7 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_MODEL		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -7962.5 4382.7 105.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_MODEL		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -7962.5 4351.0 -105.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_MODEL		# オブジェクトの種類
+	TYPE = 2				# 種類
+	POS = -7640.0 4464.0 125.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_START		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -7836.0 4480.2 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_MODEL		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7965.2 0.0 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_MODEL		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7965.2 0.0 -105.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_MODEL		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7965.2 0.0 105.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_START		# オブジェクトの種類
+	TYPE = 1				# 種類
+	POS = 7907.7 0.0 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 2060.0 983.4 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -2480.0 2511.9 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -3807.5 3560.4 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -5172.5 4082.3 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -5072.5 3917.8 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -4962.5 3786.1 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -6372.5 3535.7 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -7147.5 4222.3 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -6982.5 4026.7 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -3002.5 3235.3 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -637.5 2261.0 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -537.5 2057.8 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -412.5 1819.9 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = -732.5 2444.8 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 5057.5 196.5 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7287.5 207.4 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7370.0 140.8 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7475.0 73.3 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7587.5 26.4 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7700.0 4.7 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+MODELSET
+	OBJ = TYPE_ENEMY		# オブジェクトの種類
+	TYPE = 0				# 種類
+	POS = 7825.0 0.1 -0.0		# 位置
+	ROT = 0.0 0.0 0.0		# 向き
+END_MODELSET
+
+END_SCRIPT		# この行は絶対消さないこと！
