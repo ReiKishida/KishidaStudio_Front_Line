@@ -159,9 +159,10 @@ private:
 	void RootSearch(void);					// 最短経路検索
 	void RallyRootSearch(void);				// ラリーポイントでの最短経路検索
 	void PatrolRootSearch(void);			// 往復用の最短経路検索
-	void Cancel(void);						// 中断
+	void Cancel(void);						// データ初期化
 	void AddEdge(int first, int second, float weight, Node *node);	// エッジの追加
 	void Dijkstra(int nodeMax, int start, int end, Node *node);		// 経路探索
+	void NowPointSearch(void);				// 現在地で停止
 
 	// =============================================================
 	// 戦闘系AIの関数
@@ -238,6 +239,7 @@ private:
 	int				m_nCountPoint;							// 目標までの移動回数
 	int				m_nPoint;								// 現在の移動回数
 	bool			m_bGoal;								// 目的地に到着したか
+	int				m_nNearNode;							// 最近地点
 
 	// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
