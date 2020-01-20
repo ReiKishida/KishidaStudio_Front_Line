@@ -897,6 +897,54 @@ void CPlayer::Update(void)
 						CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 						CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
 
+						if (m_Respawn == RESPAWN_NONE)
+						{
+							// ピン関係の更新処理
+							CPlayer::PinUpdateMulti();
+
+							if (m_bDeath)
+							{
+								if (m_pPin != NULL)
+								{// ピンの破棄
+									m_pPin->Uninit();
+									m_pPin = NULL;
+								}
+
+								if (m_pPinBullet != NULL)
+								{// ピン立て弾の破棄
+									m_pPinBullet->Uninit();
+									m_pPinBullet = NULL;
+								}
+
+								if (m_pAllyPin != NULL)
+								{// 味方ピンの破棄
+									m_pAllyPin->Uninit();
+									m_pAllyPin = NULL;
+								}
+
+								if (m_pAllyPosPin != NULL)
+								{// 味方位置ピンの破棄
+									m_pAllyPosPin->Uninit();
+									m_pAllyPosPin = NULL;
+								}
+
+								for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+								{
+									if (m_pAIPin[nCntAI] != NULL)
+									{// AIピンの破棄
+										m_pAIPin[nCntAI]->Uninit();
+										m_pAIPin[nCntAI] = NULL;
+									}
+
+									if (m_pAllyAIPin[nCntAI] != NULL)
+									{// 味方AIピンの破棄
+										m_pAllyAIPin[nCntAI]->Uninit();
+										m_pAllyAIPin[nCntAI] = NULL;
+									}
+								}
+							}
+						}
+
 						if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
 						{	// ライフある && 戦闘開始状態の時
 							if (m_nDiff > 0)
@@ -916,9 +964,6 @@ void CPlayer::Update(void)
 							}
 							// 弾を撃つ
 							Shoot();
-
-							// ピン関係の更新処理
-							CPlayer::PinUpdateMulti();
 
 							if (m_bChat == false)
 							{//チャットを使用していない場合
@@ -964,11 +1009,11 @@ void CPlayer::Update(void)
 
 						// 角度の更新
 						Angle();
+					}
 
-						if (!m_bConnect)
-						{// コンピュータが操作する場合
-							AIUpdate();
-						}
+					if (!m_bConnect)
+					{// コンピュータが操作する場合
+						AIUpdate();
 					}
 				}
 			}
@@ -981,11 +1026,58 @@ void CPlayer::Update(void)
 				{
 					m_pReticle->SetDisp(false);
 
-
 					if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
 					{// アクションパート
 						CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 						CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
+
+						if (m_Respawn == RESPAWN_NONE)
+						{
+							// ピン関係の更新処理
+							CPlayer::PinUpdateSingle();
+
+							if (m_bDeath)
+							{
+								if (m_pPin != NULL)
+								{// ピンの破棄
+									m_pPin->Uninit();
+									m_pPin = NULL;
+								}
+
+								if (m_pPinBullet != NULL)
+								{// ピン立て弾の破棄
+									m_pPinBullet->Uninit();
+									m_pPinBullet = NULL;
+								}
+
+								if (m_pAllyPin != NULL)
+								{// 味方ピンの破棄
+									m_pAllyPin->Uninit();
+									m_pAllyPin = NULL;
+								}
+
+								if (m_pAllyPosPin != NULL)
+								{// 味方位置ピンの破棄
+									m_pAllyPosPin->Uninit();
+									m_pAllyPosPin = NULL;
+								}
+
+								for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+								{
+									if (m_pAIPin[nCntAI] != NULL)
+									{// AIピンの破棄
+										m_pAIPin[nCntAI]->Uninit();
+										m_pAIPin[nCntAI] = NULL;
+									}
+
+									if (m_pAllyAIPin[nCntAI] != NULL)
+									{// 味方AIピンの破棄
+										m_pAllyAIPin[nCntAI]->Uninit();
+										m_pAllyAIPin[nCntAI] = NULL;
+									}
+								}
+							}
+						}
 
 						if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
 						{	// ライフある && 戦闘開始状態の時
@@ -1007,9 +1099,6 @@ void CPlayer::Update(void)
 
 							// 弾を撃つ
 							Shoot();
-
-							// ピン関係の更新処理
-							CPlayer::PinUpdateSingle();
 
 							if (m_bChat == false)
 							{	// ラジオチャットしていない
@@ -1044,7 +1133,7 @@ void CPlayer::Update(void)
 						}
 						if (m_Respawn == RESPAWN_SELECT)
 						{	// リスポーン選択状態
-							SelectRespawn();				// リスポーン位置選択
+							SelectRespawn();		// リスポーン位置選択
 						}
 
 						// 角度の更新
@@ -1057,7 +1146,7 @@ void CPlayer::Update(void)
 			{
 				if (!m_bConnect)
 				{// コンピュータが操作する場合
-					if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+					//if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
 					{// アクションパート
 						if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
 						{	// ライフある && 戦闘開始状態の時
@@ -1073,6 +1162,8 @@ void CPlayer::Update(void)
 
 							// AIの更新処理
 							AIUpdate();
+
+							// 角度処理
 							Angle();
 						}
 
@@ -1083,7 +1174,7 @@ void CPlayer::Update(void)
 
 						if (m_Respawn == RESPAWN_SELECT)
 						{	// リスポーン選択状態
-							SelectRespawn();				// リスポーン位置選択
+							SelectRespawn();		// リスポーン位置選択
 						}
 					}
 				}
@@ -1135,7 +1226,6 @@ void CPlayer::Update(void)
 
 					// 弾を撃つ
 					Shoot();
-
 
 					D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 					D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();

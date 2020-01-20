@@ -195,6 +195,7 @@ private:
 	float			m_fBulletSpeed;		// 弾速
 	int				m_nTeam;			// チーム
 	bool			m_bDeath;			// 死亡しているかどうか
+	bool			m_bDeathOld;		// 前回の死亡状況
 	int				m_nKillPlayerIdx;
 
 	// ピン
@@ -206,30 +207,30 @@ private:
 	// =============================================================
 	CNodeDataFiler *m_pNodeData;							// マップ情報へのポインタ
 
-															// パート関係
+	// パート関係
 	CGame::PART		m_bPartSwitch;							// パート情報
 	CGame::PART		m_bPartSwitchOld;						// 前回のパート情報
+	CTutorial::PART	m_bPartSwitch_T;						// チュートリアル用パート情報
+	CTutorial::PART	m_bPartSwitchOld_T;						// チュートリアル用前回のパート情報
 
-	CTutorial::PART		m_bPartSwitch_T;					// チュートリアル用パート情報
-	CTutorial::PART		m_bPartSwitchOld_T;					// チュートリアル用前回のパート情報
-															// ノード関係
+	// ノード関係
 	int				m_nStartNode;							// 開始ノード番号
 	int				m_nEndNode;								// 終了ノード番号
 	int				m_nNodeOld;								// 前回のノード番号
 
-															// ラリー関係
+	// ラリー関係
 	Node			m_node[NODEPOINT_MAX][NODEPOINT_MAX];	// ラリー時のノードの情報
 	int				m_nRallyEndNode[NODEPOINT_MAX];			// ラリー時の終了ノード番号
 	int				m_nRallyCount;							// クリック数
 	int				m_nRallyCountOld;						// 前回のクリック数
 
-															// パトロール関係
+	// パトロール関係
 	bool			m_bPatrol;								// 往復移動状態か
 	int				m_nPatrolStartNode;						// パトロール時の開始ノード番号
 	D3DXVECTOR3		m_patrolWaypoint[NODEPOINT_MAX];		// パトロール時の中間地点
 	int				m_nCountPatrolPoint;					// パトロール時の目標までの移動回数
 
-															// 自動移動関係
+	// 自動移動関係
 	D3DXVECTOR3		m_waypoint[NODEPOINT_MAX];				// 中間地点
 	D3DXVECTOR3		m_posDest;								// 目標位置
 	D3DXVECTOR3		m_rotDest;								// 目標位置
@@ -238,7 +239,7 @@ private:
 	int				m_nPoint;								// 現在の移動回数
 	bool			m_bGoal;								// 目的地に到着したか
 
-															// ロジックツリー関係の情報
+	// ロジックツリー関係の情報
 	int				m_LogicTree[4];							// AIへの指示の情報
 	AI_ACTION		m_AIAction[4];							// AIの行動
 
