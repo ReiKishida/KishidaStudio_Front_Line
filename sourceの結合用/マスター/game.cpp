@@ -1226,10 +1226,6 @@ void CGame::PrintData(void)
 				// 位置を書き込む
 				pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().y, m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().z);
 				pClient->Printf(" ");
-
-				// 表示時間を書き込む
-				pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetPinLife());
-				pClient->Printf(" ");
 			}
 			else
 			{// ピンを使用していない場合
@@ -1476,7 +1472,41 @@ void CGame::PrintCPUData(void)
 							pClient->Printf("0");
 							pClient->Printf(" ");
 						}
+					}
 
+					// ピンを使用しているかどうかを書き込む
+					if (m_pPlayer[nCntPlayer]->GetPinUse() == true)
+					{// ピンを使用している場合
+						pClient->Printf("1");
+						pClient->Printf(" ");
+
+						// 位置を書き込む
+						pClient->Printf("%.1f %.1f %.1f", m_pPlayer[nCntPlayer]->GetPinPos().x, m_pPlayer[nCntPlayer]->GetPinPos().y, m_pPlayer[nCntPlayer]->GetPinPos().z);
+						pClient->Printf(" ");
+					}
+					else
+					{// ピンを使用していない場合
+						pClient->Printf("0");
+						pClient->Printf(" ");
+					}
+
+					for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+					{// AIの数だけ回る
+					 // AIがピンを使用しているかどうかを書き込む
+						if (m_pPlayer[nCntPlayer]->GetAIPinUse(nCntAI) == true)
+						{// AIがピンを使用している場合
+							pClient->Printf("1");
+							pClient->Printf(" ");
+
+							// 位置を書き込む
+							pClient->Printf("%.1f %.1f %.1f", m_pPlayer[nCntPlayer]->GetAIPinPos(nCntAI).x, m_pPlayer[nCntPlayer]->GetAIPinPos(nCntAI).y, m_pPlayer[nCntPlayer]->GetAIPinPos(nCntAI).z);
+							pClient->Printf(" ");
+						}
+						else
+						{// ピンを使用していない場合
+							pClient->Printf("0");
+							pClient->Printf(" ");
+						}
 					}
 				}
 			}
@@ -2099,6 +2129,11 @@ char *CGame::ReadCPUData(char *pStr)
 			int nKillPlayerIdx = 0;											//キルプレイヤーの番号
 			TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
 
+			bool bPinUse = false;											// ピンを使用しているかどうか
+			D3DXVECTOR3 pinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				// ピンの位置
+			bool bAIPinUse[AI_MAX] = { false, false };						// AIがピンを使用しているかどうか
+			D3DXVECTOR3 AIPinPos[AI_MAX] = { D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3(0.0f, 0.0f, 0.0f) };// AIのピンの位置
+
 			D3DXVECTOR3 AIPos[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f),D3DXVECTOR3(0.0f,0.0f,0.0f) };		//AIの位置
 			D3DXVECTOR3 AIRot[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f) ,D3DXVECTOR3(0.0f,0.0f,0.0f) };	//AIの向き
 			bool bAIDeath[AI_MAX] = { false ,false };														//AIが死んでいるかどうか
@@ -2281,6 +2316,47 @@ char *CGame::ReadCPUData(char *pStr)
 					}
 				}
 
+				//ピンを使用してるかどうかを代入
+				bPinUse = CServerFunction::ReadBool(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				if (bPinUse == true)
+				{// ピンを使用している場合
+				 // ピンの位置を代入
+					pinPos.x = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+					pinPos.y = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+					pinPos.z = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+				}
+
+				for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+				{// AIの数だけ回る
+				 // AIがピンを使用してるかどうかを代入
+					bAIPinUse[nCntAI] = CServerFunction::ReadBool(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					if (bAIPinUse[nCntAI] == true)
+					{// AIがピンを使用している場合
+					 // AIのピンの位置を代入
+						AIPinPos[nCntAI].x = CServerFunction::ReadFloat(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+						AIPinPos[nCntAI].y = CServerFunction::ReadFloat(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+						AIPinPos[nCntAI].z = CServerFunction::ReadFloat(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+					}
+				}
+
 				if (bDeath == true)
 				{//死亡している場合
 					m_pPlayer[nPlayerIdx]->GetDeath() = true;
@@ -2347,6 +2423,14 @@ char *CGame::ReadCPUData(char *pStr)
 				//CPUプレイヤーの情報を設置処理
 				SetCPUData(nPlayerIdx, pos, rot);
 
+				// ピンの更新
+				SetPinData(nPlayerIdx, pinPos, bPinUse);
+
+				for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+				{// AIの数だけ回る
+				 // AIピンの更新
+					SetAIPinData(nPlayerIdx, nCntAI, AIPinPos[nCntAI], bAIPinUse[nCntAI]);
+				}
 
 				//// 角度を求める
 				//D3DXVECTOR3 rotCamera = m_pPlayer[nPlayerIdx]->GetDestUpper();
