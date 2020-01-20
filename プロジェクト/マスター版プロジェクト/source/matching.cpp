@@ -33,6 +33,7 @@
 //*****************************************************************************
 // 静的メンバ変数
 //*****************************************************************************
+bool CMatching::m_bConnect[MAX_PLAYER_CONNECT] = { false,false,false,false };
 
 //=========================================
 // コンストラクタ
@@ -181,6 +182,15 @@ void CMatching::Update(void)
 							{
 								m_bFade = true;	//フェードをする状態にする
 
+#if 1
+								for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
+								{
+									if (m_bConnect[nCntPlayer] == false)
+									{
+										CGame::SetMechaType(nCntPlayer, (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX));
+									}
+								}
+#endif
 								m_pButtonUI->Uninit();
 								m_pButtonUI = NULL;
 							}
@@ -203,6 +213,7 @@ void CMatching::Update(void)
 
 	//情報を読み取る処理
 	ReadMessage();
+
 	//UIのスクロール処理
 	ScrollUI();
 
@@ -347,6 +358,17 @@ void CMatching::PrintData(void)
 				{
 				case true:
 					pClient->Printf(SERVER_FADE_OUT);
+					pClient->Printf(" ");
+
+					for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
+					{
+						if (m_bConnect[nCntPlayer] == false)
+						{
+							pClient->Printf("%d", CGame::GetMechaType(nCntPlayer));
+							pClient->Printf(" ");
+						}
+					}
+
 					break;
 				case false:
 					pClient->Printf(SERVER_FADE_NONE);
@@ -410,13 +432,19 @@ void CMatching::ReadMessage(void)
 				nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 				pStr += nWord;													//頭出し
 
-																				//接続状況を代入
+			}
+			if (CServerFunction::Memcmp(pStr, SERVER_CONNECT_STATE) == 0)
+			{
+				pStr += strlen(SERVER_CONNECT_DATA);								//頭出し
+
+				//接続状況を代入
 				for (int nCntPlayerConnect = 0; nCntPlayerConnect < MAX_PLAYER_CONNECT; nCntPlayerConnect++)
 				{
 					m_bConnect[nCntPlayerConnect] = CServerFunction::ReadBool(pStr, "");
 					nWord = CServerFunction::PopString(pStr, "");					//文字数カウント
 					pStr += nWord;													//頭出し
 				}
+
 			}
 			if (CServerFunction::Memcmp(pStr, SERVER_PLAYER_START) == 0)
 			{//プレイヤーの開始を示している場合
@@ -452,6 +480,19 @@ void CMatching::ReadMessage(void)
 								m_bFade = true;	//フェードしている状態にする
 								pStr += strlen(SERVER_FADE_OUT);
 								pStr += strlen(" ");
+
+								for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
+								{
+									if (m_bConnect[nCntPlayer] == false)
+									{
+										int nMechaType = 0;
+										nMechaType = CServerFunction::ReadInt(pStr, "");
+										nWord = CServerFunction::PopString(pStr, "");
+										pStr += nWord;
+
+										CGame::SetMechaType(nCntPlayer, (CMechaSelect::MECHATYPE)nMechaType);
+									}
+								}
 
 							}
 						}

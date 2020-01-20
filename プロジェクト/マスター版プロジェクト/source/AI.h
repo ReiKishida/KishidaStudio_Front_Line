@@ -195,6 +195,7 @@ private:
 	float			m_fBulletSpeed;		// 弾速
 	int				m_nTeam;			// チーム
 	bool			m_bDeath;			// 死亡しているかどうか
+	bool			m_bDeathOld;		// 前回の死亡状況
 	int				m_nKillPlayerIdx;
 
 	// ピン
@@ -209,9 +210,9 @@ private:
 															// パート関係
 	CGame::PART		m_bPartSwitch;							// パート情報
 	CGame::PART		m_bPartSwitchOld;						// 前回のパート情報
+	CTutorial::PART	m_bPartSwitch_T;						// チュートリアル用パート情報
+	CTutorial::PART	m_bPartSwitchOld_T;						// チュートリアル用前回のパート情報
 
-	CTutorial::PART		m_bPartSwitch_T;					// チュートリアル用パート情報
-	CTutorial::PART		m_bPartSwitchOld_T;					// チュートリアル用前回のパート情報
 															// ノード関係
 	int				m_nStartNode;							// 開始ノード番号
 	int				m_nEndNode;								// 終了ノード番号

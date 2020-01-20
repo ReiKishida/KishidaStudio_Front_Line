@@ -28,8 +28,8 @@
 #define MENU_BUTTON_WIDTH	(250.0f)	// ボタンの幅
 #define MENU_BUTTON_HEIGHT	(220.0f)	// ボタンの高さ
 
-#define BACK_BUTTON_WIDTH	(180.0f)	// ボタンの幅
-#define BACK_BUTTON_HEIGHT	(120.0f)	// ボタンの高さ
+#define BACK_BUTTON_WIDTH	(150.0f)	// ボタンの幅
+#define BACK_BUTTON_HEIGHT	(150.0f)	// ボタンの高さ
 
 
 #define MESS_SCROLL_SPEED		(0.003f)	// スクロールスピード
@@ -117,7 +117,7 @@ HRESULT CTutorialMenu::Init(void)
 	}
 	if (m_pBackButton == NULL)
 	{
-		m_pBackButton = CButton2D::Create(D3DXVECTOR3(SCREEN_WIDTH - 110.0f, 60.0f, 0.0f), BACK_BUTTON_WIDTH, BACK_BUTTON_HEIGHT);				// 戻るボタン
+		m_pBackButton = CButton2D::Create(D3DXVECTOR3(1200.0f, 80.0f, 0.0f), BACK_BUTTON_WIDTH, BACK_BUTTON_HEIGHT);				// 戻るボタン
 		m_pBackButton->BindTexture(CTexture::GetTexture((CTexture::TEXTURE)(CTexture::TEXTURE_BACK)));											// テクスチャ素材
 	}
 

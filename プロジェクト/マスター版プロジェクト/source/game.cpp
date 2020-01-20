@@ -51,6 +51,8 @@
 #include "damageDirection.h"
 #include "nodeDataFiler.h"
 
+#include "matching.h"
+
 //*****************************************************************************
 // マクロ定義
 //*****************************************************************************
@@ -107,7 +109,7 @@ CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType
 
 	for (int nCntConnect = 0; nCntConnect < MAX_PLAYER_CONNECT; nCntConnect++)
 	{
-		m_bConnect[nCntConnect] = false;
+		//m_bConnect[nCntConnect] = false;
 		m_bPlayerDeath[nCntConnect] = false;
 	}
 
@@ -612,6 +614,19 @@ void CGame::NomalUpdate (void)
 			CResult::SetTeamWin(CResult::TEAM_WIN_BLUE);
 		}
 	}
+	CDebugProc::Print("接続状況 ");
+	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
+	{
+		switch (CMatching::GetConnect(nCntPlayer))
+		{
+		case true:
+			CDebugProc::Print("1");
+			break;
+		case false:
+			CDebugProc::Print("0");
+			break;
+		}
+	}
 }
 
 //=============================================================================
@@ -621,6 +636,19 @@ void CGame::EndUpdate(void)
 {
 	//UIの破棄
 	CScene::UIUninit();
+
+	//バグ対策用にプレイヤーＵＩの破棄処理
+	if (CMenu::MODE_MULTI == CMenu::GetMode())
+	{
+		if (CManager::GetClient() != NULL)
+		{
+			m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->ReleasePlayerUI();
+		}
+	}
+	else if (CMenu::MODE_SINGLE == CMenu::GetMode())
+	{
+		m_pPlayer[0]->ReleasePlayerUI();
+	}
 
 	if (m_pEndBG == NULL)
 	{//NULLの場合
@@ -819,17 +847,17 @@ void CGame::SwicthPart(void)
 
 		if (PART_STRATEGY == m_part)
 		{
-			//バグ対策用にチャット破棄処理
+			//バグ対策用にプレイヤーＵＩの破棄処理
 			if (CMenu::MODE_MULTI == CMenu::GetMode())
 			{
 				if (CManager::GetClient() != NULL)
 				{
-					m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->ReleaseChat();
+					m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->ReleasePlayerUI();
 				}
 			}
 			else if(CMenu::MODE_SINGLE == CMenu::GetMode())
 			{
-				m_pPlayer[0]->ReleaseChat();
+				m_pPlayer[0]->ReleasePlayerUI();
 			}
 
 			CreateStrategyUI();
@@ -1021,17 +1049,26 @@ void CGame::CreatePlayer(void)
 			//クライアントの取得
 			CClient *pClient = CManager::GetClient();
 
-			if (m_aMechaType[nCntPlayer] == -1)
-			{//機体番号が-1の場合
-			 //ランダムで機体を決める
-				m_aMechaType[nCntPlayer] = (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX);
-				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], respawnPos, m_bConnect[nCntPlayer]);
-			}
-			else
-			{//それ以外の場合
-				m_bConnect[nCntPlayer] = true;	//接続している状態にする
-				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], respawnPos, m_bConnect[nCntPlayer]);
+			//if (m_aMechaType[nCntPlayer] == -1)
+			//{//機体番号が-1の場合
+			// //ランダムで機体を決める
+			//	m_aMechaType[nCntPlayer] = (CMechaSelect::MECHATYPE)(rand() % CMechaSelect::MECHATYPE_MAX);
+			//	m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], respawnPos, m_bConnect[nCntPlayer]);
+			//}
+			//else
+			//{//それ以外の場合
+			//	m_bConnect[nCntPlayer] = true;	//接続している状態にする
+			//	m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], respawnPos, m_bConnect[nCntPlayer]);
 
+			//}
+
+			if (CMatching::GetConnect(nCntPlayer) == false)
+			{//マッチング時点で接続されていなかった場合
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], respawnPos, false);
+			}
+			else if (CMatching::GetConnect(nCntPlayer) == true)
+			{
+				m_pPlayer[nCntPlayer] = CPlayer::Create(nCntPlayer, m_aMechaType[nCntPlayer], respawnPos, true);
 			}
 		}
 		else
@@ -1261,10 +1298,6 @@ void CGame::PrintData(void)
 					// 位置を書き込む
 					pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinPos(nCntAI).x, m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinPos(nCntAI).y, m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinPos(nCntAI).z);
 					pClient->Printf(" ");
-
-					// 表示時間を書き込む
-					pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetAIPinLife(nCntAI));
-					pClient->Printf(" ");
 				}
 				else
 				{// ピンを使用していない場合
@@ -1342,7 +1375,8 @@ void CGame::PrintCPUData(void)
 		{
 			if (pClient->GetPlayerIdx() != nCntPlayer)
 			{
-				if (m_bConnect[nCntPlayer] == false)
+				//if (m_bConnect[nCntPlayer] == false)
+				if(CMatching::GetConnect(nCntPlayer) == false)
 				{
 					//AIプレイヤー情報を書き込む
 					pClient->Printf(SERVER_AI_PLAYER_DATA);
@@ -1600,10 +1634,8 @@ char *CGame::ReadPlayerData(char *pStr)
 	TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
 
 	bool bPinUse = false;											// ピンを使用しているかどうか
-	int nPinLife = 0;												// ピンの表示時間
 	D3DXVECTOR3 pinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				// ピンの位置
 	bool bAIPinUse[AI_MAX] = { false, false };						// AIがピンを使用しているかどうか
-	int nAIPinLife[AI_MAX] = { 0, 0 };								// AIのピンの表示時間
 	D3DXVECTOR3 AIPinPos[AI_MAX] = { D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3(0.0f, 0.0f, 0.0f) };// AIのピンの位置
 
 	D3DXVECTOR3 AIPos[AI_MAX] = {D3DXVECTOR3(0.0f,0.0f,0.0f),D3DXVECTOR3(0.0f,0.0f,0.0f)};		//AIの位置
@@ -1829,11 +1861,6 @@ char *CGame::ReadPlayerData(char *pStr)
 				pinPos.z = CServerFunction::ReadFloat(pStr, "");
 				nWord = CServerFunction::PopString(pStr, "");
 				pStr += nWord;
-
-				// ピンの表示時間を代入
-				nPinLife = CServerFunction::ReadInt(pStr, "");
-				nWord = CServerFunction::PopString(pStr, "");
-				pStr += nWord;
 			}
 
 			for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
@@ -1853,11 +1880,6 @@ char *CGame::ReadPlayerData(char *pStr)
 					nWord = CServerFunction::PopString(pStr, "");
 					pStr += nWord;
 					AIPinPos[nCntAI].z = CServerFunction::ReadFloat(pStr, "");
-					nWord = CServerFunction::PopString(pStr, "");
-					pStr += nWord;
-
-					// AIのピンの表示時間を代入
-					nAIPinLife[nCntAI] = CServerFunction::ReadInt(pStr, "");
 					nWord = CServerFunction::PopString(pStr, "");
 					pStr += nWord;
 				}
@@ -2069,19 +2091,13 @@ char *CGame::ReadPlayerData(char *pStr)
 						SetChatData(nPlayerIdx, (int)radioChat);
 					}
 
-					if (bPinUse == true)
-					{// ピンを使用している場合
-					 // ピンの更新
-						SetPinData(nPlayerIdx, pinPos, nPinLife);
-					}
+					// ピンの更新
+					SetPinData(nPlayerIdx, pinPos,bPinUse);
 
 					for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
 					{// AIの数だけ回る
-						if (bAIPinUse[nCntAI] == true)
-						{// AIがピンを使用している場合
-						 // AIピンの更新
-							SetAIPinData(nPlayerIdx, nCntAI, AIPinPos[nCntAI], nAIPinLife[nCntAI]);
-						}
+						// AIピンの更新
+						SetAIPinData(nPlayerIdx, nCntAI, AIPinPos[nCntAI], bAIPinUse[nCntAI]);
 					}
 
 					if (nState == 1)
@@ -2113,7 +2129,8 @@ char *CGame::ReadCPUData(char *pStr)
 {
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
-		if (m_bConnect[nCntPlayer] == false)
+		//if (m_bConnect[nCntPlayer] == false)
+		if(CMatching::GetConnect(nCntPlayer) == false)
 		{
 			D3DXVECTOR3 pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//位置
 			D3DXVECTOR3 rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//向き
@@ -2621,7 +2638,7 @@ void CGame::SetChatData(int nPlayerIdx, int radioChat)
 //=============================================================================
 // ピン情報の設置処理
 //=============================================================================
-void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos, int nLife)
+void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos, bool use)
 {
 	// プレイヤー番号別で処理分け
 	switch (nPlayerIdx)
@@ -2629,26 +2646,22 @@ void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos, int nLife)
 	case 0:
 		// プレイヤー0
 		m_pPlayer[1]->GetAllyPinPos() = pinPos;
-		m_pPlayer[1]->GetAllyPinLife() = nLife;
-		m_pPlayer[1]->GetAllyPinUse() = true;
+		m_pPlayer[1]->GetAllyPinUse() = use;
 		break;
 	case 1:
 		// プレイヤー1
 		m_pPlayer[0]->GetAllyPinPos() = pinPos;
-		m_pPlayer[0]->GetAllyPinLife() = nLife;
-		m_pPlayer[0]->GetAllyPinUse() = true;
+		m_pPlayer[0]->GetAllyPinUse() = use;
 		break;
 	case 2:
 		// プレイヤー2
 		m_pPlayer[3]->GetAllyPinPos() = pinPos;
-		m_pPlayer[3]->GetAllyPinLife() = nLife;
-		m_pPlayer[3]->GetAllyPinUse() = true;
+		m_pPlayer[3]->GetAllyPinUse() = use;
 		break;
 	case 3:
 		// プレイヤー3
 		m_pPlayer[2]->GetAllyPinPos() = pinPos;
-		m_pPlayer[2]->GetAllyPinLife() = nLife;
-		m_pPlayer[2]->GetAllyPinUse() = true;
+		m_pPlayer[2]->GetAllyPinUse() = use;
 		break;
 	}
 }
@@ -2656,7 +2669,7 @@ void CGame::SetPinData(int nPlayerIdx, D3DXVECTOR3 pinPos, int nLife)
 //=============================================================================
 // ピン情報の設置処理
 //=============================================================================
-void CGame::SetAIPinData(int nPlayerIdx, int AIInd, D3DXVECTOR3 AIPinPos, int nAILife)
+void CGame::SetAIPinData(int nPlayerIdx, int AIInd, D3DXVECTOR3 AIPinPos, bool use)
 {
 	// プレイヤー番号別で処理分け
 	switch (nPlayerIdx)
@@ -2664,26 +2677,22 @@ void CGame::SetAIPinData(int nPlayerIdx, int AIInd, D3DXVECTOR3 AIPinPos, int nA
 	case 0:
 		// プレイヤー0
 		m_pPlayer[1]->GetAllyAIPinPos(AIInd) = AIPinPos;
-		m_pPlayer[1]->GetAllyAIPinLife(AIInd) = nAILife;
-		m_pPlayer[1]->GetAllyAIPinUse(AIInd) = true;
+		m_pPlayer[1]->GetAllyAIPinUse(AIInd) = use;
 		break;
 	case 1:
 		// プレイヤー1
 		m_pPlayer[0]->GetAllyAIPinPos(AIInd) = AIPinPos;
-		m_pPlayer[0]->GetAllyAIPinLife(AIInd) = nAILife;
-		m_pPlayer[0]->GetAllyAIPinUse(AIInd) = true;
+		m_pPlayer[0]->GetAllyAIPinUse(AIInd) = use;
 		break;
 	case 2:
 		// プレイヤー2
 		m_pPlayer[3]->GetAllyAIPinPos(AIInd) = AIPinPos;
-		m_pPlayer[3]->GetAllyAIPinLife(AIInd) = nAILife;
-		m_pPlayer[3]->GetAllyAIPinUse(AIInd) = true;
+		m_pPlayer[3]->GetAllyAIPinUse(AIInd) = use;
 		break;
 	case 3:
 		// プレイヤー3
 		m_pPlayer[2]->GetAllyAIPinPos(AIInd) = AIPinPos;
-		m_pPlayer[2]->GetAllyAIPinLife(AIInd) = nAILife;
-		m_pPlayer[2]->GetAllyAIPinUse(AIInd) = true;
+		m_pPlayer[2]->GetAllyAIPinUse(AIInd) = use;
 		break;
 	}
 }

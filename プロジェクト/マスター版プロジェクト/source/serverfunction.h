@@ -43,6 +43,7 @@
 #define SERVER_AI_PLAYER_DATA		"AI_PLAYER_DATA = "			//AIプレイヤー情報
 #define SERVER_FADE_OUT				"FADE_OUT"					//フェードアウトしている状態
 #define SERVER_FADE_NONE			"FADE_NONE"					//フェードしていない状態
+#define SERVER_CONNECT_STATE		"CONNECT_STATE = "			//接続状況
 
 //*****************************************************************************
 // クラスの定義
