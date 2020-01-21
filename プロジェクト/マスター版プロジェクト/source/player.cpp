@@ -927,49 +927,48 @@ void CPlayer::Update(void)
 						CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
 
 						if (m_Respawn == RESPAWN_NONE)
-						{
-							// ピン関係の更新処理
+						{// 戦闘開始状態
+						 // ピン関係の更新処理
 							CPlayer::PinUpdateMulti();
+						}
+						else if (m_Respawn == RESPAWN_DEATH)
+						{// 行動不能状態
+							if (m_pPin != NULL)
+							{// ピンの破棄
+								m_pPin->Uninit();
+								m_pPin = NULL;
+							}
 
-							if (m_bDeath)
+							if (m_pPinBullet != NULL)
+							{// ピン立て弾の破棄
+								m_pPinBullet->Uninit();
+								m_pPinBullet = NULL;
+							}
+
+							if (m_pAllyPin != NULL)
+							{// 味方ピンの破棄
+								m_pAllyPin->Uninit();
+								m_pAllyPin = NULL;
+							}
+
+							if (m_pAllyPosPin != NULL)
+							{// 味方位置ピンの破棄
+								m_pAllyPosPin->Uninit();
+								m_pAllyPosPin = NULL;
+							}
+
+							for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
 							{
-								if (m_pPin != NULL)
-								{// ピンの破棄
-									m_pPin->Uninit();
-									m_pPin = NULL;
+								if (m_pAIPin[nCntAI] != NULL)
+								{// AIピンの破棄
+									m_pAIPin[nCntAI]->Uninit();
+									m_pAIPin[nCntAI] = NULL;
 								}
 
-								if (m_pPinBullet != NULL)
-								{// ピン立て弾の破棄
-									m_pPinBullet->Uninit();
-									m_pPinBullet = NULL;
-								}
-
-								if (m_pAllyPin != NULL)
-								{// 味方ピンの破棄
-									m_pAllyPin->Uninit();
-									m_pAllyPin = NULL;
-								}
-
-								if (m_pAllyPosPin != NULL)
-								{// 味方位置ピンの破棄
-									m_pAllyPosPin->Uninit();
-									m_pAllyPosPin = NULL;
-								}
-
-								for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
-								{
-									if (m_pAIPin[nCntAI] != NULL)
-									{// AIピンの破棄
-										m_pAIPin[nCntAI]->Uninit();
-										m_pAIPin[nCntAI] = NULL;
-									}
-
-									if (m_pAllyAIPin[nCntAI] != NULL)
-									{// 味方AIピンの破棄
-										m_pAllyAIPin[nCntAI]->Uninit();
-										m_pAllyAIPin[nCntAI] = NULL;
-									}
+								if (m_pAllyAIPin[nCntAI] != NULL)
+								{// 味方AIピンの破棄
+									m_pAllyAIPin[nCntAI]->Uninit();
+									m_pAllyAIPin[nCntAI] = NULL;
 								}
 							}
 						}
@@ -997,19 +996,37 @@ void CPlayer::Update(void)
 							// ピン関係の更新処理
 							CPlayer::PinUpdateMulti();
 
-							if (m_bChat == false)
-							{//チャットを使用していない場合
-							 //ラジオチャットボタンの生成
-								ChatBotton();
-							}
-							if (m_bChat == true)
-							{//チャットを使用している場合
-							 //チャットのメッセージ表示処理
-								ChatMess(m_bChat);
-							}
+							//if (m_bChat == false)
+							//{	// ラジオチャットしていない
+							//	ChatBotton();
+							//}
+
+							//if (m_bOption == true)
+							//{	// オプション設定中
+							//	Option(m_bOption);
+							//}
+
+							//if (m_bChat == true)
+							//{	// チャットしてる
+							//	ChatMess(m_bChat);
+							//}
+
 							if (m_bOption == true)
 							{	// オプション設定中
 								Option(m_bOption);
+							}
+							else
+							{
+								if (m_bChat == false)
+								{//チャットを使用していない場合
+								 //ラジオチャットボタンの生成
+									ChatBotton();
+								}
+								if (m_bChat == true)
+								{//チャットを使用している場合
+								 //チャットのメッセージ表示処理
+									ChatMess(m_bChat);
+								}
 							}
 
 							if (m_bAllyChat == true)
@@ -1086,49 +1103,48 @@ void CPlayer::Update(void)
 						CXInput *pXInput = CManager::GetXInput();					// XInputの入力を取得
 
 						if (m_Respawn == RESPAWN_NONE)
-						{
-							// ピン関係の更新処理
+						{// 戦闘開始状態
+						 // ピン関係の更新処理
 							CPlayer::PinUpdateSingle();
+						}
+						else if (m_Respawn == RESPAWN_DEATH)
+						{// 行動不能状態
+							if (m_pPin != NULL)
+							{// ピンの破棄
+								m_pPin->Uninit();
+								m_pPin = NULL;
+							}
 
-							if (m_bDeath)
+							if (m_pPinBullet != NULL)
+							{// ピン立て弾の破棄
+								m_pPinBullet->Uninit();
+								m_pPinBullet = NULL;
+							}
+
+							if (m_pAllyPin != NULL)
+							{// 味方ピンの破棄
+								m_pAllyPin->Uninit();
+								m_pAllyPin = NULL;
+							}
+
+							if (m_pAllyPosPin != NULL)
+							{// 味方位置ピンの破棄
+								m_pAllyPosPin->Uninit();
+								m_pAllyPosPin = NULL;
+							}
+
+							for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
 							{
-								if (m_pPin != NULL)
-								{// ピンの破棄
-									m_pPin->Uninit();
-									m_pPin = NULL;
+								if (m_pAIPin[nCntAI] != NULL)
+								{// AIピンの破棄
+									m_pAIPin[nCntAI]->Uninit();
+									m_pAIPin[nCntAI] = NULL;
 								}
 
-								if (m_pPinBullet != NULL)
-								{// ピン立て弾の破棄
-									m_pPinBullet->Uninit();
-									m_pPinBullet = NULL;
-								}
-
-								if (m_pAllyPin != NULL)
-								{// 味方ピンの破棄
-									m_pAllyPin->Uninit();
-									m_pAllyPin = NULL;
-								}
-
-								if (m_pAllyPosPin != NULL)
-								{// 味方位置ピンの破棄
-									m_pAllyPosPin->Uninit();
-									m_pAllyPosPin = NULL;
-								}
-
-								for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
-								{
-									if (m_pAIPin[nCntAI] != NULL)
-									{// AIピンの破棄
-										m_pAIPin[nCntAI]->Uninit();
-										m_pAIPin[nCntAI] = NULL;
-									}
-
-									if (m_pAllyAIPin[nCntAI] != NULL)
-									{// 味方AIピンの破棄
-										m_pAllyAIPin[nCntAI]->Uninit();
-										m_pAllyAIPin[nCntAI] = NULL;
-									}
+								if (m_pAllyAIPin[nCntAI] != NULL)
+								{// 味方AIピンの破棄
+									m_pAllyAIPin[nCntAI]->Uninit();
+									m_pAllyAIPin[nCntAI] = NULL;
 								}
 							}
 						}
@@ -1157,20 +1173,39 @@ void CPlayer::Update(void)
 							// ピン関係の更新処理
 							CPlayer::PinUpdateSingle();
 
-							if (m_bChat == false)
-							{	// ラジオチャットしていない
-								ChatBotton();
-							}
+							//if (m_bChat == false)
+							//{	// ラジオチャットしていない
+							//	ChatBotton();
+							//}
+
+							//if (m_bOption == true)
+							//{	// オプション設定中
+							//	Option(m_bOption);
+							//}
+
+							//if (m_bChat == true)
+							//{	// チャットしてる
+							//	ChatMess(m_bChat);
+							//}
 
 							if (m_bOption == true)
 							{	// オプション設定中
 								Option(m_bOption);
 							}
-
-							if (m_bChat == true)
-							{	// チャットしてる
-								ChatMess(m_bChat);
+							else
+							{//オプション設定中にチャットをできないようにする
+								if (m_bChat == false)
+								{//チャットを使用していない場合
+								 //ラジオチャットボタンの生成
+									ChatBotton();
+								}
+								if (m_bChat == true)
+								{//チャットを使用している場合
+								 //チャットのメッセージ表示処理
+									ChatMess(m_bChat);
+								}
 							}
+
 
 							D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 							D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
@@ -1206,7 +1241,7 @@ void CPlayer::Update(void)
 					if (CMenu::GetMode() == CMenu::MODE_MULTI)
 					{
 						// ピン関係の更新処理
-						//CPlayer::PinUpdateMulti();
+						CPlayer::PinUpdateMulti();
 					}
 				 //if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
 					{// アクションパート
@@ -2258,6 +2293,10 @@ void CPlayer::Reload(bool bReload)
 					if (m_pUITexReload[nCnt] != NULL)
 					{
 						m_pUITexReload[nCnt]->SetDisp(bDisp);
+					}
+					if (m_pGauge != NULL)
+					{
+						m_pGauge->SetDisp(bDisp);
 					}
 				}
 			}
@@ -4389,4 +4428,18 @@ void CPlayer::ReleasePlayerUI(void)
 		}
 	}
 
+	if (m_pGauge != NULL)
+	{	// ゲージの破棄
+		m_pGauge->Uninit();
+		m_pGauge = NULL;
+	}
+
+	for (int nCnt = 0; nCnt < RELOAD_TEX; nCnt++)
+	{	// リロードロゴの破棄
+		if (m_pUITexReload[nCnt] != NULL)
+		{
+			m_pUITexReload[nCnt]->Uninit();
+			m_pUITexReload[nCnt] = NULL;
+		}
+	}
 }

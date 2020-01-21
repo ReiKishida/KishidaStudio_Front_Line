@@ -66,6 +66,8 @@ CGauge2D::CGauge2D(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 {
 	m_pGauge = NULL;
 	m_nCurGauge = 0;
+	m_bDisp = true;
+
 }
 
 //=============================================================================
@@ -290,6 +292,23 @@ D3DXCOLOR CGauge2D::GetColor(int nBar)
 
 	// 使われていない本数が指定されたとき
 	return D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f);
+}
+
+//=============================================================================
+// 表示の処理
+//=============================================================================
+void CGauge2D::SetDisp(bool bDisp)
+{
+	m_bDisp = bDisp;
+
+	for (int nCntGauge = 0; nCntGauge < m_nNumBar; nCntGauge++)
+	{
+		if (NULL != m_pGauge[nCntGauge])
+		{// 2Dポリゴンの破棄
+			m_pGauge[nCntGauge]->SetDisp(m_bDisp);
+		}
+	}
+
 }
 
 /*==============================================*/

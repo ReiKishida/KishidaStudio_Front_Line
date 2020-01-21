@@ -218,11 +218,11 @@ void CRenderer::Draw(void)
 			{// ストラテジー画面のみ
 				pCamera->Set(0);	// カメラのセット
 
-				//CManager::GetGame()->GetMouse()->SetDisp(false);
-			/*	CManager::GetGame()->GetField()->SetDisp(false);
-				CManager::GetGame()->GetFloor()->SetDisp(false);*/
+									//CManager::GetGame()->GetMouse()->SetDisp(false);
+									/*	CManager::GetGame()->GetField()->SetDisp(false);
+									CManager::GetGame()->GetFloor()->SetDisp(false);*/
 
-				// 全てのオブジェクトの描画
+									// 全てのオブジェクトの描画
 				CScene::DrawAll();
 
 				CManager::GetGame()->GetFloor()->SetDisp(true);
@@ -245,42 +245,112 @@ void CRenderer::Draw(void)
 					{
 						if (nTeam == CManager::GetGame()->GetPlayer(nCntPlayer)->GetTeam())
 						{
-							// ライト無効
-							m_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+							if (CManager::GetGame()->GetPlayer(nCntPlayer)->GetDeath() == false)
+							{// プレイヤーが生きているとき
+							 // ライト無効
+								m_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-							CManager::GetGame()->GetPlayer(nCntPlayer)->GetPlayerIcon()->SetDisp(true);
-							CManager::GetGame()->GetPlayer(nCntPlayer)->GetPlayerIcon()->Draw();
-							for (int nCntAi = 0; nCntAi < 2; nCntAi++)
-							{
-								CManager::GetGame()->GetPlayer(nCntPlayer)->GetMyAI(nCntAi)->GetAIIcon()->SetDisp(true);
-								CManager::GetGame()->GetPlayer(nCntPlayer)->GetMyAI(nCntAi)->GetAIIcon()->Draw();
+								CManager::GetGame()->GetPlayer(nCntPlayer)->GetPlayerIcon()->SetDisp(true);
+								CManager::GetGame()->GetPlayer(nCntPlayer)->GetPlayerIcon()->Draw();
+								for (int nCntAi = 0; nCntAi < 2; nCntAi++)
+								{
+									if (CManager::GetGame()->GetPlayer(nCntPlayer)->GetMyAI(nCntAi)->GetModel(0)->GetDisp() == true)
+									{// AIが生きているとき
+										CManager::GetGame()->GetPlayer(nCntPlayer)->GetMyAI(nCntAi)->GetAIIcon()->SetDisp(true);
+										CManager::GetGame()->GetPlayer(nCntPlayer)->GetMyAI(nCntAi)->GetAIIcon()->Draw();
+									}
+									else
+									{// AIが死んでるとき
+										CManager::GetGame()->GetPlayer(nCntPlayer)->GetMyAI(nCntAi)->GetAIIcon()->SetDisp(false);
+									}
+								}
+
+								// ライト有効
+								m_pD3DDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
 							}
-							// ライト有効
-							m_pD3DDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
-
+							else
+							{// プレイヤーが死んでるとき
+								CManager::GetGame()->GetPlayer(nCntPlayer)->GetPlayerIcon()->SetDisp(false);
+								for (int nCntAi = 0; nCntAi < 2; nCntAi++)
+								{
+									CManager::GetGame()->GetPlayer(nCntPlayer)->GetMyAI(nCntAi)->GetAIIcon()->SetDisp(false);
+								}
+							}
 						}
 					}
 				}
 				else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
 				{
-
 					// ライト無効
 					m_pD3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-					CManager::GetGame()->GetPlayer(0)->GetPlayerIcon()->SetDisp(true);
-					CManager::GetGame()->GetPlayer(0)->GetPlayerIcon()->Draw();
-					CManager::GetGame()->GetPlayer(0)->GetMyAI(0)->GetAIIcon()->SetDisp(true);
-					CManager::GetGame()->GetPlayer(0)->GetMyAI(0)->GetAIIcon()->Draw();
-					CManager::GetGame()->GetPlayer(0)->GetMyAI(1)->GetAIIcon()->SetDisp(true);
-					CManager::GetGame()->GetPlayer(0)->GetMyAI(1)->GetAIIcon()->Draw();
+					if (CManager::GetGame()->GetPlayer(0)->GetDeath() == false)
+					{// 自分が生きているとき
+						CManager::GetGame()->GetPlayer(0)->GetPlayerIcon()->SetDisp(true);
+						CManager::GetGame()->GetPlayer(0)->GetPlayerIcon()->Draw();
 
-					CManager::GetGame()->GetPlayer(1)->GetPlayerIcon()->SetDisp(true);
-					CManager::GetGame()->GetPlayer(1)->GetPlayerIcon()->Draw();
-					CManager::GetGame()->GetPlayer(1)->GetMyAI(0)->GetAIIcon()->SetDisp(true);
-					CManager::GetGame()->GetPlayer(1)->GetMyAI(0)->GetAIIcon()->Draw();
-					CManager::GetGame()->GetPlayer(1)->GetMyAI(1)->GetAIIcon()->SetDisp(true);
-					CManager::GetGame()->GetPlayer(1)->GetMyAI(1)->GetAIIcon()->Draw();
+						if (CManager::GetGame()->GetPlayer(0)->GetMyAI(0)->GetModel(0)->GetDisp() == true)
+						{// ドローンタイプが生きているとき
+							CManager::GetGame()->GetPlayer(0)->GetMyAI(0)->GetAIIcon()->SetDisp(true);
+							CManager::GetGame()->GetPlayer(0)->GetMyAI(0)->GetAIIcon()->Draw();
+						}
+						else
+						{// ドローンタイプが死んでるとき
+							CManager::GetGame()->GetPlayer(0)->GetMyAI(0)->GetAIIcon()->SetDisp(false);
+						}
 
+						if (CManager::GetGame()->GetPlayer(0)->GetMyAI(1)->GetModel(0)->GetDisp() == true)
+						{// ワーカータイプが生きているとき
+							CManager::GetGame()->GetPlayer(0)->GetMyAI(1)->GetAIIcon()->SetDisp(true);
+							CManager::GetGame()->GetPlayer(0)->GetMyAI(1)->GetAIIcon()->Draw();
+						}
+						else
+						{// ワーカータイプが死んでるとき
+							CManager::GetGame()->GetPlayer(0)->GetMyAI(1)->GetAIIcon()->SetDisp(false);
+						}
+					}
+					else
+					{// 自分が死んでるとき
+						CManager::GetGame()->GetPlayer(0)->GetPlayerIcon()->SetDisp(false);
+						for (int nCntAi = 0; nCntAi < 2; nCntAi++)
+						{
+							CManager::GetGame()->GetPlayer(0)->GetMyAI(nCntAi)->GetAIIcon()->SetDisp(false);
+						}
+					}
+
+					if (CManager::GetGame()->GetPlayer(1)->GetDeath() == false)
+					{// 味方が生きているとき
+						CManager::GetGame()->GetPlayer(1)->GetPlayerIcon()->SetDisp(true);
+						CManager::GetGame()->GetPlayer(1)->GetPlayerIcon()->Draw();
+
+						if (CManager::GetGame()->GetPlayer(1)->GetMyAI(0)->GetModel(0)->GetDisp() == true)
+						{// ドローンタイプが生きているとき
+							CManager::GetGame()->GetPlayer(1)->GetMyAI(0)->GetAIIcon()->SetDisp(true);
+							CManager::GetGame()->GetPlayer(1)->GetMyAI(0)->GetAIIcon()->Draw();
+						}
+						else
+						{// ドローンタイプが死んでるとき
+							CManager::GetGame()->GetPlayer(1)->GetMyAI(0)->GetAIIcon()->SetDisp(false);
+						}
+
+						if (CManager::GetGame()->GetPlayer(1)->GetMyAI(1)->GetModel(0)->GetDisp() == true)
+						{// ワーカータイプが生きているとき
+							CManager::GetGame()->GetPlayer(1)->GetMyAI(1)->GetAIIcon()->SetDisp(true);
+							CManager::GetGame()->GetPlayer(1)->GetMyAI(1)->GetAIIcon()->Draw();
+						}
+						else
+						{// ワーカータイプが死んでるとき
+							CManager::GetGame()->GetPlayer(1)->GetMyAI(1)->GetAIIcon()->SetDisp(false);
+						}
+					}
+					else
+					{// 味方が死んでるとき
+						CManager::GetGame()->GetPlayer(1)->GetPlayerIcon()->SetDisp(false);
+						for (int nCntAi = 0; nCntAi < 2; nCntAi++)
+						{
+							CManager::GetGame()->GetPlayer(1)->GetMyAI(nCntAi)->GetAIIcon()->SetDisp(false);
+						}
+					}
 
 					// ライト有効
 					m_pD3DDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
@@ -369,7 +439,7 @@ void CRenderer::Draw(void)
 			{// ヌルチェック
 				pCamera->Set(0);	// カメラのセット
 
-				// 全てのオブジェクトの描画
+									// 全てのオブジェクトの描画
 				CScene::DrawAll();
 			}
 		}

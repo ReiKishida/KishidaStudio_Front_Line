@@ -1263,6 +1263,11 @@ void CGame::PrintData(void)
 					//死亡していないことを書き込む
 					pClient->Printf("0");
 					pClient->Printf(" ");
+
+					//体力の表示
+					pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetLife());
+					pClient->Printf(" ");
+
 				}
 
 				//弾を発射しているかどうかを書き込む
@@ -1302,9 +1307,9 @@ void CGame::PrintData(void)
 				pClient->Printf("%.1f %.1f %.1f", m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().x, m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().y, m_pPlayer[pClient->GetPlayerIdx()]->GetPinPos().z);
 				pClient->Printf(" ");
 
-				// 表示時間を書き込む
-				pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetPinLife());
-				pClient->Printf(" ");
+				//// 表示時間を書き込む
+				//pClient->Printf("%d", m_pPlayer[pClient->GetPlayerIdx()]->GetPinLife());
+				//pClient->Printf(" ");
 			}
 			else
 			{// ピンを使用していない場合
@@ -1525,6 +1530,10 @@ void CGame::PrintCPUData(void)
 							//死亡していないことを書き込む
 							pClient->Printf("0");
 							pClient->Printf(" ");
+
+							//体力の表示
+							pClient->Printf("%d", m_pPlayer[nCntPlayer]->GetMyAI(nCntAI)->GetLife());
+							pClient->Printf(" ");
 						}
 
 						//弾を発射しているかどうかを書き込む
@@ -1705,7 +1714,7 @@ char *CGame::ReadPlayerData(char *pStr)
 	float fAIAngle[AI_MAX] = { 0.0f,0.0f };														//AI角度
 	float fAIAngleV[AI_MAX] = { 0.0f,0.0f };													//AI角度
 	int nAIAttack[AI_MAX] = { 0, 0 };															//AI攻撃力
-
+	int nAILife[AI_MAX] = { 0,0 };																//AI体力
 
 #if 0
 	D3DXVECTOR3 AIPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//AIの位置
@@ -1725,7 +1734,7 @@ char *CGame::ReadPlayerData(char *pStr)
 			nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 			pStr += nWord;										//頭出し
 
-																//チーム情報の代入
+			//チーム情報の代入
 			nTeam = CServerFunction::ReadInt(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
@@ -1874,6 +1883,12 @@ char *CGame::ReadPlayerData(char *pStr)
 
 					//キルプレイヤーの種類を代入
 					AIPlayerType[nCntAI] = (TYPE)CServerFunction::ReadInt(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+				}
+				else
+				{
+					nAILife[nCntAI] = CServerFunction::ReadInt(pStr, "");
 					nWord = CServerFunction::PopString(pStr, "");
 					pStr += nWord;
 				}
@@ -2127,6 +2142,9 @@ char *CGame::ReadPlayerData(char *pStr)
 						//向きの設置処理
 						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetRot(AIRot[nCntAI]);
 
+						//体力の設置処理
+						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetLife(nAILife[nCntAI]);
+
 						if (bAIShoot[nCntAI] == true)
 						{
 							D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMtxWorld();
@@ -2222,6 +2240,7 @@ char *CGame::ReadCPUData(char *pStr)
 			float fAIAngle[AI_MAX] = { 0.0f,0.0f };														//AI角度
 			float fAIAngleV[AI_MAX] = { 0.0f,0.0f };													//AI角度
 			int nAIAttack[AI_MAX] = { 0, 0 };															//AI攻撃力
+			int nAILife[AI_MAX] = { 0,0 };																//AI体力
 
 			if (CServerFunction::Memcmp(pStr, SERVER_AI_PLAYER_DATA) == 0)
 			{
@@ -2371,6 +2390,12 @@ char *CGame::ReadCPUData(char *pStr)
 						nWord = CServerFunction::PopString(pStr, "");
 						pStr += nWord;
 					}
+					else
+					{
+						nAILife[nCntAI] = CServerFunction::ReadInt(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+					}
 
 					//弾を発射しているかどうかを代入
 					bAIShoot[nCntAI] = CServerFunction::ReadBool(pStr, "");
@@ -2499,6 +2524,75 @@ char *CGame::ReadCPUData(char *pStr)
 					m_bPlayerDeath[nPlayerIdx] = false;
 				}
 
+				for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+				{
+
+					if (bAIDeath[nCntAI] == true)
+					{//AIが死亡している場合
+						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetDeath(bAIDeath[nCntAI]);	//AIの死亡設置処理
+						if (m_bAIDeath[nCntAI][nPlayerIdx] == false)
+						{//
+							m_bAIDeath[nCntAI][nPlayerIdx] = true;
+							if (m_bAIDeath[nCntAI][nPlayerIdx] == true)
+							{//
+							 //パーティクルを生成
+								CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(0)->GetWorldPos(), 4);
+								CParticle::Create(m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(0)->GetWorldPos(), 5);
+								for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetNumParts(); nCntModel++)
+								{//表示しない
+									m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(nCntModel)->SetDisp(false);
+								}
+
+								//チーム別処理
+								switch (nTeam)
+								{
+								case 0:
+									m_nBlueLinkEnergy -= 10;	//ブルーチームのリンクエネルギー減算
+									break;
+								case 1:
+									m_nRedLinkEnergy -= 10;		//レッドチームのリンクエネルギー減算
+									break;
+								}
+
+								//キルログの設置処理
+								for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
+								{
+									if (CManager::GetGame()->GetLog(nCntKill) == false)
+									{
+										CManager::GetGame()->SetKillIdx(nCntKill, nAIKillPlayerIdx[nCntAI]);
+										CManager::GetGame()->SetDeathIdx(nCntKill, nPlayerIdx);
+										CManager::GetGame()->SetPlayerType(0, AIPlayerType[nCntAI]);
+										if (m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
+										{
+											CManager::GetGame()->SetPlayerType(1, TYPE_DROWN);
+										}
+										else if (m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
+										{
+											CManager::GetGame()->SetPlayerType(1, TYPE_WORKER);
+										}
+										CManager::GetGame()->SetLog(nCntKill, true);
+										break;
+									}
+								}
+							}
+						}
+					}
+					else
+					{
+						if (m_bAIDeath[nCntAI][nPlayerIdx] == true)
+						{
+							m_bAIDeath[nCntAI][nPlayerIdx] = false;
+							m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetDeath(bAIDeath[nCntAI]);
+
+							//表示する
+							for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetNumParts(); nCntModel++)
+							{
+								m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetModel(nCntModel)->SetDisp(true);
+							}
+						}
+					}
+				}
+
 				//CPUプレイヤーの情報を設置処理
 				SetCPUData(nPlayerIdx, pos, rot);
 
@@ -2606,7 +2700,7 @@ char *CGame::ReadCPUData(char *pStr)
 				{
 					m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetPos(AIPos[nCntAI]);
 					m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetRot(AIRot[nCntAI]);
-
+					m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetLife(nAILife[nCntAI]);
 					if (bAIShoot[nCntAI] == true)
 					{
 						D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->GetMtxWorld();

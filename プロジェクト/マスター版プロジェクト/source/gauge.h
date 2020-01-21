@@ -51,6 +51,9 @@ public:
 
 	int GetNumBar(void) { return m_nNumBar; }
 
+	void SetDisp(bool bDisp);
+	bool GetDisp(void) { return m_bDisp; };
+
 private:
 	CLogo **m_pGauge;		// 2Dポリゴンクラスのポインタ変数
 	float m_fGauge;			// 現在のゲージの値
@@ -60,6 +63,7 @@ private:
 	float m_fMax;			// 最大値
 	int m_nStartReduce;		// 減らし始めるまでの時間
 	int m_nCurGauge;		// 現在の値を示すバーの番号
+	bool m_bDisp;			// 表示するかどうか
 };
 
 /*========================*/
