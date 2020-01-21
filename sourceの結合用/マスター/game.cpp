@@ -2108,7 +2108,7 @@ char *CGame::ReadCPUData(char *pStr)
 {
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
-		if (m_bConnect[nCntPlayer] == false)
+		if (CMatching::GetConnect(nCntPlayer) == false)
 		{
 			D3DXVECTOR3 pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//ˆÊ’u
 			D3DXVECTOR3 rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//Œü‚«
