@@ -188,7 +188,7 @@ HRESULT CAIMecha::Init(void)
 
 								for (int nCntModelParts = 0; nCntModelParts < m_nNumParts; nCntModelParts++)
 								{// パーツ数分ループ
-									m_pModel[nCntModelParts] = CModel::Create(this,&m_mtxWorld);
+									m_pModel[nCntModelParts] = CModel::Create(this, &m_mtxWorld);
 								}
 							}
 							else if (strcmp(aStr, "CAPACITY") == 0)
@@ -375,7 +375,7 @@ HRESULT CAIMecha::Init(void)
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
 		m_pNodeData = CGame::GetNodeFiler();	// ファイル情報の取得
-		// パート関係
+												// パート関係
 		m_bPartSwitch = CGame::PART_ACTION;
 		m_bPartSwitchOld = CGame::PART_ACTION;
 	}
@@ -384,7 +384,7 @@ HRESULT CAIMecha::Init(void)
 		if (CTutorialMenu::GetMode() == CTutorialMenu::TYPE_STRATEGY)
 		{
 			m_pNodeData = CTutorial::GetNodeFiler();	// ファイル情報の取得
-			// パート関係
+														// パート関係
 			m_bPartSwitch_T = CTutorial::PART_ACTION;
 			m_bPartSwitchOld_T = CTutorial::PART_ACTION;
 		}
@@ -573,9 +573,9 @@ void CAIMecha::Update(void)
 	}
 
 	if (m_bDeath == false)
-	{
-		if (m_bDeathOld == true)
-		{// 復活したとき
+	{// 生きてるとき
+		if (CMenu::GetMode() == CMenu::MODE_SINGLE && m_bDeathOld == true)
+		{// シングルモードで復活したとき
 			// データ初期化処理
 			Cancel();
 			// 追従行動を設定
@@ -620,11 +620,35 @@ void CAIMecha::Update(void)
 		}
 	}
 	else if (m_bDeath == true)
-	{
+	{// 死んでるとき
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{
 			//表示をしない処理
 			m_pModel[nCntModel]->SetDisp(false);
+		}
+
+		if (CMenu::GetMode() == CMenu::MODE_SINGLE && m_bDeathOld == false)
+		{// シングルモードで死んだとき
+			m_bPin = false;
+		}
+	}
+
+	if (CMenu::GetMode() == CMenu::MODE_MULTI && this->GetModel(0)->GetDisp() == false)
+	{// マルチモードで死んだとき
+		if (m_AIAction[1] != AI_ACTION_FOLLOW)
+		{// 追従行動じゃないとき
+			// データ初期化処理
+			Cancel();
+			// 追従行動を設定
+			m_AIAction[0] = AI_ACTION_MOVE;
+			m_AIAction[1] = AI_ACTION_FOLLOW;
+			m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
+			m_AIAction[3] = AI_ACTION_ATTACK;
+			// ロジックツリーの情報を初期化
+			for (int nCntAction = 0; nCntAction < 4; nCntAction++)
+			{// 行動数の分回る
+				m_LogicTree[nCntAction] = -1;
+			}
 		}
 
 		m_bPin = false;
@@ -645,7 +669,7 @@ void CAIMecha::Draw(void)
 
 	D3DXMATRIX mtxRot, mtxTrans;	// 計算用マトリックス
 
-	// ワールドマトリックスの初期化
+									// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_mtxWorld);
 
 	// 回転を反映
@@ -699,8 +723,8 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 									CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());			//キルプレイヤーの番号を設置処理
 									CManager::GetGame()->SetDeathIdx(nCntKill, m_pPlayer->GetPlayerIdx());		//デスプレイヤーの番号を設置処理
 									CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);					//プレイヤーの種類を設置処理
-									//プレイヤーの種類を設置処理
-									if(m_mechaType == MECHATYPE_DRONE){ CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+																												//プレイヤーの種類を設置処理
+									if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
 									else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 									CManager::GetGame()->SetLog(nCntKill, true);								//ログの設置処理
 								}
@@ -716,7 +740,7 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 									if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
 									{//オブジェクトの種類がドローンの場合
 										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);							//プレイヤーの種類を設置処理
-										//プレイヤーの種類を設置処理
+																															//プレイヤーの種類を設置処理
 										if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
 										else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 										CManager::GetGame()->SetLog(nCntKill, true);										//ログの設置処理
@@ -724,7 +748,7 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 									else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 									{//オブジェクトの種類がワーカーの場合
 										CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);							//プレイヤーの種類を設置処理
-										//プレイヤーの種類を設置処理
+																															//プレイヤーの種類を設置処理
 										if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
 										else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 										CManager::GetGame()->SetLog(nCntKill, true);										//ログの設置処理
@@ -791,7 +815,7 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 											CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());		//キルプレイヤーの番号を設置処理
 											CManager::GetGame()->SetDeathIdx(nCntKill, m_pPlayer->GetPlayerIdx());	//デスプレイヤーの番号を設置処理
 											CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);				//プレイヤーの種類を設置処理
-											//プレイヤーの種類を設置処理
+																													//プレイヤーの種類を設置処理
 											if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
 											else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 											CManager::GetGame()->SetLog(nCntKill, true);							//ログの設置処理
@@ -808,7 +832,7 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 											if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
 											{//オブジェクトの種類がドローンの場合
 												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
-												//プレイヤーの種類を設置処理
+																																//プレイヤーの種類を設置処理
 												if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
 												else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
@@ -816,7 +840,7 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 											else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
 											{//オブジェクトの種類がワーカーの場合
 												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);						//プレイヤーの種類を設置処理
-												//プレイヤーの種類を設置処理
+																																//プレイヤーの種類を設置処理
 												if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
 												else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
 												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
@@ -954,7 +978,7 @@ void CAIMecha::AIUpdate()
 	{// アクションへ移行したとき
 		if (m_AIAction[0] == AI_ACTION_NONE)
 		{// AIの行動が決定していない場合
-			// 追従モードに設定する
+		 // 追従モードに設定する
 			m_AIAction[0] = AI_ACTION_MOVE;
 			m_AIAction[1] = AI_ACTION_FOLLOW;
 			m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
@@ -1004,13 +1028,13 @@ void CAIMecha::AIUpdate()
 	{
 		//if (m_bPartSwitch == CGame::PART_ACTION)
 		{// アクションパートの場合
-			//m_nRallyCount = 0;
+		 //m_nRallyCount = 0;
 
-			// 自動移動処理
+		 // 自動移動処理
 			CAIMecha::AutoMove();
 		}
 
-		//if (m_bPartSwitch == CGame::PART_STRATEGY)
+		if (m_bPartSwitch == CGame::PART_STRATEGY)
 		{// ストラテジーパートの場合
 			if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
 			{// AIの行動が決定している状態で左クリックされた場合
@@ -1056,15 +1080,15 @@ void CAIMecha::AIUpdate()
 	{
 		//if (m_bPartSwitch_T == CGame::PART_ACTION)
 		{// アクションパートの場合
-			//m_nRallyCount = 0;
+		 //m_nRallyCount = 0;
 
-			// 自動移動処理
+		 // 自動移動処理
 			CAIMecha::AutoMove();
 		}
 
 		if (CTutorialMenu::GetMode() == CTutorialMenu::TYPE_STRATEGY)
 		{
-			//if (m_bPartSwitch_T == CTutorial::PART_STRATEGY)
+			if (m_bPartSwitch_T == CTutorial::PART_STRATEGY)
 			{// ストラテジーパートの場合
 				if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
 				{// AIの行動が決定している状態で左クリックされた場合
@@ -1122,19 +1146,19 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 			{// AIの行動が決定している場合
 				if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 				{// 自分のメカタイプが選択されている場合
-				 	// データ初期化処理
-				 	Cancel();
+				 // データ初期化処理
+					Cancel();
 
-				 	// 行動の初期化
-				 	for (int nCntAction = 0; nCntAction < 4; nCntAction++)
-				 	{// 行動数の分回る
-				 		m_AIAction[nCntAction] = AI_ACTION_NONE;
-				 		m_LogicTree[nCntAction] = -1;
-				 	}
+					// 行動の初期化
+					for (int nCntAction = 0; nCntAction < 4; nCntAction++)
+					{// 行動数の分回る
+						m_AIAction[nCntAction] = AI_ACTION_NONE;
+						m_LogicTree[nCntAction] = -1;
+					}
 
 					for (int nCntButton = 0; nCntButton < 4; nCntButton++)
 					{// ボタンの数だけ回る
-						// 指示の取得
+					 // 指示の取得
 						m_LogicTree[nCntButton] = CManager::GetGame()->GetButtonManager()->GetSelectLogic(nCntButton);
 					}
 
@@ -1234,7 +1258,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 					{// ストラテジーパート時に左クリックされた場合
 						if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 						{// 自分を指定している場合
-							// 前回の情報の保存
+						 // 前回の情報の保存
 							m_nRallyCountOld = m_nRallyCount;
 
 							if (m_AIAction[2] == AI_ACTION_ROUND_TRIP || m_AIAction[2] == AI_ACTION_RALLY)
@@ -1262,7 +1286,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 				}
 				else if (m_AIAction[1] == AI_ACTION_FOLLOW)
 				{// 追従型の場合
-					// 主人に追従する
+				 // 主人に追従する
 					CAIMecha::Follow();
 				}
 			}
@@ -1279,7 +1303,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 			{// AIの行動が決定している場合
 				if (CManager::GetTutorial()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 				{// 自分のメカタイプが選択されている場合
-					// 行動の初期化
+				 // 行動の初期化
 					for (int nCntAction = 0; nCntAction < 4; nCntAction++)
 					{// 行動数の分回る
 						m_AIAction[nCntAction] = AI_ACTION_NONE;
@@ -1288,7 +1312,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 
 					for (int nCntButton = 0; nCntButton < 4; nCntButton++)
 					{// ボタンの数だけ回る
-						// 指示の取得
+					 // 指示の取得
 						m_LogicTree[nCntButton] = CManager::GetTutorial()->GetButtonManager()->GetSelectLogic(nCntButton);
 					}
 
@@ -1380,7 +1404,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 		// 行動ごとの処理
 		if (m_AIAction[0] == AI_ACTION_NONE)
 		{// AIの行動が決定していない場合
-			// 追従モードに設定する
+		 // 追従モードに設定する
 			m_AIAction[0] = AI_ACTION_MOVE;
 			m_AIAction[1] = AI_ACTION_FOLLOW;
 			m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
@@ -1395,7 +1419,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 					{// ストラテジーパート時に左クリックされた場合
 						if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 						{// 自分を指定している場合
-							// 前回の情報の保存
+						 // 前回の情報の保存
 							m_nRallyCountOld = m_nRallyCount;
 
 							if (m_AIAction[2] == AI_ACTION_ROUND_TRIP || m_AIAction[2] == AI_ACTION_RALLY)
@@ -1423,7 +1447,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 				}
 				else if (m_AIAction[1] == AI_ACTION_FOLLOW)
 				{// 追従型の場合
-					// 主人に追従する
+				 // 主人に追従する
 					CAIMecha::Follow();
 				}
 			}
@@ -1483,7 +1507,7 @@ void CAIMecha::Attack()
 			if (fAttackLength < ATTACK_AREA)
 			{// 範囲内に敵が入った場合
 
-				// 発見状態にする
+			 // 発見状態にする
 				bFind[nCntPlayer] = true;
 
 				// 見つけた敵の方向を向く
@@ -1536,8 +1560,8 @@ void CAIMecha::Attack()
 				if (rand() % 30 == 0)
 				{// ランダムなタイミングで攻撃
 
-					// 弾の生成
-					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this,m_fBulletSpeed);
+				 // 弾の生成
+					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this, m_fBulletSpeed);
 
 					//撃っている状態にする
 					m_bShoot = true;
@@ -1875,7 +1899,7 @@ void CAIMecha::RootSearch()
 	int nCntWeight = 0;				// コストのカウンタ
 	std::vector<int> path;			// 最短経路の情報を保持するvector
 
-	//======= エッジコストの算出 =========================================================================
+									//======= エッジコストの算出 =========================================================================
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		weight[nCntWeight] = sqrt(
@@ -1931,7 +1955,7 @@ void CAIMecha::RallyRootSearch()
 	int nCntWeight = 0;		// コストのカウンタ
 	std::vector<int> path;	// 最短経路の情報を保持するvector
 
-	//======= エッジコストの算出 =========================================================================
+							//======= エッジコストの算出 =========================================================================
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		if (m_nRallyCount != 0)
@@ -2029,7 +2053,7 @@ void CAIMecha::PatrolRootSearch()
 	int nCntWeight = 0;		// コストのカウンタ
 	std::vector<int> path;	// 最短経路の情報を保持するvector
 
-	//======= エッジコストの算出 =========================================================================
+							//======= エッジコストの算出 =========================================================================
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		if (m_nRallyCount != 0)
@@ -2290,7 +2314,7 @@ void CAIMecha::NowPointSearch()
 {
 	float fMinLength = 100000, fLength = 100000;	// 差分系
 
-	// 自分の位置に最も近いノードを検索する
+													// 自分の位置に最も近いノードを検索する
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
 	 // 差分を求める
