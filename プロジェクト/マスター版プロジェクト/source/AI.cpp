@@ -378,7 +378,6 @@ HRESULT CAIMecha::Init(void)
 												// パート関係
 		m_bPartSwitch = CGame::PART_ACTION;
 		m_bPartSwitchOld = CGame::PART_ACTION;
-
 	}
 	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
 	{
@@ -388,7 +387,6 @@ HRESULT CAIMecha::Init(void)
 														// パート関係
 			m_bPartSwitch_T = CTutorial::PART_ACTION;
 			m_bPartSwitchOld_T = CTutorial::PART_ACTION;
-
 		}
 	}
 
@@ -439,9 +437,14 @@ HRESULT CAIMecha::Init(void)
 
 	for (int nCntAction = 0; nCntAction < 4; nCntAction++)
 	{// 行動数の分回る
-		m_AIAction[nCntAction] = AI_ACTION_NONE;
 		m_LogicTree[nCntAction] = -1;
 	}
+
+	// 追従行動を設定
+	m_AIAction[0] = AI_ACTION_MOVE;
+	m_AIAction[1] = AI_ACTION_FOLLOW;
+	m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
+	m_AIAction[3] = AI_ACTION_ATTACK;
 
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
@@ -466,10 +469,11 @@ HRESULT CAIMecha::Init(void)
 		if (fMinLength > fLength)
 		{// 差分の最小値を求める
 			fMinLength = fLength;
-			m_nStartNode = nCntNode;
+			m_nNearNode = nCntNode;
 		}
 	}
-	m_nEndNode = m_nStartNode;
+	m_nEndNode = m_nNearNode;
+	m_nStartNode = m_nNearNode;
 
 	// ポイントへの経路探索
 	CAIMecha::RootSearch();
@@ -491,7 +495,6 @@ HRESULT CAIMecha::Init(void)
 				m_pAIIcon->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_BLUE_DISP_DRONE));
 
 			}
-
 		}
 		else
 		{
@@ -573,8 +576,18 @@ void CAIMecha::Update(void)
 	{
 		if (m_bDeathOld == true)
 		{// 復活したとき
-		 // 中断処理
+		 // データ初期化処理
 			Cancel();
+			// 追従行動を設定
+			m_AIAction[0] = AI_ACTION_MOVE;
+			m_AIAction[1] = AI_ACTION_FOLLOW;
+			m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
+			m_AIAction[3] = AI_ACTION_ATTACK;
+			// ロジックツリーの情報を初期化
+			for (int nCntAction = 0; nCntAction < 4; nCntAction++)
+			{// 行動数の分回る
+				m_LogicTree[nCntAction] = -1;
+			}
 		}
 
 		m_pAIIcon->CScene3D::SetPos(D3DXVECTOR3(m_pos.x, m_pos.y + 150.0f, m_pos.z));
@@ -847,66 +860,68 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 //=============================================================================
 void CAIMecha::AIUpdate()
 {
-	// パート情報
-	CDebugProc::Print("========AI========\n");
-	CDebugProc::Print("ゴールに到着%s。\n", m_bGoal ? "しました" : "してません");
-	CDebugProc::Print("AIPos :%.1f, %.1f\n", m_pos.x, m_pos.z);
-	CDebugProc::Print("\n");
+	//// パート情報
+	//CDebugProc::Print("========AI========\n");
+	//CDebugProc::Print("ゴールに到着%s。\n", m_bGoal ? "しました" : "してません");
+	//CDebugProc::Print("AIPos :%.1f, %.1f\n", m_pos.x, m_pos.z);
+	//CDebugProc::Print("\n");
 
-	CDebugProc::Print("クリック回数 : %d\n", m_nRallyCount);
+	//CDebugProc::Print("クリック回数 : %d\n", m_nRallyCount);
 
-	if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)
-	{// 通常時
-		CDebugProc::Print("目標優先状態\n");
-		CDebugProc::Print("開始地点 : %d\n", m_nStartNode);
-		CDebugProc::Print("終了地点 : %d\n", m_nEndNode);
-		CDebugProc::Print("\n");
-	}
-	else if (m_AIAction[2] == AI_ACTION_RALLY)
-	{// ラリー時
-		CDebugProc::Print("ラリー状態\n");
-		CDebugProc::Print("開始地点 : %d\n", m_nRallyEndNode[0]);
-		for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
-		{
-			CDebugProc::Print("中間地点[%d] : %d\n", nCntRally, m_nRallyEndNode[nCntRally]);
-		}
-		CDebugProc::Print("終了地点 : %d\n", m_nRallyEndNode[m_nRallyCount]);
-		CDebugProc::Print("\n");
-	}
-	else if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)
-	{// 往復移動時
-		CDebugProc::Print("往復移動状態\n");
-		CDebugProc::Print("往復移動開始地点: %d\n", m_nStartNode);
-		CDebugProc::Print("開始地点 : %d\n", m_nRallyEndNode[0]);
-		for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
-		{
-			CDebugProc::Print("中間地点[%d] : %d\n", nCntRally, m_nRallyEndNode[nCntRally]);
-		}
-		CDebugProc::Print("終了地点 : %d\n", m_nRallyEndNode[m_nRallyCount]);
-		CDebugProc::Print("\n");
-	}
-	else if (m_AIAction[1] == AI_ACTION_FOLLOW)
-	{// 追従時
-		CDebugProc::Print("追従状態\n");
-		CDebugProc::Print("開始地点 : %d\n", m_nStartNode);
-		CDebugProc::Print("終了地点 : %d\n", m_nEndNode);
-		CDebugProc::Print("\n");
-	}
+	//if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)
+	//{// 通常時
+	//	CDebugProc::Print("目標優先状態\n");
+	//	CDebugProc::Print("開始地点 : %d\n", m_nStartNode);
+	//	CDebugProc::Print("終了地点 : %d\n", m_nEndNode);
+	//	CDebugProc::Print("\n");
+	//}
+	//else if (m_AIAction[2] == AI_ACTION_RALLY)
+	//{// ラリー時
+	//	CDebugProc::Print("ラリー状態\n");
+	//	CDebugProc::Print("開始地点 : %d\n", m_nRallyEndNode[0]);
+	//	for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
+	//	{
+	//		CDebugProc::Print("中間地点[%d] : %d\n", nCntRally, m_nRallyEndNode[nCntRally]);
+	//	}
+	//	CDebugProc::Print("終了地点 : %d\n", m_nRallyEndNode[m_nRallyCount]);
+	//	CDebugProc::Print("\n");
+	//}
+	//else if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)
+	//{// 往復移動時
+	//	CDebugProc::Print("往復移動状態\n");
+	//	CDebugProc::Print("往復移動開始地点: %d\n", m_nStartNode);
+	//	CDebugProc::Print("開始地点 : %d\n", m_nRallyEndNode[0]);
+	//	for (int nCntRally = 1; nCntRally < m_nRallyCount; nCntRally++)
+	//	{
+	//		CDebugProc::Print("中間地点[%d] : %d\n", nCntRally, m_nRallyEndNode[nCntRally]);
+	//	}
+	//	CDebugProc::Print("終了地点 : %d\n", m_nRallyEndNode[m_nRallyCount]);
+	//	CDebugProc::Print("\n");
+	//}
+	//else if (m_AIAction[1] == AI_ACTION_FOLLOW)
+	//{// 追従時
+	//	CDebugProc::Print("追従状態\n");
+	//	CDebugProc::Print("開始地点 : %d\n", m_nStartNode);
+	//	CDebugProc::Print("終了地点 : %d\n", m_nEndNode);
+	//	CDebugProc::Print("\n");
+	//}
 
-	if (m_AIAction[2] != AI_ACTION_ROUND_TRIP)
-	{// 往復移動以外
-		CDebugProc::Print("現在の移動回数 : %d\n", m_nPoint);
-		CDebugProc::Print("目標までの移動回数 : %d\n", m_nCountPoint);
-		CDebugProc::Print("\n");
-	}
-	else
-	{// 往復移動時
-		CDebugProc::Print("現在の移動回数 : %d\n", m_nPoint);
-		CDebugProc::Print("目標までの移動回数 : %d\n", m_nCountPatrolPoint);
-		CDebugProc::Print("\n");
-	}
+	//if (m_AIAction[2] != AI_ACTION_ROUND_TRIP)
+	//{// 往復移動以外
+	//	CDebugProc::Print("現在の移動回数 : %d\n", m_nPoint);
+	//	CDebugProc::Print("目標までの移動回数 : %d\n", m_nCountPoint);
+	//	CDebugProc::Print("\n");
+	//}
+	//else
+	//{// 往復移動時
+	//	CDebugProc::Print("現在の移動回数 : %d\n", m_nPoint);
+	//	CDebugProc::Print("目標までの移動回数 : %d\n", m_nCountPatrolPoint);
+	//	CDebugProc::Print("\n");
+	//}
 
 	//CDebugProc::Print("m_bFind : %s\n", m_bFind ? "true" : "false");
+
+	//CDebugProc::Print("最近地点 : %d", m_nNearNode);
 
 	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
@@ -929,17 +944,61 @@ void CAIMecha::AIUpdate()
 		}
 	}
 
-	if (m_bPartSwitchOld == CGame::PART_ACTION && m_bPartSwitch == CGame::PART_STRATEGY)
-	{// ストラテジーへ移行したとき
-	 // 中断処理
-		Cancel();
+	//if (m_bPartSwitchOld == CGame::PART_ACTION && m_bPartSwitch == CGame::PART_STRATEGY)
+	//{// ストラテジーへ移行したとき
+	//	// データ初期化処理
+	//	Cancel();
+	//}
+
+	if (m_bPartSwitch == CGame::PART_ACTION && m_bPartSwitchOld == CGame::PART_STRATEGY)
+	{// アクションへ移行したとき
+		if (m_AIAction[0] == AI_ACTION_NONE)
+		{// AIの行動が決定していない場合
+		 // 追従モードに設定する
+			m_AIAction[0] = AI_ACTION_MOVE;
+			m_AIAction[1] = AI_ACTION_FOLLOW;
+			m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
+		}
+	}
+
+	if (m_bGoal)
+	{// 目的地到着時
+		m_nCountPoint = 0;
+		float fMinLength = 100000, fLength = 100000;	// 差分系
+		int nNearNode = 0;
+
+		// 自分の位置に最も近いノードを検索する
+		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+		{// ノードの数だけ回る
+		 // 差分を求める
+			if (m_pPlayer != NULL)
+			{// プレイヤーのNULLチェック
+				fLength =
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) +
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) *
+					(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
+
+				if (fMinLength > fLength)
+				{// 差分の最小値を求める
+					fMinLength = fLength;
+					nNearNode = nCntNode;
+				}
+			}
+		}
+
+		// 現在地を開始ノードに設定する
+		m_nStartNode = nNearNode;
 	}
 
 	// 攻撃関係処理
-	Attack();
+	CAIMecha::Attack();
 
 	// AI行動設定
-	AIActionSet(pMouse);
+	CAIMecha::AIActionSet(pMouse);
+
+	//最近地点の検索
+	CAIMecha::NowPointSearch();
 
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
@@ -951,26 +1010,44 @@ void CAIMecha::AIUpdate()
 			CAIMecha::AutoMove();
 		}
 
-		//if (m_bPartSwitch == CGame::PART_STRATEGY)
+		if (m_bPartSwitch == CGame::PART_STRATEGY)
 		{// ストラテジーパートの場合
 			if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
 			{// AIの行動が決定している状態で左クリックされた場合
-				m_nPoint = 0;
-				m_nCountPoint = -1;
+				if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
+				{// 自分を指定している場合
+					m_nPoint = 0;
+					m_nCountPoint = -1;
 
-				// 経路探索方法
-				if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)// 往復移動時
-				{// ポイント間を徘徊する経路探索
-					CAIMecha::RootSearch();
-					CAIMecha::PatrolRootSearch();
-				}
-				else if (m_AIAction[2] == AI_ACTION_RALLY)// ラリー時
-				{// ラリーポイントによる経路探索
-					CAIMecha::RallyRootSearch();
-				}
-				if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)// 目標優先時
-				{// ポイントへの経路探索
-					CAIMecha::RootSearch();
+					// 経路探索方法
+					if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)// 往復移動時
+					{// ポイント間を徘徊する経路探索
+						m_nCountPoint = 0;
+						m_nStartNode = m_nNearNode;
+
+						CAIMecha::RootSearch();
+						CAIMecha::PatrolRootSearch();
+					}
+					else if (m_AIAction[2] == AI_ACTION_RALLY)// ラリー時
+					{// ラリーポイントによる経路探索
+						m_nCountPoint = 0;
+						m_nStartNode = m_nNearNode;
+
+						CAIMecha::RallyRootSearch();
+					}
+					if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)// 目標優先時
+					{// ポイントへの経路探索
+						m_nCountPoint = 0;
+						m_nStartNode = m_nNearNode;
+
+						// 経由地点の初期化
+						for (int nCnt = 0; nCnt < NODEPOINT_MAX; nCnt++)
+						{
+							m_waypoint[nCnt] = m_pNodeData->GetLoadData().pos[m_nNearNode];
+						}
+
+						CAIMecha::RootSearch();
+					}
 				}
 			}
 		}
@@ -987,26 +1064,44 @@ void CAIMecha::AIUpdate()
 
 		if (CTutorialMenu::GetMode() == CTutorialMenu::TYPE_STRATEGY)
 		{
-			//if (m_bPartSwitch_T == CTutorial::PART_STRATEGY)
+			if (m_bPartSwitch_T == CTutorial::PART_STRATEGY)
 			{// ストラテジーパートの場合
 				if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
 				{// AIの行動が決定している状態で左クリックされた場合
-					m_nPoint = 0;
-					m_nCountPoint = -1;
+					if (CManager::GetTutorial()->GetButtonManager()->GetSelectAIType() == m_mechaType)
+					{// 自分を指定している場合
+						m_nPoint = 0;
+						m_nCountPoint = -1;
 
-					// 経路探索方法
-					if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)// 往復移動時
-					{// ポイント間を徘徊する経路探索
-						CAIMecha::RootSearch();
-						CAIMecha::PatrolRootSearch();
-					}
-					else if (m_AIAction[2] == AI_ACTION_RALLY)// ラリー時
-					{// ラリーポイントによる経路探索
-						CAIMecha::RallyRootSearch();
-					}
-					if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)// 目標優先時
-					{// ポイントへの経路探索
-						CAIMecha::RootSearch();
+						// 経路探索方法
+						if (m_AIAction[2] == AI_ACTION_ROUND_TRIP)// 往復移動時
+						{// ポイント間を徘徊する経路探索
+							m_nCountPoint = 0;
+							m_nStartNode = m_nNearNode;
+
+							CAIMecha::RootSearch();
+							CAIMecha::PatrolRootSearch();
+						}
+						else if (m_AIAction[2] == AI_ACTION_RALLY)// ラリー時
+						{// ラリーポイントによる経路探索
+							m_nCountPoint = 0;
+							m_nStartNode = m_nNearNode;
+
+							CAIMecha::RallyRootSearch();
+						}
+						if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)// 目標優先時
+						{// ポイントへの経路探索
+							m_nCountPoint = 0;
+							m_nStartNode = m_nNearNode;
+
+							// 経由地点の初期化
+							for (int nCnt = 0; nCnt < NODEPOINT_MAX; nCnt++)
+							{
+								m_waypoint[nCnt] = m_pNodeData->GetLoadData().pos[m_nNearNode];
+							}
+
+							CAIMecha::RootSearch();
+						}
 					}
 				}
 			}
@@ -1027,9 +1122,12 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 			{// AIの行動が決定している場合
 				if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 				{// 自分のメカタイプが選択されている場合
+				 // データ初期化処理
+					Cancel();
+
+					// 行動の初期化
 					for (int nCntAction = 0; nCntAction < 4; nCntAction++)
 					{// 行動数の分回る
-					 // データの初期化
 						m_AIAction[nCntAction] = AI_ACTION_NONE;
 						m_LogicTree[nCntAction] = -1;
 					}
@@ -1126,37 +1224,39 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 		}
 
 		// 行動ごとの処理
-		if (m_AIAction[0] == AI_ACTION_NONE)
-		{// AIの行動が決定していない場合
-		 // 追従モードに設定する
-			m_AIAction[0] = AI_ACTION_MOVE;
-			m_AIAction[1] = AI_ACTION_FOLLOW;
-			m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
-		}
-		else if (m_AIAction[0] != AI_ACTION_NONE)
+		if (m_AIAction[0] != AI_ACTION_NONE)
 		{// AIの行動が決定している場合
 			if (m_AIAction[0] == AI_ACTION_MOVE)
 			{// 移動の場合
 				if (m_AIAction[1] == AI_ACTION_DISPATCH)
 				{// 派遣型の場合
 					if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && m_bPartSwitch == CGame::PART_STRATEGY)
-					{// ストラテジーパートに左クリックされた場合
-						if (m_nRallyCount < RALLYPOINT_MAX)
-						{// カウントが最大数まで到達していない場合
+					{// ストラテジーパート時に左クリックされた場合
+						if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
+						{// 自分を指定している場合
 						 // 前回の情報の保存
 							m_nRallyCountOld = m_nRallyCount;
 
 							if (m_AIAction[2] == AI_ACTION_ROUND_TRIP || m_AIAction[2] == AI_ACTION_RALLY)
 							{// ラリー時または往復移動時
-								m_nRallyCount++;
+								if (m_nRallyCount < RALLYPOINT_MAX)
+								{// カウントが最大数まで到達していない場合
+									m_nRallyCount++;
+
+									// ポイント検索
+									CAIMecha::NodeSearch(m_bGoal);
+								}
 							}
 							else if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)
 							{// 目標優先行動時
-								m_nRallyCount = 1;
-							}
+								if (m_nRallyCount < 1)
+								{// カウントが最大数まで到達していない場合
+									m_nRallyCount = 1;
 
-							// ポイント検索
-							CAIMecha::NodeSearch(m_bGoal);
+									// ポイント検索
+									CAIMecha::NodeSearch(m_bGoal);
+								}
+							}
 						}
 					}
 				}
@@ -1179,9 +1279,9 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 			{// AIの行動が決定している場合
 				if (CManager::GetTutorial()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 				{// 自分のメカタイプが選択されている場合
+				 // 行動の初期化
 					for (int nCntAction = 0; nCntAction < 4; nCntAction++)
 					{// 行動数の分回る
-					 // データの初期化
 						m_AIAction[nCntAction] = AI_ACTION_NONE;
 						m_LogicTree[nCntAction] = -1;
 					}
@@ -1292,23 +1392,32 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 				if (m_AIAction[1] == AI_ACTION_DISPATCH)
 				{// 派遣型の場合
 					if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && m_bPartSwitch_T == CTutorial::PART_STRATEGY)
-					{// ストラテジーパートに左クリックされた場合
-						if (m_nRallyCount < RALLYPOINT_MAX)
-						{// カウントが最大数まで到達していない場合
+					{// ストラテジーパート時に左クリックされた場合
+						if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
+						{// 自分を指定している場合
 						 // 前回の情報の保存
 							m_nRallyCountOld = m_nRallyCount;
 
 							if (m_AIAction[2] == AI_ACTION_ROUND_TRIP || m_AIAction[2] == AI_ACTION_RALLY)
 							{// ラリー時または往復移動時
-								m_nRallyCount++;
+								if (m_nRallyCount < RALLYPOINT_MAX)
+								{// カウントが最大数まで到達していない場合
+									m_nRallyCount++;
+
+									// ポイント検索
+									CAIMecha::NodeSearch(m_bGoal);
+								}
 							}
 							else if (m_AIAction[2] == AI_ACTION_FOCUS_GOAL)
 							{// 目標優先行動時
-								m_nRallyCount = 1;
-							}
+								if (m_nRallyCount < 1)
+								{// カウントが最大数まで到達していない場合
+									m_nRallyCount = 1;
 
-							// ポイント検索
-							CAIMecha::NodeSearch(m_bGoal);
+									// ポイント検索
+									CAIMecha::NodeSearch(m_bGoal);
+								}
+							}
 						}
 					}
 				}
@@ -1507,6 +1616,18 @@ void CAIMecha::AutoMove()
 				m_bPatrol = true;
 				m_nPoint = 0;
 			}
+			//else
+			//{
+			//	// データ初期化処理
+			//	Cancel();
+
+			//	// 行動の初期化
+			//	for (int nCntAction = 0; nCntAction < 4; nCntAction++)
+			//	{// 行動数の分回る
+			//		m_AIAction[nCntAction] = AI_ACTION_NONE;
+			//		m_LogicTree[nCntAction] = -1;
+			//	}
+			//}
 		}
 	}
 	else if (m_nBreaktime == 0)
@@ -2039,7 +2160,7 @@ void CAIMecha::PatrolRootSearch()
 }
 
 //=============================================================================
-//	中断処理
+//	データ初期化処理
 //=============================================================================
 void CAIMecha::Cancel()
 {
@@ -2088,11 +2209,6 @@ void CAIMecha::Cancel()
 		m_patrolWaypoint[nCntAll] = m_pNodeData->GetLoadData().pos[nNear];
 	}
 
-	for (int nCntAction = 0; nCntAction < 4; nCntAction++)
-	{// 行動数の分回る
-		m_AIAction[nCntAction] = AI_ACTION_NONE;
-		m_LogicTree[nCntAction] = -1;
-	}
 	m_posDest = m_pNodeData->GetLoadData().pos[nNear];
 }
 
@@ -2162,6 +2278,34 @@ void CAIMecha::Dijkstra(int nodeMax, int start, int end, Node *node)
 			{
 				node[to].minCost = cost;
 				node[to].from = doneNode;
+			}
+		}
+	}
+}
+
+//=============================================================================
+// 最近地点検索
+//=============================================================================
+void CAIMecha::NowPointSearch()
+{
+	float fMinLength = 100000, fLength = 100000;	// 差分系
+
+													// 自分の位置に最も近いノードを検索する
+	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
+	{// ノードの数だけ回る
+	 // 差分を求める
+		if (m_pPlayer != NULL)
+		{// プレイヤーのNULLチェック
+			fLength =
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].x - m_pos.x) +
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z) *
+				(m_pNodeData->GetLoadData().pos[nCntNode].z - m_pos.z);
+
+			if (fMinLength > fLength)
+			{// 差分の最小値を求める
+				fMinLength = fLength;
+				m_nNearNode = nCntNode;
 			}
 		}
 	}

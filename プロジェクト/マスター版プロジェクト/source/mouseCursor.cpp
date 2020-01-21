@@ -134,7 +134,7 @@ void CMouseCursor::Update(void)
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
 
-	// ゲーム内マウス処理
+														// ゲーム内マウス処理
 	CMouseCursor::Mouse(pMouse);
 
 #ifdef _DEBUG
@@ -171,7 +171,7 @@ void CMouseCursor::Mouse(CInputMouse *pMouse)
 
 	if (m_pCamera != NULL)
 	{// カメラがNullじゃない
-		// スクリーン座標をワールド座標へ変換
+	 // スクリーン座標をワールド座標へ変換
 		MousePos = D3DXVECTOR3((float)pMouse->GetPoint().x, (float)pMouse->GetPoint().y, 0.0f);
 		viewport = m_pCamera->GetViewport(1);
 		D3DXMatrixIdentity(&matrix);
@@ -186,22 +186,22 @@ void CMouseCursor::Mouse(CInputMouse *pMouse)
 		switch ((int)m_pCamera->GetZoom())
 		{
 		case 1:
-			m_pos.x -= m_pCamera->GetPosR().x * 5.0f;
-			m_pos.z -= m_pCamera->GetPosR().z * 5.0f;
+			m_pos.x -= m_pCamera->GetPosR().x * ((PARALLEL_PROJECTION_SIZE)-1.0f);
+			m_pos.z -= m_pCamera->GetPosR().z * ((PARALLEL_PROJECTION_SIZE)-1.0f);
 			break;
 		case 2:
-			m_pos.x -= m_pCamera->GetPosR().x * 2.0f;
-			m_pos.z -= m_pCamera->GetPosR().z * 2.0f;
+			m_pos.x -= m_pCamera->GetPosR().x * ((PARALLEL_PROJECTION_SIZE / 2.0f) - 1.0f);
+			m_pos.z -= m_pCamera->GetPosR().z * ((PARALLEL_PROJECTION_SIZE / 2.0f) - 1.0f);
 			break;
 		case 3:
-			m_pos.x -= m_pCamera->GetPosR().x ;
-			m_pos.z -= m_pCamera->GetPosR().z;
+			m_pos.x -= m_pCamera->GetPosR().x * ((PARALLEL_PROJECTION_SIZE / 3.0f) - 1.0f);
+			m_pos.z -= m_pCamera->GetPosR().z * ((PARALLEL_PROJECTION_SIZE / 3.0f) - 1.0f);
 			break;
 		}
 
 		// 位置・サイズの設定
 		CScene3D::SetMousePos(m_pos);
-		CScene3D::SetSize((m_size / m_pCamera->GetZoom()));
+		CScene3D::SetSize(((m_size * 1.1f) / m_pCamera->GetZoom()));
 	}
 
 	if (NULL != CManager::GetGame())
@@ -229,7 +229,7 @@ void CMouseCursor::File(CInputKeyboard *pKeyboard)
 
 	if (pKeyboard->GetTrigger(DIK_F11) == true)
 	{// F11キーでファイルをロード
-		// 前回のデータの削除
+	 // 前回のデータの削除
 		for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 		{// 全ノード数分回る
 			if (m_pNodePointer[nCntNode] != NULL)
@@ -340,7 +340,7 @@ void CMouseCursor2D::Update(void)
 {
 	CInputMouse *pMouse = CManager::GetInputMouse();	// マウスの入力を取得
 
-	// 移動時処理
+														// 移動時処理
 	Move(pMouse);
 }
 

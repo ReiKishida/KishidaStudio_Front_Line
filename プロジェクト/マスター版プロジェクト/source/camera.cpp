@@ -175,7 +175,10 @@ void CCamera::Update(void)
 			}
 		}
 
-		if (CManager::GetGame()->GetGameState() == CGame::STATE_NORMAL || CManager::GetGame()->GetGameState() == CGame::STATE_STARTING_FADE_IN)
+		if (CManager::GetGame()->GetGameState() == CGame::STATE_NORMAL
+			|| CManager::GetGame()->GetGameState() == CGame::STATE_STARTING_FADE_IN
+			|| CManager::GetGame()->GetGameState() == CGame::STATE_END
+			|| CManager::GetGame()->GetGameState() == CGame::STATE_END_FADE_OUT)
 		{
 			if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
 			{// アクションパート
@@ -282,7 +285,7 @@ void CCamera::Update(void)
 				}
 
 				// ホイールで拡大・縮小
-				if (pInputMouse->GetMouseAxisZ() >= 120.0f && m_fZoom < 3.0f)
+				if (pInputMouse->GetMouseAxisZ() >= 120.0f && m_fZoom < 2.0f)
 				{// 拡大
 					m_fZoom++;
 				}
@@ -396,7 +399,7 @@ void CCamera::Update(void)
 			}
 
 			// ホイールで拡大・縮小
-			if (pInputMouse->GetMouseAxisZ() >= 120.0f && m_fZoom < 3.0f)
+			if (pInputMouse->GetMouseAxisZ() >= 120.0f && m_fZoom < 2.0f)
 			{// 拡大
 				m_fZoom++;
 			}

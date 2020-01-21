@@ -839,33 +839,58 @@ void CGame::SwicthPart(void)
 	CDirectInput *pDirectInput = CManager::GetDirectInput();	//DirectInputの取得
 	CDirectInput::GamePad *DirectInputStick = pDirectInput->GetgamePadStick();
 
-	if (pKeyboard->GetTrigger(DIK_Z) || pDirectInput->GetGamePadTrigger(0))
-	{// パート切り替え
-		m_part = (PART)((m_part + 1) % PART_MAX);
+	if (m_state == STATE_NORMAL)
+	{
+		if (pKeyboard->GetTrigger(DIK_Z) || pDirectInput->GetGamePadTrigger(0))
+		{// パート切り替え
+			m_part = (PART)((m_part + 1) % PART_MAX);
 
-		CScene::UIUninit();
+			CScene::UIUninit();
 
-		if (PART_STRATEGY == m_part)
-		{
-			//バグ対策用にプレイヤーＵＩの破棄処理
-			if (CMenu::MODE_MULTI == CMenu::GetMode())
+			if (PART_STRATEGY == m_part)
 			{
-				if (CManager::GetClient() != NULL)
+				//バグ対策用にプレイヤーＵＩの破棄処理
+				if (CMenu::MODE_MULTI == CMenu::GetMode())
 				{
-					m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->ReleasePlayerUI();
+					if (CManager::GetClient() != NULL)
+					{
+						m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->ReleasePlayerUI();
+					}
 				}
-			}
-			else if(CMenu::MODE_SINGLE == CMenu::GetMode())
-			{
-				m_pPlayer[0]->ReleasePlayerUI();
-			}
+				else if (CMenu::MODE_SINGLE == CMenu::GetMode())
+				{
+					m_pPlayer[0]->ReleasePlayerUI();
+				}
 
-			CreateStrategyUI();
+				CreateStrategyUI();
+			}
+			else
+			{
+				CreateActionUI();
+			}
 		}
-		else
+	}
+	else if (m_state == STATE_END)
+	{
+		if (NULL != m_pButtonManager)
+		{// ボタン管理クラスの破棄
+			m_pButtonManager->Uninit();
+			m_pButtonManager = NULL;
+		}
+		if (NULL != m_pMouseCursor)
+		{// マウスカーソルの破棄
+			m_pMouseCursor->Uninit();
+			m_pMouseCursor = NULL;
+		}
+
+		if (NULL != m_pMouse)
 		{
-			CreateActionUI();
+			//m_pMouse->Uninit();
+			//m_pMouse = NULL;
+			m_pMouse->SetDisp(false);
 		}
+		m_part = PART_ACTION;
+
 	}
 }
 
@@ -1375,8 +1400,7 @@ void CGame::PrintCPUData(void)
 		{
 			if (pClient->GetPlayerIdx() != nCntPlayer)
 			{
-				//if (m_bConnect[nCntPlayer] == false)
-				if(CMatching::GetConnect(nCntPlayer) == false)
+				if (CMatching::GetConnect(nCntPlayer) == false)
 				{
 					//AIプレイヤー情報を書き込む
 					pClient->Printf(SERVER_AI_PLAYER_DATA);
@@ -1506,7 +1530,7 @@ void CGame::PrintCPUData(void)
 						//弾を発射しているかどうかを書き込む
 						if (m_pPlayer[nCntPlayer]->GetMyAI(nCntAI)->GetShoot() == true)
 						{//発射されている場合
-							//発射している情報を書き込む
+						 //発射している情報を書き込む
 							pClient->Printf("1");
 							pClient->Printf(" ");
 
@@ -1527,7 +1551,41 @@ void CGame::PrintCPUData(void)
 							pClient->Printf("0");
 							pClient->Printf(" ");
 						}
+					}
 
+					// ピンを使用しているかどうかを書き込む
+					if (m_pPlayer[nCntPlayer]->GetPinUse() == true)
+					{// ピンを使用している場合
+						pClient->Printf("1");
+						pClient->Printf(" ");
+
+						// 位置を書き込む
+						pClient->Printf("%.1f %.1f %.1f", m_pPlayer[nCntPlayer]->GetPinPos().x, m_pPlayer[nCntPlayer]->GetPinPos().y, m_pPlayer[nCntPlayer]->GetPinPos().z);
+						pClient->Printf(" ");
+					}
+					else
+					{// ピンを使用していない場合
+						pClient->Printf("0");
+						pClient->Printf(" ");
+					}
+
+					for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+					{// AIの数だけ回る
+					 // AIがピンを使用しているかどうかを書き込む
+						if (m_pPlayer[nCntPlayer]->GetAIPinUse(nCntAI) == true)
+						{// AIがピンを使用している場合
+							pClient->Printf("1");
+							pClient->Printf(" ");
+
+							// 位置を書き込む
+							pClient->Printf("%.1f %.1f %.1f", m_pPlayer[nCntPlayer]->GetAIPinPos(nCntAI).x, m_pPlayer[nCntPlayer]->GetAIPinPos(nCntAI).y, m_pPlayer[nCntPlayer]->GetAIPinPos(nCntAI).z);
+							pClient->Printf(" ");
+						}
+						else
+						{// ピンを使用していない場合
+							pClient->Printf("0");
+							pClient->Printf(" ");
+						}
 					}
 				}
 			}
@@ -2129,8 +2187,7 @@ char *CGame::ReadCPUData(char *pStr)
 {
 	for (int nCntPlayer = 0; nCntPlayer < MAX_PLAYER_CONNECT; nCntPlayer++)
 	{
-		//if (m_bConnect[nCntPlayer] == false)
-		if(CMatching::GetConnect(nCntPlayer) == false)
+		if (CMatching::GetConnect(nCntPlayer) == false)
 		{
 			D3DXVECTOR3 pos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//位置
 			D3DXVECTOR3 rot = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				//向き
@@ -2150,6 +2207,11 @@ char *CGame::ReadCPUData(char *pStr)
 			int nLife = 0;													//体力
 			int nKillPlayerIdx = 0;											//キルプレイヤーの番号
 			TYPE playerType = TYPE_PLAYER;									//キルプレイヤーの種類
+
+			bool bPinUse = false;											// ピンを使用しているかどうか
+			D3DXVECTOR3 pinPos = D3DXVECTOR3(0.0f, 0.0f, 0.0f);				// ピンの位置
+			bool bAIPinUse[AI_MAX] = { false, false };						// AIがピンを使用しているかどうか
+			D3DXVECTOR3 AIPinPos[AI_MAX] = { D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3(0.0f, 0.0f, 0.0f) };// AIのピンの位置
 
 			D3DXVECTOR3 AIPos[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f),D3DXVECTOR3(0.0f,0.0f,0.0f) };		//AIの位置
 			D3DXVECTOR3 AIRot[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f) ,D3DXVECTOR3(0.0f,0.0f,0.0f) };	//AIの向き
@@ -2333,6 +2395,47 @@ char *CGame::ReadCPUData(char *pStr)
 					}
 				}
 
+				//ピンを使用してるかどうかを代入
+				bPinUse = CServerFunction::ReadBool(pStr, "");
+				nWord = CServerFunction::PopString(pStr, "");
+				pStr += nWord;
+
+				if (bPinUse == true)
+				{// ピンを使用している場合
+				 // ピンの位置を代入
+					pinPos.x = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+					pinPos.y = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+					pinPos.z = CServerFunction::ReadFloat(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+				}
+
+				for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+				{// AIの数だけ回る
+				 // AIがピンを使用してるかどうかを代入
+					bAIPinUse[nCntAI] = CServerFunction::ReadBool(pStr, "");
+					nWord = CServerFunction::PopString(pStr, "");
+					pStr += nWord;
+
+					if (bAIPinUse[nCntAI] == true)
+					{// AIがピンを使用している場合
+					 // AIのピンの位置を代入
+						AIPinPos[nCntAI].x = CServerFunction::ReadFloat(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+						AIPinPos[nCntAI].y = CServerFunction::ReadFloat(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+						AIPinPos[nCntAI].z = CServerFunction::ReadFloat(pStr, "");
+						nWord = CServerFunction::PopString(pStr, "");
+						pStr += nWord;
+					}
+				}
+
 				if (bDeath == true)
 				{//死亡している場合
 					m_pPlayer[nPlayerIdx]->GetDeath() = true;
@@ -2399,6 +2502,14 @@ char *CGame::ReadCPUData(char *pStr)
 				//CPUプレイヤーの情報を設置処理
 				SetCPUData(nPlayerIdx, pos, rot);
 
+				// ピンの更新
+				SetPinData(nPlayerIdx, pinPos, bPinUse);
+
+				for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
+				{// AIの数だけ回る
+				 // AIピンの更新
+					SetAIPinData(nPlayerIdx, nCntAI, AIPinPos[nCntAI], bAIPinUse[nCntAI]);
+				}
 
 				//// 角度を求める
 				//D3DXVECTOR3 rotCamera = m_pPlayer[nPlayerIdx]->GetDestUpper();
