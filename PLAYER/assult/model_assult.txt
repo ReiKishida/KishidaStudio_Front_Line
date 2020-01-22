@@ -38,13 +38,13 @@ CHARACTERSET
 	CAPACITY = 3					# ‘•’e”
 	ATTACK = 4						# UŒ‚—Í
 	SHOOTS = 8						# “¯Žž”­ŽË”
-	DISPERTION = 150				# ‚Î‚ç‚Â‚«
+	DISPERTION = 180				# ‚Î‚ç‚Â‚«
 	RELOAD = 100					# ƒŠƒ[ƒhŽžŠÔ
 	BULLETSPEED = 30.0				# ’e‘¬
 	BULLETLIFE = 20					# ’e‚ÌŽõ–½
 
 	LIFE = 360						# ‘Ï‹v—Í
-	SPEED = 5.0						# ˆÚ“®—Ê
+	SPEED = 5.4						# ˆÚ“®—Ê
 
 	FOOT = 4						# ‘«‚ÌŽn‚Ü‚è”Ô†
 
