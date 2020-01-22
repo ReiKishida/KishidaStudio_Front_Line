@@ -145,6 +145,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_vtxMin = D3DXVECTOR3(1000.0f, 1000.0f, 1000.0f);
 	m_pCursor = NULL;
 	m_nLife = 0;
+	m_nBulletLife = 0;
 	m_nTimer = 0;
 	m_nDisTime = 0;
 	m_mecha = CMechaSelect::MECHATYPE_ASSULT;
@@ -366,6 +367,10 @@ HRESULT CPlayer::Init(void)
 							else if (strcmp(aStr, "BULLETSPEED") == 0)
 							{// 弾速
 								fscanf(pFile, " = %f", &m_fBulletSpeed);
+							}
+							else if (strcmp(aStr, "BULLETLIFE") == 0)
+							{// 弾の寿命
+								fscanf(pFile, " = %d", &m_nBulletLife);
 							}
 							else if (strcmp(aStr, "LIFE") == 0)
 							{// 耐久力
@@ -1011,21 +1016,24 @@ void CPlayer::Update(void)
 							//	ChatMess(m_bChat);
 							//}
 
-							if (m_bOption == true)
-							{	// オプション設定中
-								Option(m_bOption);
-							}
-							else
+							if (m_bDeath == false)
 							{
-								if (m_bChat == false)
-								{//チャットを使用していない場合
-								 //ラジオチャットボタンの生成
-									ChatBotton();
+								if (m_bOption == true)
+								{	// オプション設定中
+									Option(m_bOption);
 								}
-								if (m_bChat == true)
-								{//チャットを使用している場合
-								 //チャットのメッセージ表示処理
-									ChatMess(m_bChat);
+								else
+								{
+									if (m_bChat == false)
+									{//チャットを使用していない場合
+									 //ラジオチャットボタンの生成
+										ChatBotton();
+									}
+									if (m_bChat == true)
+									{//チャットを使用している場合
+									 //チャットのメッセージ表示処理
+										ChatMess(m_bChat);
+									}
 								}
 							}
 
@@ -1188,24 +1196,26 @@ void CPlayer::Update(void)
 							//	ChatMess(m_bChat);
 							//}
 
-							if (m_bOption == true)
-							{	// オプション設定中
-								Option(m_bOption);
-							}
-							else
-							{//オプション設定中にチャットをできないようにする
-								if (m_bChat == false)
-								{//チャットを使用していない場合
-								 //ラジオチャットボタンの生成
-									ChatBotton();
+							if (m_bDeath == false)
+							{
+								if (m_bOption == true)
+								{	// オプション設定中
+									Option(m_bOption);
 								}
-								if (m_bChat == true)
-								{//チャットを使用している場合
-								 //チャットのメッセージ表示処理
-									ChatMess(m_bChat);
+								else
+								{//オプション設定中にチャットをできないようにする
+									if (m_bChat == false)
+									{//チャットを使用していない場合
+									 //ラジオチャットボタンの生成
+										ChatBotton();
+									}
+									if (m_bChat == true)
+									{//チャットを使用している場合
+									 //チャットのメッセージ表示処理
+										ChatMess(m_bChat);
+									}
 								}
 							}
-
 
 							D3DXVECTOR3 rotCamera = CManager::GetCamera()->GetRot();
 							D3DXVECTOR3 posR = CManager::GetCamera()->GetPosR();
@@ -1243,7 +1253,7 @@ void CPlayer::Update(void)
 						// ピン関係の更新処理
 						CPlayer::PinUpdateMulti();
 					}
-				 //if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
+					//if (CManager::GetGame()->GetPart() == CGame::PART_ACTION)
 					{// アクションパート
 						if (m_nLife >= 0 && m_Respawn == RESPAWN_NONE)
 						{	// ライフある && 戦闘開始状態の時
@@ -1604,7 +1614,7 @@ void CPlayer::Shoot(void)
 				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this, m_fBulletSpeed);
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 				CParticle::Create(posCanon, 2);
 
 				// レティクル（目的の位置）の取得
@@ -1625,7 +1635,7 @@ void CPlayer::Shoot(void)
 				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this, m_fBulletSpeed);
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 				CParticle::Create(posCanon, 2);
 
 				switch (m_mecha)
@@ -1845,6 +1855,12 @@ void CPlayer::Damage(int nDamage, CScene *pScene)
 						m_nLife = 0;		//体力を０にする
 						m_bDeath = true;	//死亡状態にする
 
+						m_nRadioChat = 0;				// 切り替えリセット
+						m_bChatBotton = false;
+						m_bOption = false;
+						UninitOption();
+						UninitRadioChatButton();
+
 						if (m_bDeath == true && CManager::GetMode() == CManager::MODE_GAME)
 						{//死亡している場合
 							for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
@@ -1969,6 +1985,12 @@ void CPlayer::Damage(int nDamage, CScene *pScene)
 							{//体力が０以下の場合
 								m_nLife = 0;		//体力を０にする
 								m_bDeath = true;	//死亡状態にする
+
+								m_nRadioChat = 0;				// 切り替えリセット
+								m_bChatBotton = false;
+								m_bOption = false;
+								UninitOption();
+								UninitRadioChatButton();
 
 								if (m_bDeath == true && CManager::GetMode() == CManager::MODE_GAME)
 								{//死亡している場合
@@ -3399,7 +3421,7 @@ void CPlayer::CpuShoot(void)
 			if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 			// 弾の生成
-			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this, m_fBulletSpeed);
+			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 
 			// レティクル（目的の位置）の取得
 			posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
@@ -3419,7 +3441,7 @@ void CPlayer::CpuShoot(void)
 			if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 			// 弾の発射
-			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this, m_fBulletSpeed);
+			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 		}
 
 		// 弾を減らす

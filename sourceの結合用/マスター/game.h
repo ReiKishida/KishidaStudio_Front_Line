@@ -177,7 +177,6 @@ private:
 	CModel *m_pField;							// 地面のモデル
 	CModel *m_pSky;								// スカイドーム
 	CModel *m_pFloor;							// 地面のモデル
-	bool m_bConnect[MAX_PLAYER_CONNECT];
 
 	CMouseCursor *m_pMouse;
 

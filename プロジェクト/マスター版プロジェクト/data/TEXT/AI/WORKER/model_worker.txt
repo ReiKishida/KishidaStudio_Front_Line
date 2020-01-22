@@ -37,6 +37,7 @@ CHARACTERSET
 	ATTACK = 10						# UŒ‚—Í
 	SHOOTS = 5						# ”­ŽË”
 	BULLETSPEED = 30.0				# ’e‘¬
+	BULLETLIFE = 80					# ’e‚ÌŽõ–½
 
 	LIFE = 500						# ‘Ï‹v—Í
 	SPEED = 2.5						# ˆÚ“®—Ê

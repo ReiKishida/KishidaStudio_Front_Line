@@ -171,6 +171,8 @@ public:
 
 	int GetNumShoot(void) { return m_nNumShoot; }
 
+	int GetBulletLife(void) { return m_nBulletLife; };
+
 	void SetTeam(int nTeam) { m_nTeam = nTeam; };
 	int GetTeam(void) { return m_nTeam; };
 	bool &GetDeath(void) { return m_bDeath; };
@@ -234,6 +236,8 @@ public:
 	D3DXVECTOR3 GetDestUpper(void) { return m_fRotDestUpper; };
 
 	CScene3D *GetPlayerIcon(void) { return m_pPlayerIcon; };
+
+	void ReleasePlayerUI(void);
 private:
 	void Movement(void);
 	void Shoot(void);
@@ -294,6 +298,7 @@ private:
 	D3DXVECTOR3		m_posOld;			// 過去の位置
 	bool			m_bShoot;			// 弾を発射しているかどうか
 	float			m_fBulletSpeed;		// 弾速
+	int				m_nBulletLife;		// 弾の寿命
 	int				m_nLife;			// 耐久力
 
 	int				m_nCapacity;		// 装弾数
@@ -320,15 +325,15 @@ private:
 	bool			m_bPin;						// ピンを立てているか
 	int				m_nPinLife;					// ピンの表示時間
 	D3DXVECTOR3		m_PinPos;					// ピンの位置
-	// AIのピン
+												// AIのピン
 	CPin			*m_pAIPin[AI_MAX];			// AIのピンのポインタ
 	bool			m_bAIPin[AI_MAX];			// AIがピンを立てているか
 	D3DXVECTOR3		m_AIPinPos[AI_MAX];			// AIのピンの位置
-	// 味方のピン
+												// 味方のピン
 	CPin			*m_pAllyPin;				// 味方のピンのポインタ
 	bool			m_bAllyPin;					// 味方がピンを立てているか
 	D3DXVECTOR3		m_AllyPinPos;				// 味方のピンの位置
-	// 味方AIのピン
+												// 味方AIのピン
 	CPin			*m_pAllyAIPin[AI_MAX];		// 味方AIのピンのポインタ
 	bool			m_bAllyAIPin[AI_MAX];		// 味方AIがピンを立てているか
 	D3DXVECTOR3		m_AllyAIPinPos[AI_MAX];		// 味方AIのピンの位置

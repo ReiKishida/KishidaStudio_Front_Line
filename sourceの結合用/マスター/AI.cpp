@@ -97,6 +97,7 @@ CAIMecha::CAIMecha(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_nCurMotion = 0;
 	m_nLifeMax = 0;
 	m_nNumShoot = 0;
+	m_nBulletLife = 0;
 	m_pPlayer = NULL;
 	m_nTeam = 0;
 	m_bDeathOld = false;
@@ -206,6 +207,10 @@ HRESULT CAIMecha::Init(void)
 							else if (strcmp(aStr, "BULLETSPEED") == 0)
 							{// 弾速
 								fscanf(pFile, " = %f", &m_fBulletSpeed);
+							}
+							else if (strcmp(aStr, "BULLETLIFE") == 0)
+							{// 弾速
+								fscanf(pFile, " = %d", &m_nBulletLife);
 							}
 							else if (strcmp(aStr, "LIFE") == 0)
 							{// 耐久力
@@ -573,10 +578,10 @@ void CAIMecha::Update(void)
 	}
 
 	if (m_bDeath == false)
-	{// 生きてるとき
+	{
 		if (CMenu::GetMode() == CMenu::MODE_SINGLE && m_bDeathOld == true)
 		{// シングルモードで復活したとき
-			// データ初期化処理
+		 // データ初期化処理
 			Cancel();
 			// 追従行動を設定
 			m_AIAction[0] = AI_ACTION_MOVE;
@@ -620,7 +625,7 @@ void CAIMecha::Update(void)
 		}
 	}
 	else if (m_bDeath == true)
-	{// 死んでるとき
+	{
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{
 			//表示をしない処理
@@ -637,7 +642,7 @@ void CAIMecha::Update(void)
 	{// マルチモードで死んだとき
 		if (m_AIAction[1] != AI_ACTION_FOLLOW)
 		{// 追従行動じゃないとき
-			// データ初期化処理
+		 // データ初期化処理
 			Cancel();
 			// 追従行動を設定
 			m_AIAction[0] = AI_ACTION_MOVE;
@@ -874,6 +879,96 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 						}
 					}
 				}
+			}
+			if (CManager::GetClient()->GetPlayerIdx() == 0 && m_pPlayer->GetPlayerConnect() == false)
+			{
+				if (m_nLife > 0 && m_bDeath == false)
+				{//体力が０より大きく且つ死亡していない場合
+					m_state = STATE_DAMAGE;								// ダメージを受けている状態にする
+
+					m_nLife -= nDamage;									// 体力の減算
+
+					if (0 >= m_nLife)
+					{//体力が０以下の場合
+						m_nLife = 0;		//体力を０にする
+						m_bDeath = true;	//死亡状態にする
+
+						if (m_bDeath == true && CManager::GetMode() == CManager::MODE_GAME)
+						{//死亡している場合
+							for (int nCntKill = 0; nCntKill < NUM_KILL_LOG; nCntKill++)
+							{
+								//キルログの表示処理
+								if (CManager::GetGame()->GetLog(nCntKill) == false)
+								{//ログが使用されていない場合
+									if (pScene->GetObjType() == CScene::OBJTYPE_PLAYER)
+									{//オブジェクトの種類がプレイヤーの場合
+										CPlayer *pPlayer = (CPlayer*)pScene;
+										if (pPlayer != NULL)
+										{
+											m_nKillPlayerIdx = pPlayer->GetPlayerIdx();								//キルプレイヤーの番号を設置処理
+											CManager::GetGame()->SetKillIdx(nCntKill, pPlayer->GetPlayerIdx());		//キルプレイヤーの番号を設置処理
+											CManager::GetGame()->SetDeathIdx(nCntKill, m_pPlayer->GetPlayerIdx());	//デスプレイヤーの番号を設置処理
+											CManager::GetGame()->SetPlayerType(0, CGame::TYPE_PLAYER);				//プレイヤーの種類を設置処理
+																													//プレイヤーの種類を設置処理
+											if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+											else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
+											CManager::GetGame()->SetLog(nCntKill, true);							//ログの設置処理
+										}
+									}
+									else if (pScene->GetObjType() == CScene::OBJTYPE_AI)
+									{//オブジェクトの種類がAIの場合
+										CAIMecha *pAIMecha = (CAIMecha*)pScene;
+										if (pAIMecha != NULL)
+										{
+											m_nKillPlayerIdx = pAIMecha->GetPlayer()->GetPlayerIdx();							//キルプレイヤーの番号を設置処理
+											CManager::GetGame()->SetKillIdx(nCntKill, pAIMecha->GetPlayer()->GetPlayerIdx());	//キルプレイヤーの番号を設置処理
+											CManager::GetGame()->SetDeathIdx(nCntKill, m_pPlayer->GetPlayerIdx());				//デスプレイヤーの番号を設置処理
+											if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_DRONE)
+											{//オブジェクトの種類がドローンの場合
+												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_DROWN);						//プレイヤーの種類を設置処理
+																																//プレイヤーの種類を設置処理
+												if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+												else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
+												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
+											}
+											else if (pAIMecha->GetMechaType() == CAIMecha::MECHATYPE_WORKER)
+											{//オブジェクトの種類がワーカーの場合
+												CManager::GetGame()->SetPlayerType(0, CGame::TYPE_WORKER);						//プレイヤーの種類を設置処理
+																																//プレイヤーの種類を設置処理
+												if (m_mechaType == MECHATYPE_DRONE) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_DROWN); }
+												else if (m_mechaType == MECHATYPE_WORKER) { CManager::GetGame()->SetPlayerType(1, CGame::TYPE_WORKER); }
+												CManager::GetGame()->SetLog(nCntKill, true);									//ログの設置処理
+											}
+										}
+									}
+									break;
+								}
+							}
+						}
+
+						//パーティクルを生成
+						CParticle::Create(m_pModel[0]->GetWorldPos(), 4);
+						CParticle::Create(m_pModel[0]->GetWorldPos(), 5);
+
+						//for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
+						//{
+						//	//表示をしない処理
+						//	m_pModel[nCntModel]->SetDisp(false);
+						//}
+
+						//チーム別で処理分け
+						switch (m_nTeam)
+						{
+						case 0:
+							CManager::GetGame()->SetBlueLinkEnergy(CManager::GetGame()->GetBlueLinkEnergy() - 10);
+							break;
+						case 1:
+							CManager::GetGame()->SetRedLinkEnergy(CManager::GetGame()->GetRedLinkEnergy() - 10);
+							break;
+						}
+					}
+				}
+
 			}
 		}
 	}
@@ -1417,7 +1512,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 				{// 派遣型の場合
 					if (pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true && m_bPartSwitch_T == CTutorial::PART_STRATEGY)
 					{// ストラテジーパート時に左クリックされた場合
-						if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
+						if (CManager::GetTutorial()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 						{// 自分を指定している場合
 						 // 前回の情報の保存
 							m_nRallyCountOld = m_nRallyCount;
@@ -1561,7 +1656,7 @@ void CAIMecha::Attack()
 				{// ランダムなタイミングで攻撃
 
 				 // 弾の生成
-					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this, m_fBulletSpeed);
+					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 
 					//撃っている状態にする
 					m_bShoot = true;

@@ -41,6 +41,7 @@ CHARACTERSET
 	DISPERTION = 70					# ‚Î‚ç‚Â‚«
 	RELOAD = 200					# ƒŠƒ[ƒhŽžŠÔ
 	BULLETSPEED = 30.0				# ’e‘¬
+	BULLETLIFE = 55					# ’e‚ÌŽõ–½
 
 	LIFE = 350						# ‘Ï‹v—Í
 	SPEED = 5.2						# ˆÚ“®—Ê
