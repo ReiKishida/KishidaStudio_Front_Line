@@ -80,12 +80,12 @@ class CBulletPlayer : public CBullet
 public:
 	CBulletPlayer();
 	~CBulletPlayer();
-	HRESULT Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,float fBulletSpeed);
+	HRESULT Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,float fBulletSpeed, int nLife);
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
 
-	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, int nTeam, CScene *pScene, float fBulletSpeed);
+	static CBulletPlayer *Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, int nTeam, CScene *pScene, float fBulletSpeed, int nLife);
 
 	bool BulletCollision(void);
 

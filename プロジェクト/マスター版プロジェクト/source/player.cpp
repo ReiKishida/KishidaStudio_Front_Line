@@ -145,6 +145,7 @@ CPlayer::CPlayer(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, obj
 	m_vtxMin = D3DXVECTOR3(1000.0f, 1000.0f, 1000.0f);
 	m_pCursor = NULL;
 	m_nLife = 0;
+	m_nBulletLife = 0;
 	m_nTimer = 0;
 	m_nDisTime = 0;
 	m_mecha = CMechaSelect::MECHATYPE_ASSULT;
@@ -366,6 +367,10 @@ HRESULT CPlayer::Init(void)
 							else if (strcmp(aStr, "BULLETSPEED") == 0)
 							{// 弾速
 								fscanf(pFile, " = %f", &m_fBulletSpeed);
+							}
+							else if (strcmp(aStr, "BULLETLIFE") == 0)
+							{// 弾の寿命
+								fscanf(pFile, " = %d", &m_nBulletLife);
 							}
 							else if (strcmp(aStr, "LIFE") == 0)
 							{// 耐久力
@@ -1609,7 +1614,7 @@ void CPlayer::Shoot(void)
 				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this, m_fBulletSpeed);
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 				CParticle::Create(posCanon, 2);
 
 				// レティクル（目的の位置）の取得
@@ -1630,7 +1635,7 @@ void CPlayer::Shoot(void)
 				if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 				// 弾の生成
-				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this, m_fBulletSpeed);
+				CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 				CParticle::Create(posCanon, 2);
 
 				switch (m_mecha)
@@ -3416,7 +3421,7 @@ void CPlayer::CpuShoot(void)
 			if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 			// 弾の生成
-			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this, m_fBulletSpeed);
+			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2], m_pAngleV[nCntShoots * 2], m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 
 			// レティクル（目的の位置）の取得
 			posReticle = D3DXVECTOR3(MtxSearch._41, MtxSearch._42, MtxSearch._43);
@@ -3436,7 +3441,7 @@ void CPlayer::CpuShoot(void)
 			if (m_nDispertion != 0) { m_pAngleV[nCntShoots * 2 + 1] += (float)(m_nDispertion - (rand() % m_nDispertion * 2)) * 0.0005f; }
 
 			// 弾の発射
-			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this, m_fBulletSpeed);
+			CBulletPlayer::Create(posCanon, m_pAngle[nCntShoots * 2 + 1], m_pAngleV[nCntShoots * 2 + 1], m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 		}
 
 		// 弾を減らす

@@ -97,6 +97,7 @@ CAIMecha::CAIMecha(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, o
 	m_nCurMotion = 0;
 	m_nLifeMax = 0;
 	m_nNumShoot = 0;
+	m_nBulletLife = 0;
 	m_pPlayer = NULL;
 	m_nTeam = 0;
 	m_bDeathOld = false;
@@ -206,6 +207,10 @@ HRESULT CAIMecha::Init(void)
 							else if (strcmp(aStr, "BULLETSPEED") == 0)
 							{// íeë¨
 								fscanf(pFile, " = %f", &m_fBulletSpeed);
+							}
+							else if (strcmp(aStr, "BULLETLIFE") == 0)
+							{// íeë¨
+								fscanf(pFile, " = %d", &m_nBulletLife);
 							}
 							else if (strcmp(aStr, "LIFE") == 0)
 							{// ëœãvóÕ
@@ -1651,7 +1656,7 @@ void CAIMecha::Attack()
 				{// ÉâÉìÉ_ÉÄÇ»É^ÉCÉ~ÉìÉOÇ≈çUåÇ
 
 				 // íeÇÃê∂ê¨
-					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this, m_fBulletSpeed);
+					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 
 					//åÇÇ¡ÇƒÇ¢ÇÈèÛë‘Ç…Ç∑ÇÈ
 					m_bShoot = true;

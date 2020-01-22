@@ -170,7 +170,7 @@ void CBulletCollision::Draw(void)
 //==================================
 // ê∂ê¨èàóù
 //==================================
-CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, int nTeam, CScene *pScene, float fBulletSpeed)
+CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, int nTeam, CScene *pScene, float fBulletSpeed, int nLife)
 {
 	CBulletPlayer *pBullet = NULL;
 
@@ -180,7 +180,7 @@ CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngle
 	{// ÉÅÉÇÉäämï€ê¨å˜
 		pBullet->m_nTeam = nTeam;
 		pBullet->m_pScene = pScene;
-		pBullet->Init(pos, fAngle, fAngleVertical, nDamage,fBulletSpeed);
+		pBullet->Init(pos, fAngle, fAngleVertical, nDamage,fBulletSpeed, nLife);
 	}
 
 	return pBullet;
@@ -203,13 +203,13 @@ CBulletPlayer::~CBulletPlayer()
 //=========================================
 // èâä˙âªèàóù
 //=========================================
-HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,float fBulletSpeed)
+HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,float fBulletSpeed, int nLife)
 {
 	CBullet::Init(pos);										// à íuÇÃê›íË
 	CBullet::SetLighting(false);
 
 	CBullet::SetMove(D3DXVECTOR3(sinf(fAngle) * fBulletSpeed, cosf(fAngleVertical) * fBulletSpeed, cosf(fAngle) * fBulletSpeed));
-	CBullet::SetLife(BULLET_LIFE);
+	CBullet::SetLife(nLife);
 	CBullet::SetSize(D3DXVECTOR3(3.0f, 3.0f, 0.0f));							// ëÂÇ´Ç≥ÇÃê›íË
 	CBullet::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));	// êFÇÃê›íË
 	CBullet::SetDamage(nDamage);

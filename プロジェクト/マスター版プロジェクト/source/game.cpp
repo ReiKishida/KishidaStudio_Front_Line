@@ -2152,7 +2152,7 @@ char *CGame::ReadPlayerData(char *pStr)
 
 							D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
 							// ’e‚Ì¶¬
-							CBulletPlayer::Create(posCanon, fAIAngle[nCntAI], fAIAngleV[nCntAI], nAIAttack[nCntAI], nTeam, m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI), m_pPlayer[nPlayerIdx]->GetBulletSpeed());
+							CBulletPlayer::Create(posCanon, fAIAngle[nCntAI], fAIAngleV[nCntAI], nAIAttack[nCntAI], nTeam, m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI), m_pPlayer[nPlayerIdx]->GetBulletSpeed(), m_pPlayer[nPlayerIdx]->GetBulletLife());
 
 							m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetShoot(false);
 						}
@@ -2708,7 +2708,7 @@ char *CGame::ReadCPUData(char *pStr)
 
 						D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42 - 8.0f, mtxCanon._43);
 						// ’e‚Ì¶¬
-						CBulletPlayer::Create(posCanon, fAIAngle[nCntAI], fAIAngleV[nCntAI], nAIAttack[nCntAI], nTeam, m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI), m_pPlayer[nPlayerIdx]->GetBulletSpeed());
+						CBulletPlayer::Create(posCanon, fAIAngle[nCntAI], fAIAngleV[nCntAI], nAIAttack[nCntAI], nTeam, m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI), m_pPlayer[nPlayerIdx]->GetBulletSpeed(), m_pPlayer[nPlayerIdx]->GetBulletLife());
 
 						m_pPlayer[nPlayerIdx]->GetMyAI(nCntAI)->SetShoot(false);
 					}
@@ -2792,10 +2792,10 @@ void CGame::CreatePlayerBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXV
 		// ’e‚Ì¶¬
 		D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
 		D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed());
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed(), m_pPlayer[nPlayerIdx]->GetBulletLife());
 		mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
 		posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed());
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed(), m_pPlayer[nPlayerIdx]->GetBulletLife());
 
 		//’e‚ð”­ŽË‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©‚ÌÝ’uˆ—
 		m_pPlayer[nPlayerIdx]->SetShoot(false);
@@ -2925,10 +2925,10 @@ void CGame::CreateCPUBullet(int nPlayerIdx, int nNumShoot, int nAttack, D3DXVECT
 		// ’e‚Ì¶¬
 		D3DXMATRIX mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(2)->GetMtxWorld();
 		D3DXVECTOR3 posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed());
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2], pAngleV[nCntShoot * 2], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed(), m_pPlayer[nPlayerIdx]->GetBulletLife());
 		mtxCanon = m_pPlayer[nPlayerIdx]->GetModel(3)->GetMtxWorld();
 		posCanon = D3DXVECTOR3(mtxCanon._41, mtxCanon._42, mtxCanon._43) + D3DXVECTOR3(sinf(cameraRot.y) * 30.0f, cosf(cameraRot.x) * 30.0f, cosf(cameraRot.y) * 30.0f);
-		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed());
+		CBulletPlayer::Create(posCanon, pAngle[nCntShoot * 2 + 1], pAngleV[nCntShoot * 2 + 1], nAttack, m_pPlayer[nPlayerIdx]->GetTeam(), m_pPlayer[nPlayerIdx], m_pPlayer[nPlayerIdx]->GetBulletSpeed(), m_pPlayer[nPlayerIdx]->GetBulletLife());
 
 		//’e‚ð”­ŽË‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©‚ÌÝ’uˆ—
 		m_pPlayer[nPlayerIdx]->SetShoot(false);

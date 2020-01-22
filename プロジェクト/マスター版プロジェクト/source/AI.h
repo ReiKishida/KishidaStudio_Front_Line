@@ -194,6 +194,7 @@ private:
 	int				m_nAttack;			// UŒ‚—Í
 	int				m_nNumShoot;		// ”­Ë”
 	float			m_fBulletSpeed;		// ’e‘¬
+	int				m_nBulletLife;		// ’e‚Ìõ–½
 	int				m_nTeam;			// ƒ`[ƒ€
 	bool			m_bDeath;			// €–S‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©
 	bool			m_bDeathOld;		// ‘O‰ñ‚Ì€–Só‹µ

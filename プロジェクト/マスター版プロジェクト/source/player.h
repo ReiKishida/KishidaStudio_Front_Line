@@ -171,6 +171,8 @@ public:
 
 	int GetNumShoot(void) { return m_nNumShoot; }
 
+	int GetBulletLife(void) { return m_nBulletLife; };
+
 	void SetTeam(int nTeam) { m_nTeam = nTeam; };
 	int GetTeam(void) { return m_nTeam; };
 	bool &GetDeath(void) { return m_bDeath; };
@@ -296,6 +298,7 @@ private:
 	D3DXVECTOR3		m_posOld;			// ‰ß‹‚ÌˆÊ’u
 	bool			m_bShoot;			// ’e‚ğ”­Ë‚µ‚Ä‚¢‚é‚©‚Ç‚¤‚©
 	float			m_fBulletSpeed;		// ’e‘¬
+	int				m_nBulletLife;		// ’e‚Ìõ–½
 	int				m_nLife;			// ‘Ï‹v—Í
 
 	int				m_nCapacity;		// ‘•’e”
