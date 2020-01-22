@@ -2038,6 +2038,7 @@ char *CGame::ReadPlayerData(char *pStr)
 				if (m_bPlayerDeath[nPlayerIdx] == true)
 				{
 					m_bPlayerDeath[nPlayerIdx] = false;
+					m_pPlayer[nPlayerIdx]->GetDeath() = false;
 					for (int nCntModel = 0; nCntModel < m_pPlayer[nPlayerIdx]->GetNumParts(); nCntModel++)
 					{
 						m_pPlayer[nPlayerIdx]->GetModel(nCntModel)->SetDisp(true);
