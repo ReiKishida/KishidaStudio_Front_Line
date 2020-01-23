@@ -353,7 +353,7 @@ HRESULT CAIMecha::Init(void)
 	m_nLife = m_nLifeMax;	// ライフの初期値
 
 	if (m_pPlayer->GetTeam() == 0)
-	{
+	{// 青チーム
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{// チームごとの色に設定
 			m_pModel[nCntModel]->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f));
@@ -363,7 +363,7 @@ HRESULT CAIMecha::Init(void)
 		m_nTeam = 0;
 	}
 	else if (m_pPlayer->GetTeam() == 1)
-	{
+	{// 赤チーム
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{// チームごとの色に設定
 			m_pModel[nCntModel]->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f));
@@ -378,26 +378,22 @@ HRESULT CAIMecha::Init(void)
 
 	// 移動系AI数値の初期化
 	if (CManager::GetMode() == CManager::MODE_GAME)
-	{
+	{// ゲームモード
 		m_pNodeData = CGame::GetNodeFiler();	// ファイル情報の取得
-												// パート関係
+		// パート関係
 		m_bPartSwitch = CGame::PART_ACTION;
 		m_bPartSwitchOld = CGame::PART_ACTION;
 	}
 	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
-	{
+	{// チュートリアルモード
 		if (CTutorialMenu::GetMode() == CTutorialMenu::TYPE_STRATEGY)
-		{
+		{// ストラテジーチュートリアル
 			m_pNodeData = CTutorial::GetNodeFiler();	// ファイル情報の取得
-														// パート関係
+			// パート関係
 			m_bPartSwitch_T = CTutorial::PART_ACTION;
 			m_bPartSwitchOld_T = CTutorial::PART_ACTION;
 		}
 	}
-
-	// パート関係
-	m_bPartSwitch = CGame::PART_ACTION;
-	m_bPartSwitchOld = CGame::PART_ACTION;
 
 	// ノード関係
 	m_nStartNode = 0;
@@ -452,14 +448,14 @@ HRESULT CAIMecha::Init(void)
 	m_AIAction[3] = AI_ACTION_ATTACK;
 
 	if (CManager::GetMode() == CManager::MODE_GAME)
-	{
+	{// ゲームモード
 		// マップデータファイルの読み込み
 		m_pNodeData->FileLoad(LOAD_FILENAME);
 	}
 	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
-	{
+	{// チュートリアルモード
 		if (CTutorialMenu::GetMode() == CTutorialMenu::TYPE_STRATEGY)
-		{
+		{// ストラテジーチュートリアル
 			// マップデータファイルの読み込み
 			m_pNodeData->FileLoad(LOAD_FILENAME_TUTORIAL);
 		}
@@ -488,28 +484,26 @@ HRESULT CAIMecha::Init(void)
 		m_pAIIcon = CScene3D::Create();
 		m_pAIIcon->CScene3D::SetPos(D3DXVECTOR3(m_pos.x, m_pos.y + 50.0f, m_pos.z));
 		m_pAIIcon->CScene3D::SetSize(D3DXVECTOR3(100.0f, 0.0f, 100.0f));
-		if (m_nTeam == 0)
-		{
-			if (MECHATYPE_WORKER == m_mechaType)
-			{
 
+		if (m_nTeam == 0)
+		{// 青チーム
+			if (MECHATYPE_WORKER == m_mechaType)
+			{// ワーカータイプ
 				m_pAIIcon->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_BLUE_DISP_WORKER));
 			}
 			else if (MECHATYPE_DRONE == m_mechaType)
-			{
+			{// ドローンタイプ
 				m_pAIIcon->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_BLUE_DISP_DRONE));
-
 			}
 		}
 		else
-		{
+		{// 赤チーム
 			if (MECHATYPE_WORKER == m_mechaType)
-			{
-
+			{// ワーカータイプ
 				m_pAIIcon->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_RED_DISP_WORKER));
 			}
 			else if (MECHATYPE_DRONE == m_mechaType)
-			{
+			{// ドローンタイプ
 				m_pAIIcon->BindTexture(CTexture::GetTexture(CTexture::TEXTURE_RED_DISP_DRONE));
 			}
 		}
@@ -578,10 +572,10 @@ void CAIMecha::Update(void)
 	}
 
 	if (m_bDeath == false)
-	{
+	{// 生存時
 		if (CMenu::GetMode() == CMenu::MODE_SINGLE && m_bDeathOld == true)
 		{// シングルモードで復活したとき
-		 // データ初期化処理
+			// データ初期化処理
 			Cancel();
 			// 追従行動を設定
 			m_AIAction[0] = AI_ACTION_MOVE;
@@ -598,7 +592,7 @@ void CAIMecha::Update(void)
 		m_pAIIcon->CScene3D::SetPos(D3DXVECTOR3(m_pos.x, m_pos.y + 150.0f, m_pos.z));
 
 		if (CMenu::GetMode() == CMenu::MODE_MULTI)
-		{
+		{// マルチモード
 			if (CManager::GetClient()->GetPlayerIdx() == m_pPlayer->GetPlayerIdx() && m_pPlayer->GetDeath() == false)
 			{
 				// AI関係の更新処理
@@ -611,21 +605,21 @@ void CAIMecha::Update(void)
 			}
 		}
 		else if (CMenu::GetMode() == CMenu::MODE_SINGLE)
-		{
+		{// シングルモード
 			// AI関係の更新処理
 			CAIMecha::AIUpdate();
 		}
 		else if (CMenu::GetMode() == CMenu::MODE_TUTORIAL)
-		{
+		{// チュートリアルモード
 			if (CTutorialMenu::GetMode() == CTutorialMenu::TYPE_STRATEGY)
-			{
+			{// ストラテジーチュートリアル
 				// AI関係の更新処理
 				CAIMecha::AIUpdate();
 			}
 		}
 	}
 	else if (m_bDeath == true)
-	{
+	{// 死亡時
 		for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
 		{
 			//表示をしない処理
@@ -642,7 +636,7 @@ void CAIMecha::Update(void)
 	{// マルチモードで死んだとき
 		if (m_AIAction[1] != AI_ACTION_FOLLOW)
 		{// 追従行動じゃないとき
-		 // データ初期化処理
+			// データ初期化処理
 			Cancel();
 			// 追従行動を設定
 			m_AIAction[0] = AI_ACTION_MOVE;
@@ -674,7 +668,7 @@ void CAIMecha::Draw(void)
 
 	D3DXMATRIX mtxRot, mtxTrans;	// 計算用マトリックス
 
-									// ワールドマトリックスの初期化
+	// ワールドマトリックスの初期化
 	D3DXMatrixIdentity(&m_mtxWorld);
 
 	// 回転を反映
@@ -702,7 +696,7 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 	if (CMenu::GetMode() == CMenu::MODE_SINGLE)
 	{//シングルプレイの場合
 		if (m_nLife > 0 && m_bDeath == false)
-		{
+		{//体力が０より大きく且つ死亡していない場合
 			m_state = STATE_DAMAGE;	// ダメージを受けている状態にする
 
 			m_nLife -= nDamage;	//体力の減算
@@ -861,12 +855,6 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 						CParticle::Create(m_pModel[0]->GetWorldPos(), 4);
 						CParticle::Create(m_pModel[0]->GetWorldPos(), 5);
 
-						//for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-						//{
-						//	//表示をしない処理
-						//	m_pModel[nCntModel]->SetDisp(false);
-						//}
-
 						//チーム別で処理分け
 						switch (m_nTeam)
 						{
@@ -949,12 +937,6 @@ void CAIMecha::Damage(int nDamage, CScene *pScene)
 						//パーティクルを生成
 						CParticle::Create(m_pModel[0]->GetWorldPos(), 4);
 						CParticle::Create(m_pModel[0]->GetWorldPos(), 5);
-
-						//for (int nCntModel = 0; nCntModel < m_nNumParts; nCntModel++)
-						//{
-						//	//表示をしない処理
-						//	m_pModel[nCntModel]->SetDisp(false);
-						//}
 
 						//チーム別で処理分け
 						switch (m_nTeam)
@@ -1039,47 +1021,51 @@ void CAIMecha::AIUpdate()
 	//}
 
 	//CDebugProc::Print("m_bFind : %s\n", m_bFind ? "true" : "false");
-
 	//CDebugProc::Print("最近地点 : %d", m_nNearNode);
 
 	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
 	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
 
 	if (CManager::GetMode() == CManager::MODE_GAME)
-	{
+	{// ゲームモード
 		// 前回のパート情報の保存
 		m_bPartSwitchOld = m_bPartSwitch;
 		// 現在のパート情報を取得
 		m_bPartSwitch = CManager::GetGame()->GetPart();
+
+		if (m_bPartSwitch == CGame::PART_ACTION && m_bPartSwitchOld == CGame::PART_STRATEGY)
+		{// アクションへ移行したとき
+			if (m_AIAction[0] == AI_ACTION_NONE)
+			{// AIの行動が決定していない場合
+				// 追従モードに設定する
+				m_AIAction[0] = AI_ACTION_MOVE;
+				m_AIAction[1] = AI_ACTION_FOLLOW;
+				m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
+			}
+		}
 	}
 	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
-	{
+	{// チュートリアルモード
 		if (CTutorialMenu::GetMode() == CTutorialMenu::TYPE_STRATEGY)
-		{
+		{// ストラテジーチュートリアル
 			// 前回のパート情報の保存
 			m_bPartSwitchOld_T = m_bPartSwitch_T;
 			// 現在のパート情報を取得
 			m_bPartSwitch_T = CManager::GetTutorial()->GetPart();
+
+			if (m_bPartSwitch_T == CTutorial::PART_ACTION && m_bPartSwitchOld_T == CTutorial::PART_STRATEGY)
+			{// アクションへ移行したとき
+				if (m_AIAction[0] == AI_ACTION_NONE)
+				{// AIの行動が決定していない場合
+					// 追従モードに設定する
+					m_AIAction[0] = AI_ACTION_MOVE;
+					m_AIAction[1] = AI_ACTION_FOLLOW;
+					m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
+				}
+			}
 		}
 	}
-
-	//if (m_bPartSwitchOld == CGame::PART_ACTION && m_bPartSwitch == CGame::PART_STRATEGY)
-	//{// ストラテジーへ移行したとき
-	//	// データ初期化処理
-	//	Cancel();
-	//}
-
-	if (m_bPartSwitch == CGame::PART_ACTION && m_bPartSwitchOld == CGame::PART_STRATEGY)
-	{// アクションへ移行したとき
-		if (m_AIAction[0] == AI_ACTION_NONE)
-		{// AIの行動が決定していない場合
-		 // 追従モードに設定する
-			m_AIAction[0] = AI_ACTION_MOVE;
-			m_AIAction[1] = AI_ACTION_FOLLOW;
-			m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
-		}
-	}
-
+	
 	if (m_bGoal)
 	{// 目的地到着時
 		m_nCountPoint = 0;
@@ -1120,17 +1106,12 @@ void CAIMecha::AIUpdate()
 	CAIMecha::NowPointSearch();
 
 	if (CManager::GetMode() == CManager::MODE_GAME)
-	{
-		//if (m_bPartSwitch == CGame::PART_ACTION)
-		{// アクションパートの場合
-		 //m_nRallyCount = 0;
-
-		 // 自動移動処理
-			CAIMecha::AutoMove();
-		}
+	{// ゲームモード
+		// 自動移動処理
+		CAIMecha::AutoMove();
 
 		if (m_bPartSwitch == CGame::PART_STRATEGY)
-		{// ストラテジーパートの場合
+		{// ストラテジーパート
 			if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
 			{// AIの行動が決定している状態で左クリックされた場合
 				if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
@@ -1172,19 +1153,14 @@ void CAIMecha::AIUpdate()
 		}
 	}
 	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
-	{
-		//if (m_bPartSwitch_T == CGame::PART_ACTION)
-		{// アクションパートの場合
-		 //m_nRallyCount = 0;
-
-		 // 自動移動処理
-			CAIMecha::AutoMove();
-		}
+	{// チュートリアルモード
+		// 自動移動処理
+		CAIMecha::AutoMove();
 
 		if (CTutorialMenu::GetMode() == CTutorialMenu::TYPE_STRATEGY)
-		{
+		{// ストラテジーチュートリアル
 			if (m_bPartSwitch_T == CTutorial::PART_STRATEGY)
-			{// ストラテジーパートの場合
+			{// ストラテジーパート
 				if (m_LogicTree[0] != -1 && pMouse->GetTrigger(CInputMouse::DIMS_BUTTON_0) == true)
 				{// AIの行動が決定している状態で左クリックされた場合
 					if (CManager::GetTutorial()->GetButtonManager()->GetSelectAIType() == m_mechaType)
@@ -1234,14 +1210,14 @@ void CAIMecha::AIUpdate()
 void CAIMecha::AIActionSet(CInputMouse *pMouse)
 {
 	if (CManager::GetMode() == CManager::MODE_GAME)
-	{
+	{// ゲームモード時
 		if (m_bPartSwitch == CGame::PART_STRATEGY && CManager::GetGame()->GetButtonManager() != NULL)
 		{// ストラテジーパート時でボタンマネージャーがNULLじゃない場合
 			if (CManager::GetGame()->GetButtonManager()->GetSelectFinish() == true)
 			{// AIの行動が決定している場合
 				if (CManager::GetGame()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 				{// 自分のメカタイプが選択されている場合
-				 // データ初期化処理
+					// データ初期化処理
 					Cancel();
 
 					// 行動の初期化
@@ -1391,14 +1367,17 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 		}
 	}
 	else if (CManager::GetMode() == CManager::MODE_TUTORIAL)
-	{
+	{// チュートリアルモード時
 		if (m_bPartSwitch_T == CTutorial::PART_STRATEGY && CManager::GetTutorial()->GetButtonManager() != NULL)
-		{// ストラテジーパート時でボタンマネージャーがNULLじゃない場合
+		{// ストラテジーパートでボタンマネージャーがNULLじゃない場合
 			if (CManager::GetTutorial()->GetButtonManager()->GetSelectFinish() == true)
 			{// AIの行動が決定している場合
 				if (CManager::GetTutorial()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 				{// 自分のメカタイプが選択されている場合
-				 // 行動の初期化
+					// データ初期化処理
+					Cancel();
+
+					// 行動の初期化
 					for (int nCntAction = 0; nCntAction < 4; nCntAction++)
 					{// 行動数の分回る
 						m_AIAction[nCntAction] = AI_ACTION_NONE;
@@ -1407,7 +1386,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 
 					for (int nCntButton = 0; nCntButton < 4; nCntButton++)
 					{// ボタンの数だけ回る
-					 // 指示の取得
+						// 指示の取得
 						m_LogicTree[nCntButton] = CManager::GetTutorial()->GetButtonManager()->GetSelectLogic(nCntButton);
 					}
 
@@ -1496,15 +1475,7 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 			}
 		}
 
-		// 行動ごとの処理
-		if (m_AIAction[0] == AI_ACTION_NONE)
-		{// AIの行動が決定していない場合
-		 // 追従モードに設定する
-			m_AIAction[0] = AI_ACTION_MOVE;
-			m_AIAction[1] = AI_ACTION_FOLLOW;
-			m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
-		}
-		else if (m_AIAction[0] != AI_ACTION_NONE)
+		if (m_AIAction[0] != AI_ACTION_NONE)
 		{// AIの行動が決定している場合
 			if (m_AIAction[0] == AI_ACTION_MOVE)
 			{// 移動の場合
@@ -1654,8 +1625,7 @@ void CAIMecha::Attack()
 
 				if (rand() % 30 == 0)
 				{// ランダムなタイミングで攻撃
-
-				 // 弾の生成
+					// 弾の生成
 					CBulletPlayer::Create(posCanon, m_fAngle, m_fAngleV, m_nAttack, m_nTeam, this, m_fBulletSpeed, m_nBulletLife);
 
 					//撃っている状態にする
@@ -1735,18 +1705,6 @@ void CAIMecha::AutoMove()
 				m_bPatrol = true;
 				m_nPoint = 0;
 			}
-			//else
-			//{
-			//	// データ初期化処理
-			//	Cancel();
-
-			//	// 行動の初期化
-			//	for (int nCntAction = 0; nCntAction < 4; nCntAction++)
-			//	{// 行動数の分回る
-			//		m_AIAction[nCntAction] = AI_ACTION_NONE;
-			//		m_LogicTree[nCntAction] = -1;
-			//	}
-			//}
 		}
 	}
 	else if (m_nBreaktime == 0)
@@ -1994,7 +1952,7 @@ void CAIMecha::RootSearch()
 	int nCntWeight = 0;				// コストのカウンタ
 	std::vector<int> path;			// 最短経路の情報を保持するvector
 
-									//======= エッジコストの算出 =========================================================================
+	//======= エッジコストの算出 =========================================================================
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		weight[nCntWeight] = sqrt(
@@ -2050,7 +2008,7 @@ void CAIMecha::RallyRootSearch()
 	int nCntWeight = 0;		// コストのカウンタ
 	std::vector<int> path;	// 最短経路の情報を保持するvector
 
-							//======= エッジコストの算出 =========================================================================
+	//======= エッジコストの算出 =========================================================================
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		if (m_nRallyCount != 0)
@@ -2148,7 +2106,7 @@ void CAIMecha::PatrolRootSearch()
 	int nCntWeight = 0;		// コストのカウンタ
 	std::vector<int> path;	// 最短経路の情報を保持するvector
 
-							//======= エッジコストの算出 =========================================================================
+	//======= エッジコストの算出 =========================================================================
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++, nCntWeight++)
 	{// ノードの数だけ回る
 		if (m_nRallyCount != 0)
@@ -2409,7 +2367,7 @@ void CAIMecha::NowPointSearch()
 {
 	float fMinLength = 100000, fLength = 100000;	// 差分系
 
-													// 自分の位置に最も近いノードを検索する
+	// 自分の位置に最も近いノードを検索する
 	for (int nCntNode = 0; nCntNode < m_pNodeData->GetLoadData().nodeMax; nCntNode++)
 	{// ノードの数だけ回る
 	 // 差分を求める
