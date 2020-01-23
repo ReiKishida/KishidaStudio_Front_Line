@@ -445,11 +445,14 @@ HRESULT CAIMecha::Init(void)
 		m_LogicTree[nCntAction] = -1;
 	}
 
-	// 追従行動を設定
-	m_AIAction[0] = AI_ACTION_MOVE;
-	m_AIAction[1] = AI_ACTION_FOLLOW;
-	m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
-	m_AIAction[3] = AI_ACTION_ATTACK;
+	if (CManager::GetMode() == CManager::MODE_GAME)
+	{
+		// 追従行動を設定
+		m_AIAction[0] = AI_ACTION_MOVE;
+		m_AIAction[1] = AI_ACTION_FOLLOW;
+		m_AIAction[2] = AI_ACTION_FOLLOW_SHORT;
+		m_AIAction[3] = AI_ACTION_ATTACK;
+	}
 
 	if (CManager::GetMode() == CManager::MODE_GAME)
 	{
@@ -1398,7 +1401,9 @@ void CAIMecha::AIActionSet(CInputMouse *pMouse)
 			{// AIの行動が決定している場合
 				if (CManager::GetTutorial()->GetButtonManager()->GetSelectAIType() == m_mechaType)
 				{// 自分のメカタイプが選択されている場合
-				 // 行動の初期化
+					Cancel();
+
+					// 行動の初期化
 					for (int nCntAction = 0; nCntAction < 4; nCntAction++)
 					{// 行動数の分回る
 						m_AIAction[nCntAction] = AI_ACTION_NONE;

@@ -355,9 +355,11 @@ void CGame::Update(void)
 				//必要な情報を書き込む処理
 				PrintData();
 			}
-			//情報を読み取る処理
-			ReadMessage();
-
+			if (CFade::GetFade() == CFade::FADE_NONE)
+			{
+				//情報を読み取る処理
+				ReadMessage();
+			}
 			if (m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->GetRespawn() == CPlayer::RESPAWN_NONE)
 			{
 				//パートの切り替え処理
@@ -643,6 +645,16 @@ void CGame::EndUpdate(void)
 		if (CManager::GetClient() != NULL)
 		{
 			m_pPlayer[CManager::GetClient()->GetPlayerIdx()]->ReleasePlayerUI();
+
+			switch (CResult::GetTeamWin())
+			{
+			case CResult::TEAM_WIN_BLUE:
+				m_nRedLinkEnergy = 0;
+				break;
+			case CResult::TEAM_WIN_RED:
+				m_nBlueLinkEnergy = 0;
+				break;
+			}
 		}
 	}
 	else if (CMenu::MODE_SINGLE == CMenu::GetMode())
