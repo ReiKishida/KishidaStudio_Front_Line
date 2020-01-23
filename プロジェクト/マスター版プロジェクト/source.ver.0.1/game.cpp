@@ -84,9 +84,9 @@ CMechaSelect::MECHATYPE CGame::m_aMechaType[MAX_PLAYER_CONNECT] = { CMechaSelect
 CDamageDirection *CGame::m_pDamageDirection = NULL;
 CNodeDataFiler *CGame::m_pNodeFiler = NULL;			// マップデータクラスのポインタ変数
 
-													//=============================================================================
-													// コンストラクタ
-													//=============================================================================
+//=============================================================================
+// コンストラクタ
+//=============================================================================
 CGame::CGame(int nPriority, CScene::OBJTYPE objType) : CScene(nPriority, objType)
 {
 	m_modeCounter = 0;
@@ -346,10 +346,10 @@ void CGame::Update(void)
 			{
 				/*if (CManager::GetClient()->GetPlayerIdx() == 0)
 				{
-				if (m_state == STATE_NORMAL)
-				{
-				m_state = STATE_END;
-				}
+					if (m_state == STATE_NORMAL)
+					{
+						m_state = STATE_END;
+					}
 				}*/
 
 				//必要な情報を書き込む処理
@@ -442,7 +442,7 @@ void CGame::Update(void)
 		break;
 	case STATE_END:
 		EndUpdate();
-		break;
+	break;
 	case STATE_END_FADE_OUT:
 		EndFadeOutUpdate();
 		break;
@@ -493,13 +493,13 @@ void CGame::StartingFadeOutUpdate(void)
 {
 	if (m_pFadeBG == NULL)
 	{//NULLの場合
-	 //背景の生成
+		//背景の生成
 		m_pFadeBG = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH, SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_NONE);
 		m_pFadeBG->SetColor(D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f));
 	}
 	else
 	{//NULLではない場合
-	 //色を取得し透明度を加算
+		//色を取得し透明度を加算
 		D3DXCOLOR col = m_pFadeBG->GetColor();
 		col.a += 0.01f;
 
@@ -508,7 +508,7 @@ void CGame::StartingFadeOutUpdate(void)
 
 		if (col.a >= 1.0f)
 		{//透明度が１以上の場合
-		 //開始前のフェードインにする
+			//開始前のフェードインにする
 			m_state = STATE_STARTING_FADE_IN;
 		}
 	}
@@ -572,7 +572,7 @@ void CGame::StartingFadeInUpdate(void)
 //=============================================================================
 // 通常の更新処理
 //=============================================================================
-void CGame::NomalUpdate(void)
+void CGame::NomalUpdate (void)
 {
 	if (CMenu::GetMode() == CMenu::MODE_MULTI)
 	{//マルチプレイの場合
@@ -582,14 +582,14 @@ void CGame::NomalUpdate(void)
 			{//プレイヤー番号が０の場合
 				if (m_nBlueLinkEnergy <= 0)
 				{//ブルーチームのリンクエネルギーが０以下の場合
-				 //終了状態にする
+					//終了状態にする
 					m_state = STATE_END;
 					//レッドチームの勝利にする
 					CResult::SetTeamWin(CResult::TEAM_WIN_RED);
 				}
 				else if (m_nRedLinkEnergy <= 0)
 				{//レッドチームのリンクエネルギーが0以下の場合
-				 //終了状態にする
+					//終了状態にする
 					m_state = STATE_END;
 					//ブルーチームの勝利にする
 					CResult::SetTeamWin(CResult::TEAM_WIN_BLUE);
@@ -601,14 +601,14 @@ void CGame::NomalUpdate(void)
 	{//シングルプレイの場合
 		if (m_nBlueLinkEnergy <= 0)
 		{//ブルーチームのリンクエネルギーが０以下の場合
-		 //終了状態にする
+			//終了状態にする
 			m_state = STATE_END;
 			//レッドチームの勝利にする
 			CResult::SetTeamWin(CResult::TEAM_WIN_RED);
 		}
 		else if (m_nRedLinkEnergy <= 0)
 		{//レッドチームのリンクエネルギーが0以下の場合
-		 //終了状態にする
+			//終了状態にする
 			m_state = STATE_END;
 			//ブルーチームの勝利にする
 			CResult::SetTeamWin(CResult::TEAM_WIN_BLUE);
@@ -652,17 +652,17 @@ void CGame::EndUpdate(void)
 
 	if (m_pEndBG == NULL)
 	{//NULLの場合
-	 //背景の生成
+		//背景の生成
 		m_pEndBG = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.0f), SCREEN_WIDTH, SCREEN_HEIGHT, CUI_TEXTURE::UIFLAME_NONE);
 
 		if (CResult::GetTeamWin() == CResult::TEAM_WIN_BLUE)
 		{//ブルーチームの勝利の場合
-		 //背景の色を青にする
+			//背景の色を青にする
 			m_pEndBG->SetColor(D3DXCOLOR(0.0f, 0.0f, 1.0f, 0.0f));
 		}
 		else if (CResult::GetTeamWin() == CResult::TEAM_WIN_RED)
 		{//レッドチームの勝利の場合
-		 //背景の色を赤にする
+			//背景の色を赤にする
 			m_pEndBG->SetColor(D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.0f));
 		}
 		//終了のフェードアウトにする
@@ -677,7 +677,7 @@ void CGame::EndFadeOutUpdate(void)
 {
 	if (m_pEndBG != NULL)
 	{//NULLではない場合
-	 //色を取得し透明度を加算
+		//色を取得し透明度を加算
 		D3DXCOLOR col = m_pEndBG->GetColor();
 		col.a += 0.01f;
 
@@ -686,21 +686,21 @@ void CGame::EndFadeOutUpdate(void)
 
 		if (col.a >= 0.5f)
 		{//透明度が0.5以上の場合
-		 //フェード状態にする
+			//フェード状態にする
 			m_state = STATE_FADE;
 
 			//結果表示に必要なUIを生成
 
 			if (m_pEndScore[0] == NULL)
 			{//NULLの場合
-			 //ブルーチームのスコアを生成
+				//ブルーチームのスコアを生成
 				m_pEndScore[0] = CUI_NUMBER::Create(D3DXVECTOR3(515.0f, 500.0f, 0.0f), 150.0f, 150.0f, 75.0f, CUI_NUMBER::UI_NUMTYPE_NONE, 0, 1, 3);
 				//m_pEndScore[0]->SetNumDisPlay(m_nBlueLinkEnergy, CUI_NUMBER::UI_NUMTYPE_NONE);
 				m_pEndScore[0]->SetNum(m_nBlueLinkEnergy);
 			}
 			if (m_pEndScore[1] == NULL)
 			{//NULLの場合
-			 //レッドチームのスコアを生成
+				//レッドチームのスコアを生成
 				m_pEndScore[1] = CUI_NUMBER::Create(D3DXVECTOR3(950.0f, 500.0f, 0.0f), 150.0f, 150.0f, 75.0f, CUI_NUMBER::UI_NUMTYPE_NONE, 0, 1, 3);
 				//m_pEndScore[1]->SetNumDisPlay(m_nRedLinkEnergy, CUI_NUMBER::UI_NUMTYPE_NONE);
 				m_pEndScore[1]->SetNum(m_nRedLinkEnergy);
@@ -715,7 +715,7 @@ void CGame::EndFadeOutUpdate(void)
 			{//シングルプレイの場合
 				if (m_pEndResultLogo == NULL)
 				{//NULLの場合
-				 //勝敗のロゴを生成
+					//勝敗のロゴを生成
 					if (CResult::GetTeamWin() == CResult::TEAM_WIN_BLUE) { m_pEndResultLogo = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, (SCREEN_HEIGHT / 2) - 150.0f, 0.0f), SCREEN_WIDTH / 2, 200.0f, CUI_TEXTURE::UIFLAME_RESULT_VICTORY); }
 					else if (CResult::GetTeamWin() == CResult::TEAM_WIN_RED) { m_pEndResultLogo = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, (SCREEN_HEIGHT / 2) - 150.0f, 0.0f), SCREEN_WIDTH / 2, 200.0f, CUI_TEXTURE::UIFLAME_RESULT_DEFEAT); }
 				}
@@ -730,7 +730,7 @@ void CGame::EndFadeOutUpdate(void)
 					{//チームが0の場合
 						if (m_pEndResultLogo == NULL)
 						{//NULLの場合
-						 //勝敗のロゴを生成
+							//勝敗のロゴを生成
 							if (CResult::GetTeamWin() == CResult::TEAM_WIN_BLUE) { m_pEndResultLogo = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, (SCREEN_HEIGHT / 2) - 150.0f, 0.0f), SCREEN_WIDTH / 2, 200.0f, CUI_TEXTURE::UIFLAME_RESULT_VICTORY); }
 							else if (CResult::GetTeamWin() == CResult::TEAM_WIN_RED) { m_pEndResultLogo = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, (SCREEN_HEIGHT / 2) - 150.0f, 0.0f), SCREEN_WIDTH / 2, 200.0f, CUI_TEXTURE::UIFLAME_RESULT_DEFEAT); }
 						}
@@ -741,7 +741,7 @@ void CGame::EndFadeOutUpdate(void)
 					{//チームが1の場合
 						if (m_pEndResultLogo == NULL)
 						{//NULLの場合
-						 //勝敗のロゴを生成
+							//勝敗のロゴを生成
 							if (CResult::GetTeamWin() == CResult::TEAM_WIN_BLUE) { m_pEndResultLogo = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, (SCREEN_HEIGHT / 2) - 150.0f, 0.0f), SCREEN_WIDTH / 2, 200.0f, CUI_TEXTURE::UIFLAME_RESULT_DEFEAT); }
 							else if (CResult::GetTeamWin() == CResult::TEAM_WIN_RED) { m_pEndResultLogo = CUI_TEXTURE::Create(D3DXVECTOR3(SCREEN_WIDTH / 2, (SCREEN_HEIGHT / 2) - 150.0f, 0.0f), SCREEN_WIDTH / 2, 200.0f, CUI_TEXTURE::UIFLAME_RESULT_VICTORY); }
 						}
@@ -764,7 +764,7 @@ void CGame::FadeUpdate(void)
 	if (m_modeCounter >= 200)
 	{//戦死するまでのカウンターが200以上の場合
 
-	 //背景の開放
+		//背景の開放
 		if (m_pEndBG != NULL)
 		{
 			m_pEndBG->Uninit();
@@ -1071,7 +1071,7 @@ void CGame::CreatePlayer(void)
 		{//マルチプレイの場合
 			bool bConnect = false;	//接続しているかどうか
 
-									//クライアントの取得
+			//クライアントの取得
 			CClient *pClient = CManager::GetClient();
 
 			//if (m_aMechaType[nCntPlayer] == -1)
@@ -1273,7 +1273,7 @@ void CGame::PrintData(void)
 				//弾を発射しているかどうかを書き込む
 				if (m_pPlayer[pClient->GetPlayerIdx()]->GetMyAI(nCntAI)->GetShoot() == true)
 				{//発射されている場合
-				 //発射している情報を書き込む
+					//発射している情報を書き込む
 					pClient->Printf("1");
 					pClient->Printf(" ");
 
@@ -1705,11 +1705,11 @@ char *CGame::ReadPlayerData(char *pStr)
 	bool bAIPinUse[AI_MAX] = { false, false };						// AIがピンを使用しているかどうか
 	D3DXVECTOR3 AIPinPos[AI_MAX] = { D3DXVECTOR3(0.0f, 0.0f, 0.0f), D3DXVECTOR3(0.0f, 0.0f, 0.0f) };// AIのピンの位置
 
-	D3DXVECTOR3 AIPos[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f),D3DXVECTOR3(0.0f,0.0f,0.0f) };		//AIの位置
+	D3DXVECTOR3 AIPos[AI_MAX] = {D3DXVECTOR3(0.0f,0.0f,0.0f),D3DXVECTOR3(0.0f,0.0f,0.0f)};		//AIの位置
 	D3DXVECTOR3 AIRot[AI_MAX] = { D3DXVECTOR3(0.0f,0.0f,0.0f) ,D3DXVECTOR3(0.0f,0.0f,0.0f) };	//AIの向き
-	bool bAIDeath[AI_MAX] = { false ,false };														//AIが死んでいるかどうか
-	int nAIKillPlayerIdx[AI_MAX] = { 0,0 };														//AIキルプレイヤーの番号
-	TYPE AIPlayerType[AI_MAX] = { TYPE_PLAYER,TYPE_PLAYER };										//AIキルプレイヤーの種類
+	bool bAIDeath[AI_MAX] = {false ,false};														//AIが死んでいるかどうか
+	int nAIKillPlayerIdx[AI_MAX] = {0,0};														//AIキルプレイヤーの番号
+	TYPE AIPlayerType[AI_MAX] = {TYPE_PLAYER,TYPE_PLAYER};										//AIキルプレイヤーの種類
 	bool bAIShoot[AI_MAX] = { false,false };													//AI弾発射したかどうか
 	float fAIAngle[AI_MAX] = { 0.0f,0.0f };														//AI角度
 	float fAIAngleV[AI_MAX] = { 0.0f,0.0f };													//AI角度
@@ -1734,7 +1734,7 @@ char *CGame::ReadPlayerData(char *pStr)
 			nWord = CServerFunction::PopString(pStr, "");		//文字数カウント
 			pStr += nWord;										//頭出し
 
-																//チーム情報の代入
+			//チーム情報の代入
 			nTeam = CServerFunction::ReadInt(pStr, "");
 			nWord = CServerFunction::PopString(pStr, "");
 			pStr += nWord;
@@ -1900,7 +1900,7 @@ char *CGame::ReadPlayerData(char *pStr)
 
 				if (bAIShoot[nCntAI] == true)
 				{//弾を発射している場合
-				 //攻撃力を代入
+					//攻撃力を代入
 					nAIAttack[nCntAI] = CServerFunction::ReadInt(pStr, "");
 					nWord = CServerFunction::PopString(pStr, "");
 					pStr += nWord;
@@ -2169,11 +2169,11 @@ char *CGame::ReadPlayerData(char *pStr)
 					}
 
 					// ピンの更新
-					SetPinData(nPlayerIdx, pinPos, bPinUse);
+					SetPinData(nPlayerIdx, pinPos,bPinUse);
 
 					for (int nCntAI = 0; nCntAI < AI_MAX; nCntAI++)
 					{// AIの数だけ回る
-					 // AIピンの更新
+						// AIピンの更新
 						SetAIPinData(nPlayerIdx, nCntAI, AIPinPos[nCntAI], bAIPinUse[nCntAI]);
 					}
 
@@ -3132,24 +3132,24 @@ void CGame::UpdateKillLog(void)
 			m_nCntDrawLog[nCntLog]++;	//ログの描画カウンターを加算
 			if (m_nCntDrawLog[nCntLog] >= 300)
 			{//ログの描画カウンターが300以上の場合
-			 //色を取得
+				//色を取得
 
 				D3DXCOLOR col = m_apKillLogBase[nCntLog]->GetColor();
 				col.a -= 0.05f;	//色の減算
 
-								//UIの色を設置処理
+				//UIの色を設置処理
 				if (m_apKillLogBase[nCntLog] != NULL) { m_apKillLogBase[nCntLog]->SetColor(col); }
-				if (m_apKillLogPlayerIcon[nCntLog][0] != NULL) { m_apKillLogPlayerIcon[nCntLog][0]->SetColor(col); }
-				if (m_apKillLogPlayerIcon[nCntLog][1] != NULL) { m_apKillLogPlayerIcon[nCntLog][1]->SetColor(col); }
-				if (m_apKillLogPlayerIdx[nCntLog][0] != NULL) { m_apKillLogPlayerIdx[nCntLog][0]->SetColor(col); }
-				if (m_apKillLogPlayerIdx[nCntLog][1] != NULL) { m_apKillLogPlayerIdx[nCntLog][1]->SetColor(col); }
+				if (m_apKillLogPlayerIcon[nCntLog][0] != NULL) {m_apKillLogPlayerIcon[nCntLog][0]->SetColor(col);}
+				if (m_apKillLogPlayerIcon[nCntLog][1] != NULL) {m_apKillLogPlayerIcon[nCntLog][1]->SetColor(col);}
+				if(m_apKillLogPlayerIdx[nCntLog][0] != NULL){ m_apKillLogPlayerIdx[nCntLog][0]->SetColor(col); }
+				if(m_apKillLogPlayerIdx[nCntLog][1] != NULL){ m_apKillLogPlayerIdx[nCntLog][1]->SetColor(col); }
 
 				if (col.a <= 0.0f)
 				{//透明度が0以下の場合
 					m_nCntDrawLog[nCntLog] = 0;	//ログの描画カウンタ－を初期化
 					m_bLog[nCntLog] = false;	//ログを使用していない状態にする
 
-												//ログの開放処理
+					//ログの開放処理
 					ReleaseKillLog(nCntLog);
 				}
 			}

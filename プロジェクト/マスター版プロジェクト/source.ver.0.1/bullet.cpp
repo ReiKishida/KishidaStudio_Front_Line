@@ -180,7 +180,7 @@ CBulletPlayer* CBulletPlayer::Create(D3DXVECTOR3 pos, float fAngle, float fAngle
 	{// メモリ確保成功
 		pBullet->m_nTeam = nTeam;
 		pBullet->m_pScene = pScene;
-		pBullet->Init(pos, fAngle, fAngleVertical, nDamage, fBulletSpeed, nLife);
+		pBullet->Init(pos, fAngle, fAngleVertical, nDamage,fBulletSpeed, nLife);
 	}
 
 	return pBullet;
@@ -203,7 +203,7 @@ CBulletPlayer::~CBulletPlayer()
 //=========================================
 // 初期化処理
 //=========================================
-HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, float fBulletSpeed, int nLife)
+HRESULT CBulletPlayer::Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,float fBulletSpeed, int nLife)
 {
 	CBullet::Init(pos);										// 位置の設定
 	CBullet::SetLighting(false);
@@ -263,7 +263,7 @@ bool CBulletPlayer::BulletCollision(void)
 			int nTeam = pPlayer->GetTeam();
 			if (m_nTeam != nTeam)
 			{
-				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f) && pPlayer->GetDeath() == false)
+				if (CScene3DBill::Collision(pPlayer->GetPos(), 50.0f) && pPlayer->GetDeath() ==false)
 				{// 接触している
 					if (CMenu::GetMode() == CMenu::MODE_SINGLE)
 					{//シングルプレイの場合

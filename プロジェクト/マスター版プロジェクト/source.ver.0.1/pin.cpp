@@ -12,7 +12,6 @@
 #include "input.h"
 #include "texture.h"
 #include "player.h"
-#include "game.h"
 
 //=============================================================================
 // マクロ定義
@@ -100,8 +99,6 @@ void CPin::Update(void)
 //=============================================================================
 void CPin::Draw(void)
 {
-	if (CManager::GetGame()->GetGameState() != CGame::STATE_NORMAL) { return; }
-
 	// デバイスの取得
 	LPDIRECT3DDEVICE9 pDevice = CManager::GetRenderer()->GetDevice();
 

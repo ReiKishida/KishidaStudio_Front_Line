@@ -1,74 +1,80 @@
 //=============================================================================
 //
-// ピン立て処理 [pin.cpp]
+// ノードポインター処理 [mouseCursor.cpp]
 // Author : Komatsu Keisuke
 //
 //=============================================================================
-#define _CRT_SECURE_NO_WARNINGS
-#include "pin.h"
+#include "nodePointer.h"
 #include "manager.h"
 #include "renderer.h"
 #include "debugproc.h"
 #include "input.h"
-#include "texture.h"
-#include "player.h"
-#include "game.h"
 
 //=============================================================================
 // マクロ定義
 //=============================================================================
-#define MOUSE_WIDTH		(20.0f)		// ピンテクスチャの幅
-#define MOUSE_HEIGHT	(35.0f)		// ピンテクスチャの高さ
+#define POINT_SIZE_X			(18.0f)		// 仮地点用ポリゴンの大きさX
+#define POINT_SIZE_Z			(17.0f)		// 仮地点用ポリゴンの大きさY
 
 //=============================================================================
 // 静的メンバ変数
 //=============================================================================
+D3DXVECTOR3 CNodePointer::m_SearchPos = {};
+int CNodePointer::m_nNodeMax = 0;
 
 //=============================================================================
 // 生成処理
 //=============================================================================
-CPin  *CPin::Create(D3DXVECTOR3 pos)
+CNodePointer *CNodePointer::Create(D3DXVECTOR3 pos)
 {
-	CPin *pPin = NULL;
+	CNodePointer *pNodePointer = NULL;
 
-	if (pPin == NULL)
+	if (pNodePointer == NULL)
 	{
-		pPin = new CPin;
+		pNodePointer = new CNodePointer;
 
-		if (pPin != NULL)
-		{// メモリ確保成功
-			pPin->m_pos = pos;
-			pPin->Init();
+		if (pNodePointer != NULL)
+		{
+			pNodePointer->m_nNumber = m_nNodeMax;
+			pNodePointer->m_pos = pos;
+			pNodePointer->Init();
 		}
 	}
 
-	return pPin;
+	return pNodePointer;
 }
 
 //=============================================================================
 // コンストラクタ
 //=============================================================================
-CPin::CPin(int nPriority, CScene::OBJTYPE objType) : CScene3DBill(nPriority, objType) {}
+CNodePointer::CNodePointer(int nPriority, CScene::OBJTYPE objType) : CScene3D(nPriority, objType){}
 
 //=============================================================================
 // デストラクタ
 //=============================================================================
-CPin::~CPin() {}
+CNodePointer::~CNodePointer(){}
 
 //=============================================================================
 // 初期化処理
 //=============================================================================
-HRESULT CPin::Init()
-{
-	m_size = D3DXVECTOR3(MOUSE_WIDTH, MOUSE_HEIGHT, 0.0f);
-	m_pTexture = CTexture::GetTexture(CTexture::TEXTURE_GOAL_PIN);
-	CScene3DBill::Init();
+HRESULT CNodePointer::Init()
+{	
+	CScene3D::Init();
 
-	// ピンの初期設定
-	CScene3DBill::SetPos(m_pos);
-	CScene3DBill::SetSize(m_size);
-	CScene3DBill::SetColor(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-	CScene3DBill::BindTexture(m_pTexture);
+	// 初期設定
+	m_size = D3DXVECTOR3(POINT_SIZE_X, 0.0f, POINT_SIZE_Z);
+	m_color = D3DXCOLOR(1.0f, 0.5f, 0.8f, 0.5f);
+
+	for (int nCntConnect = 0; nCntConnect <CONNECT_MAX; nCntConnect++)
+	{// 接続可能最大数分回る
+		m_nConnect[nCntConnect] = 0;
+	}
+	m_nConnectMax = 0;
+
+	// ノードポインターの設定
+	CScene3D::SetPos(m_pos);
+	CScene3D::SetSize(m_size);
+	CScene3D::SetColor(m_color);
 
 	return S_OK;
 }
@@ -76,32 +82,34 @@ HRESULT CPin::Init()
 //=============================================================================
 // 終了処理
 //=============================================================================
-void CPin::Uninit(void)
+void CNodePointer::Uninit(void)
 {
-	// ピンの破棄
-	CScene3DBill::Uninit();
+	CScene3D::Uninit();
 }
 
 //=============================================================================
 // 更新処理
 //=============================================================================
-void CPin::Update(void)
+void CNodePointer::Update(void)
 {
-	CInputKeyboard *pKeyboard = CManager::GetInputKeyboard();	// キーボードの入力を取得
-	CInputMouse *pMouse = CManager::GetInputMouse();			// マウスの入力を取得
+	//CDebugProc::Print("ノードの位置 x : %.1f / y : %.1f / z : %.1f\n", m_pos.x, m_pos.y, m_pos.z);
+	//CDebugProc::Print("No. : %d\n", m_nNumber);
+	//CDebugProc::Print("接続ノード数 : %d\n", m_nConnectMax);
+	//for (int nCntConnect = 0; nCntConnect < m_nConnectMax; nCntConnect++)
+	//{
+	//	CDebugProc::Print("接続先番号[%d] : %d\n", nCntConnect, m_nConnect[nCntConnect]);
+	//}
+	//CDebugProc::Print("\n");
 
-	// 情報更新
-	CScene3DBill::BindTexture(m_pTexture);
-	CScene3DBill::SetPos(m_pos);
+	CScene3D::SetSize(m_size);
+	CScene3D::SetColor(m_color);
 }
 
 //=============================================================================
 // 描画処理
 //=============================================================================
-void CPin::Draw(void)
+void CNodePointer::Draw(void)
 {
-	if (CManager::GetGame()->GetGameState() != CGame::STATE_NORMAL) { return; }
-
 	// デバイスの取得
 	LPDIRECT3DDEVICE9 pDevice = CManager::GetRenderer()->GetDevice();
 
@@ -112,8 +120,7 @@ void CPin::Draw(void)
 	pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
 	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
 
-	// ピンの描画
-	CScene3DBill::Draw();
+	CScene3D::Draw();
 
 	// ZテストON
 	pDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);

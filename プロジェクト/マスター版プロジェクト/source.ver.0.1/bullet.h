@@ -80,7 +80,7 @@ class CBulletPlayer : public CBullet
 public:
 	CBulletPlayer();
 	~CBulletPlayer();
-	HRESULT Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage, float fBulletSpeed, int nLife);
+	HRESULT Init(D3DXVECTOR3 pos, float fAngle, float fAngleVertical, int nDamage,float fBulletSpeed, int nLife);
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
