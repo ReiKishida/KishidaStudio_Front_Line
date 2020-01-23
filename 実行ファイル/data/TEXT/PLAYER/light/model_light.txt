@@ -35,12 +35,13 @@ CHARACTERSET
 	NUM_PARTS = 10					# パーツ数
 
 	# 弾の設定
-	CAPACITY = 60					# 装弾数
+	CAPACITY = 80					# 装弾数
 	ATTACK = 3						# 攻撃力
 	SHOOTS = 1						# 同時発射数
-	DISPERTION = 70					# ばらつき
-	RELOAD = 200					# リロード時間
+	DISPERTION = 75					# ばらつき
+	RELOAD = 250					# リロード時間
 	BULLETSPEED = 30.0				# 弾速
+	BULLETLIFE = 55					# 弾の寿命
 
 	LIFE = 350						# 耐久力
 	SPEED = 5.2						# 移動量
